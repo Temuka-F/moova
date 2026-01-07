@@ -407,8 +407,7 @@ export function HomePage() {
                       transmission: car.transmission,
                       fuelType: car.fuelType,
                       seats: car.seats,
-                      category: car.category,
-                      images: car.images,
+                      images: car.images.map(img => ({ url: img.url, isPrimary: false })),
                       owner: car.owner ? {
                         firstName: car.owner.firstName,
                         lastName: car.owner.lastName,
