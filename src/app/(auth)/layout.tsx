@@ -1,3 +1,6 @@
+// Force dynamic rendering to avoid build-time errors with Supabase
+export const dynamic = 'force-dynamic'
+
 export default function AuthLayout({
   children,
 }: {
