@@ -3,191 +3,158 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CalendarIcon, MapPin, Search, ChevronRight } from 'lucide-react'
-import { format, addDays } from 'date-fns'
+import { Input } from '@/components/ui/input'
+import { MapPin, ArrowRight, Car, Shield, Clock, Star } from 'lucide-react'
 import { GEORGIAN_CITIES } from '@/types'
 
 export function HeroSection() {
   const router = useRouter()
-  const [city, setCity] = useState<string>('')
-  const [startDate, setStartDate] = useState<Date>()
-  const [endDate, setEndDate] = useState<Date>()
+  const [location, setLocation] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const filteredCities = GEORGIAN_CITIES.filter(city =>
+    city.toLowerCase().includes(location.toLowerCase())
+  )
 
   const handleSearch = () => {
     const params = new URLSearchParams()
-    if (city) params.set('city', city)
-    if (startDate) params.set('startDate', startDate.toISOString())
-    if (endDate) params.set('endDate', endDate.toISOString())
-    
+    if (location) params.set('city', location)
     router.push(`/cars?${params.toString()}`)
   }
 
+  const handleCitySelect = (city: string) => {
+    setLocation(city)
+    setShowSuggestions(false)
+  }
+
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=2070&auto=format&fit=crop')`,
-        }}
-      >
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
-        
-        {/* Animated Decorative Elements */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+    <section className="relative min-h-screen bg-gradient-to-br from-secondary via-secondary to-primary/20 overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary rounded-full blur-3xl" />
       </div>
 
-      {/* Content */}
-      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pt-20">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-6 animate-slide-up">
-            <span className="flex h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-sm text-white/90">Now available in 20+ Georgian cities</span>
-          </div>
+      <div className="relative container mx-auto px-4 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-screen py-24">
+          {/* Left Content */}
+          <div className="space-y-8 animate-slideUp">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm">
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+              Now available in 20+ cities across Georgia
+            </div>
 
-          {/* Heading */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 animate-slide-up stagger-1">
-            Drive Your Way
-            <span className="block mt-2 text-gradient">Across Georgia</span>
-          </h1>
+            <div>
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1]">
+                Drive your way
+                <span className="block text-primary">across Georgia</span>
+              </h1>
+              <p className="mt-6 text-xl text-white/80 max-w-lg">
+                Rent unique cars from trusted local hosts. From city drives to mountain adventures — find your perfect ride.
+              </p>
+            </div>
 
-          {/* Subheading */}
-          <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-2xl mx-auto animate-slide-up stagger-2">
-            Rent unique cars from trusted local hosts. From city drives in Tbilisi to mountain adventures in Kazbegi — find your perfect ride.
-          </p>
-
-          {/* Search Box */}
-          <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-4 sm:p-6 shadow-2xl max-w-3xl mx-auto animate-slide-up stagger-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Location */}
+            {/* Search Box */}
+            <div className="bg-white rounded-2xl shadow-2xl p-2 max-w-xl">
               <div className="relative">
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5 text-left">
-                  Location
-                </label>
-                <Select value={city} onValueChange={setCity}>
-                  <SelectTrigger className="w-full h-12 bg-muted/50 border-0">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <SelectValue placeholder="Where?" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GEORGIAN_CITIES.map((cityName) => (
-                      <SelectItem key={cityName} value={cityName}>
-                        {cityName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Start Date */}
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5 text-left">
-                  Pick-up
-                </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full h-12 justify-start bg-muted/50 hover:bg-muted"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {startDate ? format(startDate, 'MMM d, yyyy') : 'Start date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      disabled={(date) => date < new Date()}
-                      initialFocus
+                <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  <div className="flex-1 relative">
+                    <Input
+                      type="text"
+                      placeholder="Where do you want to pick up?"
+                      value={location}
+                      onChange={(e) => {
+                        setLocation(e.target.value)
+                        setShowSuggestions(true)
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 p-0 h-auto"
                     />
-                  </PopoverContent>
-                </Popover>
-              </div>
+                    
+                    {/* City Suggestions */}
+                    {showSuggestions && location && filteredCities.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-4 bg-white rounded-xl shadow-xl border border-border z-50 overflow-hidden">
+                        {filteredCities.slice(0, 5).map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => handleCitySelect(city)}
+                            className="w-full flex items-center gap-3 p-4 hover:bg-muted transition-colors text-left"
+                          >
+                            <MapPin className="w-5 h-5 text-muted-foreground" />
+                            <span className="font-medium">{city}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              {/* End Date */}
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5 text-left">
-                  Drop-off
-                </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full h-12 justify-start bg-muted/50 hover:bg-muted"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {endDate ? format(endDate, 'MMM d, yyyy') : 'End date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      disabled={(date) => date < (startDate || new Date())}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Search Button */}
-              <div className="flex items-end">
-                <Button 
+                <Button
                   onClick={handleSearch}
-                  className="w-full h-12 text-base gap-2 shadow-lg shadow-primary/30"
                   size="lg"
+                  className="w-full mt-2 h-14 text-lg font-semibold rounded-xl"
                 >
-                  <Search className="w-4 h-4" />
-                  Search Cars
+                  Search available cars
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </div>
             </div>
+
+            {/* Trust Indicators */}
+            <div className="flex flex-wrap gap-6 pt-4">
+              <div className="flex items-center gap-2 text-white/80">
+                <Shield className="w-5 h-5 text-primary" />
+                <span>Fully insured</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/80">
+                <Clock className="w-5 h-5 text-primary" />
+                <span>24/7 support</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/80">
+                <Star className="w-5 h-5 text-primary" />
+                <span>Verified hosts</span>
+              </div>
+            </div>
           </div>
 
-          {/* Trust Indicators */}
-          <div className="mt-12 flex flex-wrap justify-center items-center gap-8 text-white/70 animate-slide-up stagger-4">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-sm">Verified Hosts</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-sm">Insurance Included</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-sm">24/7 Support</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="text-sm">Free Cancellation</span>
-            </div>
-          </div>
-        </div>
+          {/* Right Content - Car Image */}
+          <div className="relative hidden lg:block animate-slideInRight delay-200">
+            <div className="relative">
+              {/* Car Image */}
+              <div className="relative z-10">
+                <img
+                  src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop"
+                  alt="Luxury car"
+                  className="w-full h-auto object-contain rounded-3xl shadow-2xl"
+                />
+              </div>
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-8 h-12 rounded-full border-2 border-white/30 flex items-start justify-center pt-2">
-            <div className="w-1.5 h-3 rounded-full bg-white/50" />
+              {/* Floating Cards */}
+              <div className="absolute -left-8 top-1/4 bg-white rounded-2xl shadow-xl p-4 animate-float">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <Car className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">500+</p>
+                    <p className="text-sm text-muted-foreground">Cars available</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -right-4 bottom-1/4 bg-white rounded-2xl shadow-xl p-4 animate-float delay-300">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <Star className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">4.9★</p>
+                    <p className="text-sm text-muted-foreground">Average rating</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -2,362 +2,286 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { CarCard } from '@/components/cars/car-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { CarCard } from '@/components/cars/car-card'
-import { 
-  SlidersHorizontal, 
-  MapPin, 
-  X,
-  Car,
-} from 'lucide-react'
-import { GEORGIAN_CITIES } from '@/types'
-import type { CarWithOwner, CarCategory, Transmission, FuelType } from '@/types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
+import { Search, SlidersHorizontal, MapPin, Car, Loader2 } from 'lucide-react'
+import { GEORGIAN_CITIES, CAR_CATEGORIES, TRANSMISSIONS, FUEL_TYPES } from '@/types'
 
-const categories: { value: CarCategory; label: string }[] = [
-  { value: 'ECONOMY', label: 'Economy' },
-  { value: 'COMPACT', label: 'Compact' },
-  { value: 'SEDAN', label: 'Sedan' },
-  { value: 'SUV', label: 'SUV' },
-  { value: 'LUXURY', label: 'Luxury' },
-  { value: 'SPORTS', label: 'Sports' },
-  { value: 'VAN', label: 'Van' },
-  { value: 'MINIVAN', label: 'Minivan' },
-  { value: 'PICKUP', label: 'Pickup' },
-  { value: 'CONVERTIBLE', label: 'Convertible' },
+// Sample car data for display
+const sampleCars = [
+  {
+    id: '1',
+    make: 'Toyota',
+    model: 'Camry',
+    year: 2023,
+    pricePerDay: 120,
+    city: 'Tbilisi',
+    transmission: 'AUTOMATIC',
+    fuelType: 'HYBRID',
+    seats: 5,
+    rating: 4.9,
+    reviewCount: 47,
+    image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?q=80&w=800&auto=format&fit=crop',
+    host: { name: 'Giorgi M.', avatar: null },
+  },
+  {
+    id: '2',
+    make: 'Mercedes-Benz',
+    model: 'E-Class',
+    year: 2022,
+    pricePerDay: 200,
+    city: 'Tbilisi',
+    transmission: 'AUTOMATIC',
+    fuelType: 'PETROL',
+    seats: 5,
+    rating: 4.8,
+    reviewCount: 32,
+    image: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?q=80&w=800&auto=format&fit=crop',
+    host: { name: 'Nino K.', avatar: null },
+  },
+  {
+    id: '3',
+    make: 'BMW',
+    model: 'X5',
+    year: 2023,
+    pricePerDay: 250,
+    city: 'Batumi',
+    transmission: 'AUTOMATIC',
+    fuelType: 'DIESEL',
+    seats: 7,
+    rating: 4.9,
+    reviewCount: 28,
+    image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=800&auto=format&fit=crop',
+    host: { name: 'Levan T.', avatar: null },
+  },
+  {
+    id: '4',
+    make: 'Hyundai',
+    model: 'Tucson',
+    year: 2022,
+    pricePerDay: 100,
+    city: 'Kutaisi',
+    transmission: 'AUTOMATIC',
+    fuelType: 'PETROL',
+    seats: 5,
+    rating: 4.7,
+    reviewCount: 19,
+    image: 'https://images.unsplash.com/photo-1633695610681-8477dcfd5c33?q=80&w=800&auto=format&fit=crop',
+    host: { name: 'Ana S.', avatar: null },
+  },
+  {
+    id: '5',
+    make: 'Volkswagen',
+    model: 'Golf',
+    year: 2021,
+    pricePerDay: 80,
+    city: 'Tbilisi',
+    transmission: 'MANUAL',
+    fuelType: 'PETROL',
+    seats: 5,
+    rating: 4.6,
+    reviewCount: 54,
+    image: 'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?q=80&w=800&auto=format&fit=crop',
+    host: { name: 'Dato G.', avatar: null },
+  },
+  {
+    id: '6',
+    make: 'Tesla',
+    model: 'Model 3',
+    year: 2023,
+    pricePerDay: 180,
+    city: 'Tbilisi',
+    transmission: 'AUTOMATIC',
+    fuelType: 'ELECTRIC',
+    seats: 5,
+    rating: 5.0,
+    reviewCount: 12,
+    image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=800&auto=format&fit=crop',
+    host: { name: 'Irakli B.', avatar: null },
+  },
 ]
 
-function CarsPageContent() {
+function CarsContent() {
   const searchParams = useSearchParams()
-  
-  const [cars, setCars] = useState<CarWithOwner[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  
-  // Filter states
-  const [city, setCity] = useState(searchParams.get('city') || '')
-  const [category, setCategory] = useState<CarCategory | ''>('')
-  const [transmission, setTransmission] = useState<Transmission | ''>('')
-  const [fuelType, setFuelType] = useState<FuelType | ''>('')
-  const [priceRange, setPriceRange] = useState([0, 500])
-  const [seats, setSeats] = useState<number | null>(null)
-  const [instantBookOnly, setInstantBookOnly] = useState(false)
-  const [sortBy, setSortBy] = useState<string>('newest')
+  const [cars, setCars] = useState(sampleCars)
+  const [loading, setLoading] = useState(false)
+  const [filters, setFilters] = useState({
+    city: searchParams.get('city') || '',
+    priceRange: [0, 500],
+    transmission: '',
+    fuelType: '',
+    category: '',
+  })
 
-  // Active filters count
-  const activeFiltersCount = [
-    city,
-    category,
-    transmission,
-    fuelType,
-    priceRange[0] > 0 || priceRange[1] < 500,
-    seats,
-    instantBookOnly,
-  ].filter(Boolean).length
+  const filteredCars = cars.filter(car => {
+    if (filters.city && car.city !== filters.city) return false
+    if (car.pricePerDay < filters.priceRange[0] || car.pricePerDay > filters.priceRange[1]) return false
+    if (filters.transmission && car.transmission !== filters.transmission) return false
+    if (filters.fuelType && car.fuelType !== filters.fuelType) return false
+    return true
+  })
 
-  useEffect(() => {
-    const fetchCars = async () => {
-      setIsLoading(true)
-      try {
-        const params = new URLSearchParams()
-        if (city) params.set('city', city)
-        if (category) params.set('category', category)
-        if (transmission) params.set('transmission', transmission)
-        if (fuelType) params.set('fuelType', fuelType)
-        if (priceRange[0] > 0) params.set('minPrice', priceRange[0].toString())
-        if (priceRange[1] < 500) params.set('maxPrice', priceRange[1].toString())
-        if (seats) params.set('seats', seats.toString())
-        if (instantBookOnly) params.set('isInstantBook', 'true')
-        if (sortBy) params.set('sortBy', sortBy)
-
-        const response = await fetch(`/api/cars?${params.toString()}`)
-        if (response.ok) {
-          const data = await response.json()
-          setCars(data.cars || [])
-        }
-      } catch (error) {
-        console.error('Error fetching cars:', error)
-        setCars([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchCars()
-  }, [city, category, transmission, fuelType, priceRange, seats, instantBookOnly, sortBy])
-
-  const clearFilters = () => {
-    setCity('')
-    setCategory('')
-    setTransmission('')
-    setFuelType('')
-    setPriceRange([0, 500])
-    setSeats(null)
-    setInstantBookOnly(false)
-  }
-
-  const FilterContent = () => (
+  const FilterPanel = () => (
     <div className="space-y-6">
-      {/* Location */}
-      <div className="space-y-2">
-        <Label>Location</Label>
-        <Select value={city} onValueChange={setCity}>
+      {/* City */}
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold">Location</Label>
+        <Select value={filters.city} onValueChange={(value) => setFilters({ ...filters, city: value })}>
           <SelectTrigger>
-            <SelectValue placeholder="All locations" />
+            <SelectValue placeholder="All cities" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All locations</SelectItem>
-            {GEORGIAN_CITIES.map((cityName) => (
-              <SelectItem key={cityName} value={cityName}>
-                {cityName}
-              </SelectItem>
+            <SelectItem value="">All cities</SelectItem>
+            {GEORGIAN_CITIES.map((city) => (
+              <SelectItem key={city} value={city}>{city}</SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Category */}
-      <div className="space-y-2">
-        <Label>Car Type</Label>
-        <Select value={category} onValueChange={(v) => setCategory(v as CarCategory)}>
-          <SelectTrigger>
-            <SelectValue placeholder="All types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All types</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Transmission */}
-      <div className="space-y-2">
-        <Label>Transmission</Label>
-        <Select value={transmission} onValueChange={(v) => setTransmission(v as Transmission)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Any" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">Any</SelectItem>
-            <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-            <SelectItem value="MANUAL">Manual</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Fuel Type */}
-      <div className="space-y-2">
-        <Label>Fuel Type</Label>
-        <Select value={fuelType} onValueChange={(v) => setFuelType(v as FuelType)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Any" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">Any</SelectItem>
-            <SelectItem value="PETROL">Petrol</SelectItem>
-            <SelectItem value="DIESEL">Diesel</SelectItem>
-            <SelectItem value="HYBRID">Hybrid</SelectItem>
-            <SelectItem value="ELECTRIC">Electric</SelectItem>
-            <SelectItem value="LPG">LPG</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Price Range */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Label>Price per day</Label>
+      <div className="space-y-3">
+        <div className="flex justify-between">
+          <Label className="text-sm font-semibold">Price per day</Label>
           <span className="text-sm text-muted-foreground">
-            ₾{priceRange[0]} - ₾{priceRange[1]}
+            ₾{filters.priceRange[0]} - ₾{filters.priceRange[1]}
           </span>
         </div>
         <Slider
-          value={priceRange}
-          onValueChange={setPriceRange}
+          value={filters.priceRange}
+          onValueChange={(value) => setFilters({ ...filters, priceRange: value as [number, number] })}
           min={0}
           max={500}
           step={10}
-          className="w-full"
         />
       </div>
 
-      {/* Seats */}
-      <div className="space-y-2">
-        <Label>Minimum Seats</Label>
-        <Select 
-          value={seats?.toString() || ''} 
-          onValueChange={(v) => setSeats(v ? parseInt(v) : null)}
-        >
+      {/* Transmission */}
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold">Transmission</Label>
+        <Select value={filters.transmission} onValueChange={(value) => setFilters({ ...filters, transmission: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Any" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">Any</SelectItem>
-            <SelectItem value="2">2+</SelectItem>
-            <SelectItem value="4">4+</SelectItem>
-            <SelectItem value="5">5+</SelectItem>
-            <SelectItem value="7">7+</SelectItem>
+            {TRANSMISSIONS.map((t) => (
+              <SelectItem key={t} value={t}>{t}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Instant Book */}
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="instantBook"
-          checked={instantBookOnly}
-          onCheckedChange={(checked) => setInstantBookOnly(checked as boolean)}
-        />
-        <label
-          htmlFor="instantBook"
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          Instant Book only
-        </label>
+      {/* Fuel Type */}
+      <div className="space-y-3">
+        <Label className="text-sm font-semibold">Fuel type</Label>
+        <Select value={filters.fuelType} onValueChange={(value) => setFilters({ ...filters, fuelType: value })}>
+          <SelectTrigger>
+            <SelectValue placeholder="Any" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Any</SelectItem>
+            {FUEL_TYPES.map((f) => (
+              <SelectItem key={f} value={f}>{f}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Clear Filters */}
-      {activeFiltersCount > 0 && (
-        <Button variant="outline" className="w-full" onClick={clearFilters}>
-          Clear all filters
-        </Button>
-      )}
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={() => setFilters({ city: '', priceRange: [0, 500], transmission: '', fuelType: '', category: '' })}
+      >
+        Clear filters
+      </Button>
     </div>
   )
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-muted/30 pt-20">
+      <div className="container mx-auto px-4 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">
-              {city ? `Cars in ${city}` : 'Browse All Cars'}
-            </h1>
+            <h1 className="text-3xl font-bold">Available cars</h1>
             <p className="text-muted-foreground mt-1">
-              {cars.length} cars available
+              {filteredCars.length} cars found {filters.city && `in ${filters.city}`}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="price_asc">Price: Low to High</SelectItem>
-                <SelectItem value="price_desc">Price: High to Low</SelectItem>
-                <SelectItem value="rating">Top Rated</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Mobile Filters */}
-            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="lg:hidden">
-                  <SlidersHorizontal className="w-4 h-4 mr-2" />
-                  Filters
-                  {activeFiltersCount > 0 && (
-                    <Badge className="ml-2" variant="secondary">
-                      {activeFiltersCount}
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-full sm:w-80">
-                <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6">
-                  <FilterContent />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          {/* Mobile Filter Button */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="lg:hidden">
+                <SlidersHorizontal className="w-4 h-4 mr-2" />
+                Filters
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Filters</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">
+                <FilterPanel />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
-        {/* Active Filters */}
-        {activeFiltersCount > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {city && (
-              <Badge variant="secondary" className="gap-1">
-                <MapPin className="w-3 h-3" />
-                {city}
-                <button onClick={() => setCity('')} className="ml-1 hover:text-destructive">
-                  <X className="w-3 h-3" />
-                </button>
-              </Badge>
-            )}
-            {category && (
-              <Badge variant="secondary" className="gap-1">
-                {category}
-                <button onClick={() => setCategory('')} className="ml-1 hover:text-destructive">
-                  <X className="w-3 h-3" />
-                </button>
-              </Badge>
-            )}
-            {instantBookOnly && (
-              <Badge variant="secondary" className="gap-1">
-                Instant Book
-                <button onClick={() => setInstantBookOnly(false)} className="ml-1 hover:text-destructive">
-                  <X className="w-3 h-3" />
-                </button>
-              </Badge>
-            )}
-          </div>
-        )}
-
         <div className="flex gap-8">
-          {/* Desktop Filters Sidebar */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-24 bg-card rounded-xl border p-6">
-              <h2 className="font-semibold mb-4 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4" />
-                Filters
-              </h2>
-              <FilterContent />
+          {/* Desktop Filters */}
+          <div className="hidden lg:block w-72 shrink-0">
+            <div className="bg-white rounded-2xl p-6 sticky top-24 border border-border">
+              <h2 className="font-semibold mb-6">Filters</h2>
+              <FilterPanel />
             </div>
-          </aside>
+          </div>
 
           {/* Cars Grid */}
           <div className="flex-1">
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="space-y-4">
-                    <Skeleton className="aspect-[4/3] rounded-xl" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ))}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : cars.length === 0 ? (
-              <div className="text-center py-16">
-                <Car className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No cars found</h3>
-                <p className="text-muted-foreground mb-6">
-                  Try adjusting your filters or search in a different area.
-                </p>
-                <Button onClick={clearFilters}>Clear filters</Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {cars.map((car) => (
+            ) : filteredCars.length > 0 ? (
+              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredCars.map((car) => (
                   <CarCard key={car.id} car={car} />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-20">
+                <Car className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No cars found</h3>
+                <p className="text-muted-foreground mb-6">
+                  Try adjusting your filters to find more cars
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setFilters({ city: '', priceRange: [0, 500], transmission: '', fuelType: '', category: '' })}
+                >
+                  Clear all filters
+                </Button>
               </div>
             )}
           </div>
@@ -369,8 +293,12 @@ function CarsPageContent() {
 
 export default function CarsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen pt-20 flex items-center justify-center">Loading...</div>}>
-      <CarsPageContent />
+    <Suspense fallback={
+      <div className="min-h-screen bg-muted/30 pt-20 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <CarsContent />
     </Suspense>
   )
 }

@@ -4,73 +4,64 @@ import { Search, CalendarCheck, Key, Star } from 'lucide-react'
 
 const steps = [
   {
-    step: 1,
+    step: '01',
     icon: Search,
-    title: 'Find Your Car',
-    description: 'Browse hundreds of cars in your area. Filter by type, price, features, and availability.',
+    title: 'Find your car',
+    description: 'Browse hundreds of cars in your area. Filter by price, type, and features.',
   },
   {
-    step: 2,
+    step: '02',
     icon: CalendarCheck,
-    title: 'Book Instantly',
-    description: 'Select your dates, send a booking request, and get confirmed in minutes.',
+    title: 'Book instantly',
+    description: 'Choose your dates and book in seconds. No waiting for approval.',
   },
   {
-    step: 3,
+    step: '03',
     icon: Key,
-    title: 'Pick Up & Go',
-    description: 'Meet the host, pick up the keys, and start your adventure.',
+    title: 'Pick up & go',
+    description: 'Meet your host, grab the keys, and start your adventure.',
   },
   {
-    step: 4,
+    step: '04',
     icon: Star,
-    title: 'Return & Review',
-    description: 'Drop off the car and leave a review to help other travelers.',
+    title: 'Return & review',
+    description: 'Drop off the car and share your experience with the community.',
   },
 ]
 
 export function HowItWorksSection() {
   return (
-    <section className="py-20 lg:py-28">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+    <section className="py-24 bg-white">
+      <div className="container mx-auto px-4 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-primary font-semibold text-sm tracking-wider uppercase mb-4 block">
-            How It Works
-          </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-            Rent a Car in
-            <span className="text-gradient"> 4 Easy Steps</span>
+          <h2 className="text-4xl font-bold tracking-tight mb-4">
+            How Moova works
           </h2>
-          <p className="text-muted-foreground text-lg">
-            Whether you're exploring Tbilisi's historic streets or heading to the mountains, getting on the road is simple.
+          <p className="text-lg text-muted-foreground">
+            Renting a car has never been easier. Four simple steps to get on the road.
           </p>
         </div>
 
-        {/* Steps */}
-        <div className="relative max-w-5xl mx-auto">
-          {/* Connection Line */}
-          <div className="hidden lg:block absolute top-24 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4">
-            {steps.map((step, index) => (
-              <div key={step.step} className="relative text-center group">
-                {/* Step Number Circle */}
-                <div className="relative mx-auto mb-6">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-xl shadow-primary/30 group-hover:scale-110 transition-transform z-10 relative mx-auto">
-                    <step.icon className="w-8 h-8 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-secondary text-secondary-foreground font-bold text-sm flex items-center justify-center shadow-lg z-20">
-                    {step.step}
-                  </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {steps.map((item, index) => (
+            <div key={item.step} className="relative">
+              {/* Connection Line */}
+              {index < steps.length - 1 && (
+                <div className="hidden lg:block absolute top-12 left-1/2 w-full h-0.5 bg-border" />
+              )}
+              
+              <div className="relative text-center">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-secondary mb-6 relative z-10">
+                  <item.icon className="w-10 h-10" />
+                  <span className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-black text-white text-sm font-bold flex items-center justify-center">
+                    {item.step}
+                  </span>
                 </div>
-
-                {/* Content */}
-                <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
-                <p className="text-muted-foreground">{step.description}</p>
+                <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                <p className="text-muted-foreground">{item.description}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

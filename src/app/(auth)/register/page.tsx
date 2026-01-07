@@ -10,17 +10,14 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { Car, Mail, Lock, User, Phone, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react'
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
-  phone: z.string().optional(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
   acceptTerms: z.boolean().refine(val => val === true, {
@@ -66,7 +63,6 @@ export default function RegisterPage() {
           data: {
             first_name: data.firstName,
             last_name: data.lastName,
-            phone: data.phone,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -100,29 +96,46 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 py-12">
-      <Card className="border-0 shadow-2xl shadow-primary/10">
-        <CardHeader className="space-y-4 text-center pb-2">
-          <div className="mx-auto w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30">
-            <Car className="w-7 h-7 text-primary-foreground" />
+    <div className="min-h-screen flex">
+      {/* Left side - Image */}
+      <div className="hidden lg:block lg:w-1/2 relative bg-secondary">
+        <div className="absolute inset-0 flex items-center justify-center p-16">
+          <div className="text-center text-white">
+            <h2 className="text-4xl font-bold mb-4">Join Moova today</h2>
+            <p className="text-xl text-white/70 max-w-md">
+              Start renting or sharing cars with our trusted community
+            </p>
           </div>
-          <div>
-            <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-            <CardDescription className="text-base">
-              Join Moova to start renting or sharing cars
-            </CardDescription>
-          </div>
-        </CardHeader>
+        </div>
+        <img
+          src="https://images.unsplash.com/photo-1502877338535-766e1452684a?q=80&w=1000&auto=format&fit=crop"
+          alt="Car"
+          className="w-full h-full object-cover opacity-30"
+        />
+      </div>
 
-        <CardContent className="space-y-6 pt-4">
+      {/* Right side - Form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-block text-3xl font-bold text-primary mb-6">
+              moova
+            </Link>
+            <h1 className="text-2xl font-bold mb-2">Create your account</h1>
+            <p className="text-muted-foreground">
+              Join Moova to start your journey
+            </p>
+          </div>
+
           {/* Google Login */}
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12 text-base"
+            className="w-full h-12 text-base mb-6"
             onClick={handleGoogleLogin}
           >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -143,24 +156,27 @@ export default function RegisterPage() {
             Continue with Google
           </Button>
 
-          <div className="relative">
-            <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-sm text-muted-foreground">
-              or continue with email
-            </span>
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-background text-muted-foreground">or</span>
+            </div>
           </div>
 
           {/* Registration Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">First name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
                     id="firstName"
                     placeholder="John"
-                    className="pl-10 h-12"
+                    className="pl-12 h-12"
                     {...register('firstName')}
                   />
                 </div>
@@ -170,7 +186,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">Last name</Label>
                 <Input
                   id="lastName"
                   placeholder="Doe"
@@ -186,12 +202,12 @@ export default function RegisterPage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@example.com"
-                  className="pl-10 h-12"
+                  className="pl-12 h-12"
                   {...register('email')}
                 />
               </div>
@@ -201,40 +217,22 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone (optional)</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+995 555 123 456"
-                  className="pl-10 h-12"
-                  {...register('phone')}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="pl-10 pr-10 h-12"
+                  className="pl-12 pr-12 h-12"
                   {...register('password')}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               {errors.password && (
@@ -243,14 +241,14 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Confirm password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10 h-12"
+                  className="pl-12 h-12"
                   {...register('confirmPassword')}
                 />
               </div>
@@ -259,7 +257,7 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <div className="flex items-start space-x-2">
+            <div className="flex items-start space-x-3 pt-2">
               <Checkbox
                 id="acceptTerms"
                 checked={acceptTerms}
@@ -285,7 +283,7 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 text-base shadow-lg shadow-primary/30"
+              className="w-full h-12 text-base"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -294,21 +292,23 @@ export default function RegisterPage() {
                   Creating account...
                 </>
               ) : (
-                'Create account'
+                <>
+                  Create account
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </>
               )}
             </Button>
           </form>
-        </CardContent>
 
-        <CardFooter className="flex justify-center pt-2">
-          <p className="text-sm text-muted-foreground">
+          {/* Sign in link */}
+          <p className="text-center mt-8 text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/login" className="text-primary font-medium hover:underline">
+            <Link href="/login" className="text-primary font-semibold hover:underline">
               Sign in
             </Link>
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }
