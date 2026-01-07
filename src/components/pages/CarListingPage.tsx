@@ -155,7 +155,14 @@ function CarListingContent() {
       const res = await fetch(`/api/cars?${params.toString()}`)
       
       if (!res.ok) {
-        throw new Error('Failed to fetch cars')
+        let errorMessage = 'Failed to fetch cars'
+        try {
+          const errorData = await res.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          errorMessage = res.status === 500 ? 'Server error. Please try again later.' : 'Failed to fetch cars'
+        }
+        throw new Error(errorMessage)
       }
       
       const data = await res.json()

@@ -66,8 +66,8 @@ export async function GET(
       )
     }
 
-    // Only show approved cars publicly, or owner/admin can see their own
-    if (car.status !== 'APPROVED' && car.isActive !== true) {
+    // Only show approved AND active cars publicly, or owner/admin can see their own
+    if (car.status !== 'APPROVED' || !car.isActive) {
       if (!user || (user.id !== car.ownerId && user.role !== 'ADMIN')) {
         return NextResponse.json(
           { error: 'Car not available', message: 'This car is not currently available for viewing.' },

@@ -24,10 +24,19 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/dashboard'
-  const supabase = createClient()
   
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [supabaseError, setSupabaseError] = useState<string | null>(null)
+  
+  // Initialize Supabase client with error handling
+  let supabase
+  try {
+    supabase = createClient()
+  } catch (error: any) {
+    console.error('Failed to initialize Supabase client:', error)
+    setSupabaseError(error.message || 'Failed to initialize authentication')
+  }
 
   const {
     register,
@@ -38,6 +47,11 @@ function LoginForm() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    if (!supabase) {
+      toast.error('Authentication service unavailable. Please refresh the page.')
+      return
+    }
+    
     setIsLoading(true)
     
     try {
@@ -54,24 +68,54 @@ function LoginForm() {
       toast.success('Welcome back!')
       router.push(redirect)
       router.refresh()
-    } catch (error) {
-      toast.error('An unexpected error occurred')
+    } catch (error: any) {
+      console.error('Login error:', error)
+      toast.error(error.message || 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}`,
-      },
-    })
-
-    if (error) {
-      toast.error(error.message)
+    if (!supabase) {
+      toast.error('Authentication service unavailable. Please refresh the page.')
+      return
     }
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?redirect=${redirect}`,
+        },
+      })
+
+      if (error) {
+        toast.error(error.message)
+      }
+    } catch (error: any) {
+      console.error('Google login error:', error)
+      toast.error(error.message || 'Failed to initiate Google login')
+    }
+  }
+
+  if (supabaseError) {
+    return (
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block text-3xl font-bold text-primary mb-6">
+            moova
+          </Link>
+          <h1 className="text-2xl font-bold mb-2">Authentication Error</h1>
+          <p className="text-muted-foreground mb-4">
+            {supabaseError}
+          </p>
+          <Button onClick={() => window.location.reload()} className="w-full">
+            Reload Page
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
