@@ -5,10 +5,12 @@ import Map, {
   Marker, 
   GeolocateControl, 
   NavigationControl,
-  MapRef 
+  MapRef,
+  Popup
 } from 'react-map-gl'
 import { motion, AnimatePresence } from 'motion/react'
 import { MapCar, CITIES, CityName } from '@/lib/map-cars'
+import { Star } from 'lucide-react'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 export interface MapCanvasHandle {
@@ -19,66 +21,10 @@ export interface MapCanvasHandle {
 interface MapCanvasProps {
   cars: MapCar[]
   selectedCar: MapCar | null
+  hoveredCar?: MapCar | null
   onMarkerClick: (car: MapCar) => void
   onMapClick: () => void
   currentCity: CityName
-}
-
-// Custom price pill marker component
-function CarMarker({ 
-  car, 
-  isSelected, 
-  onClick 
-}: { 
-  car: MapCar
-  isSelected: boolean
-  onClick: (e: React.MouseEvent) => void 
-}) {
-  return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ 
-        scale: isSelected ? 1.15 : 1, 
-        opacity: 1,
-      }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      onClick={onClick}
-      className="cursor-pointer select-none"
-      style={{ touchAction: 'none' }}
-    >
-      <div 
-        className={`
-          relative flex items-center gap-1 px-3 py-1.5 rounded-full
-          font-semibold text-sm whitespace-nowrap select-none
-          transition-all duration-200 ease-out
-          ${isSelected 
-            ? 'bg-black text-white shadow-2xl scale-110 ring-2 ring-white' 
-            : 'bg-white text-gray-900 shadow-lg hover:shadow-xl'
-          }
-          ${car.isWinterReady ? 'border-2 border-blue-400' : ''}
-        `}
-      >
-        {car.isWinterReady && (
-          <span className="text-xs">❄️</span>
-        )}
-        <span>{car.price}₾</span>
-        
-        {/* Pointer triangle */}
-        <div 
-          className={`
-            absolute -bottom-2 left-1/2 -translate-x-1/2 
-            w-0 h-0 
-            border-l-[6px] border-l-transparent
-            border-r-[6px] border-r-transparent
-            border-t-[8px] 
-            ${isSelected ? 'border-t-black' : 'border-t-white'}
-          `}
-        />
-      </div>
-    </motion.div>
-  )
 }
 
 interface ViewState {
@@ -87,8 +33,70 @@ interface ViewState {
   zoom: number
 }
 
+// Custom price pill marker component
+function CarMarker({ 
+  car, 
+  isSelected,
+  isHovered,
+  onClick 
+}: { 
+  car: MapCar
+  isSelected: boolean
+  isHovered: boolean
+  onClick: (e: React.MouseEvent) => void 
+}) {
+  const highlighted = isSelected || isHovered
+
+  return (
+    <motion.div
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ 
+        scale: highlighted ? 1.2 : 1, 
+        opacity: 1,
+        zIndex: highlighted ? 100 : 1,
+      }}
+      whileHover={{ scale: 1.15 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      onClick={onClick}
+      className="cursor-pointer select-none"
+      style={{ touchAction: 'manipulation' }}
+    >
+      <div 
+        className={`
+          relative flex items-center gap-1.5 px-3 py-2 rounded-full
+          font-bold text-sm whitespace-nowrap select-none
+          transition-all duration-200 ease-out
+          ${highlighted 
+            ? 'bg-black text-white shadow-2xl ring-4 ring-white' 
+            : 'bg-white text-gray-900 shadow-lg hover:shadow-xl'
+          }
+          ${car.isWinterReady && !highlighted ? 'ring-2 ring-blue-400' : ''}
+        `}
+      >
+        {car.isWinterReady && (
+          <span className="text-sm">❄️</span>
+        )}
+        <span className="text-base">{car.price}₾</span>
+        
+        {/* Pointer triangle */}
+        <div 
+          className={`
+            absolute -bottom-2 left-1/2 -translate-x-1/2 
+            w-0 h-0 
+            border-l-[8px] border-l-transparent
+            border-r-[8px] border-r-transparent
+            border-t-[10px] 
+            ${highlighted ? 'border-t-black' : 'border-t-white'}
+          `}
+        />
+      </div>
+    </motion.div>
+  )
+}
+
 export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function MapCanvas(
-  { cars, selectedCar, onMarkerClick, onMapClick, currentCity },
+  { cars, selectedCar, hoveredCar, onMarkerClick, onMapClick, currentCity },
   ref
 ) {
   const mapRef = useRef<MapRef>(null)
@@ -98,6 +106,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     longitude: cityData.lng,
     zoom: cityData.zoom,
   })
+  const [popupInfo, setPopupInfo] = useState<MapCar | null>(null)
 
   // Mapbox access token
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 
@@ -145,19 +154,24 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     // CRITICAL: Stop propagation to prevent map click
     e.stopPropagation()
     e.preventDefault()
-    onMarkerClick(car)
+    
+    // Fly to the car
     flyToCar(car)
+    
+    // Notify parent
+    onMarkerClick(car)
   }, [onMarkerClick, flyToCar])
 
   // Handle map click (deselect car)
   const handleMapClick = useCallback(() => {
+    setPopupInfo(null)
     onMapClick()
   }, [onMapClick])
 
   return (
     <div 
       className="absolute inset-0 z-0" 
-      style={{ touchAction: 'none' }}
+      style={{ touchAction: 'pan-x pan-y' }}
     >
       <Map
         ref={mapRef}
@@ -171,6 +185,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         reuseMaps
         dragRotate={false}
         pitchWithRotate={false}
+        touchZoomRotate={true}
+        doubleClickZoom={true}
       >
         {/* User location control */}
         <GeolocateControl
@@ -203,7 +219,6 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
               longitude={car.lng}
               anchor="bottom"
               onClick={(e) => {
-                // Also stop here for mapbox events
                 e.originalEvent.stopPropagation()
                 e.originalEvent.preventDefault()
               }}
@@ -211,11 +226,36 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
               <CarMarker
                 car={car}
                 isSelected={selectedCar?.id === car.id}
+                isHovered={hoveredCar?.id === car.id}
                 onClick={(e) => handleMarkerClick(car, e)}
               />
             </Marker>
           ))}
         </AnimatePresence>
+
+        {/* Mini popup on hover (desktop only) */}
+        {hoveredCar && !selectedCar && (
+          <Popup
+            latitude={hoveredCar.lat}
+            longitude={hoveredCar.lng}
+            closeButton={false}
+            closeOnClick={false}
+            anchor="bottom"
+            offset={[0, -45]}
+            className="map-popup"
+          >
+            <div className="p-2 min-w-[180px]">
+              <p className="font-semibold text-gray-900">{hoveredCar.make} {hoveredCar.model}</p>
+              <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span>{hoveredCar.rating}</span>
+                <span>·</span>
+                <span>{hoveredCar.category}</span>
+              </div>
+              <p className="font-bold text-gray-900 mt-1">{hoveredCar.price}₾/day</p>
+            </div>
+          </Popup>
+        )}
       </Map>
 
       {/* Winter mode overlay gradient for Gudauri */}

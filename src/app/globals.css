@@ -550,6 +550,24 @@ input:-webkit-autofill:focus {
   @apply rounded-xl shadow-lg;
 }
 
+/* Mapbox popup */
+.mapboxgl-popup-content {
+  @apply bg-white rounded-xl shadow-xl border-0 p-0 overflow-hidden;
+  font-family: inherit !important;
+}
+
+.mapboxgl-popup-tip {
+  @apply border-t-white;
+}
+
+.mapboxgl-popup-close-button {
+  @apply hidden;
+}
+
+.map-popup .mapboxgl-popup-content {
+  @apply p-0;
+}
+
 .mapboxgl-user-location-dot {
   @apply bg-blue-500;
 }
