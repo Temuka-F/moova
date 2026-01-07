@@ -192,11 +192,11 @@ export default function BookingsPage() {
 
   const BookingCard = ({ booking }: { booking: Booking }) => (
     <Card className="hover:shadow-lg transition-shadow">
-      <CardContent className="p-4">
+      <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <Link 
             href={`/cars/${booking.car.id}`}
-            className="w-full sm:w-24 h-32 sm:h-20 rounded-xl bg-cover bg-center shrink-0 bg-muted"
+            className="w-full sm:w-24 h-40 sm:h-20 rounded-xl bg-cover bg-center shrink-0 bg-muted"
             style={{
               backgroundImage: booking.car?.images?.[0]?.url 
                 ? `url('${booking.car.images[0].url}')`
@@ -204,42 +204,41 @@ export default function BookingsPage() {
             }}
           />
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+              <div className="flex-1 min-w-0">
                 <Link href={`/dashboard/bookings/${booking.id}`} className="hover:underline">
-                  <h3 className="font-semibold text-lg">
+                  <h3 className="font-semibold text-base sm:text-lg mb-1">
                     {booking.car?.make} {booking.car?.model}
                   </h3>
                 </Link>
                 <p className="text-sm text-muted-foreground">{booking.car?.year}</p>
               </div>
-              {getStatusBadge(booking.status)}
+              <div className="shrink-0">{getStatusBadge(booking.status)}</div>
             </div>
-            <div className="grid sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-muted-foreground mb-4">
               <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                <span>
+                <Calendar className="w-4 h-4 shrink-0" />
+                <span className="break-words">
                   {format(new Date(booking.startDate), 'MMM d')} - {format(new Date(booking.endDate), 'MMM d, yyyy')}
                 </span>
               </div>
               <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
+                <MapPin className="w-4 h-4 shrink-0" />
                 <span className="truncate">{booking.pickupLocation}</span>
               </div>
             </div>
-          </div>
-          <div className="flex sm:flex-col justify-between sm:text-right shrink-0">
-            <div>
-              <p className="font-bold text-lg">₾{booking.totalAmount}</p>
-              <p className="text-xs text-muted-foreground">{booking.totalDays} days</p>
-            </div>
-            <div className="flex flex-col gap-2 mt-2">
-              <Button size="sm" variant="outline" asChild className="rounded-full">
-                <Link href={`/dashboard/bookings/${booking.id}`}>
-                  View Details
-                </Link>
-              </Button>
-              <div className="flex gap-2 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+              <div className="flex-1">
+                <p className="font-bold text-lg">₾{booking.totalAmount}</p>
+                <p className="text-xs text-muted-foreground">{booking.totalDays} days</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button size="sm" variant="outline" asChild className="rounded-full min-h-[44px] w-full sm:w-auto">
+                  <Link href={`/dashboard/bookings/${booking.id}`}>
+                    View Details
+                  </Link>
+                </Button>
+                <div className="flex gap-2">
               {booking.status === 'PENDING' && (
                 <>
                   <Button 

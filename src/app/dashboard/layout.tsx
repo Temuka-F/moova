@@ -149,14 +149,18 @@ export default function DashboardLayout({
               <ProfileSwitcher
                 currentRole={user.role}
                 activeProfileMode={user.activeProfileMode || null}
-                onSwitch={() => {
-                  // Refetch user data
-                  fetch('/api/me')
-                    .then(res => res.json())
-                    .then(data => {
-                      setUser(data)
-                      window.location.reload()
-                    })
+                onSwitch={async (newMode) => {
+                  // Refetch user data to update state
+                  try {
+                    const response = await fetch('/api/me')
+                    if (response.ok) {
+                      const updatedUser = await response.json()
+                      setUser(updatedUser)
+                      // Navigation will update automatically via getDashboardNavigation
+                    }
+                  } catch (error) {
+                    console.error('Error refetching user:', error)
+                  }
                 }}
               />
             </div>

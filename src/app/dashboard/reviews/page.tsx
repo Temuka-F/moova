@@ -122,7 +122,7 @@ export default function ReviewsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Reviews</h1>
           <p className="text-muted-foreground">
@@ -132,7 +132,7 @@ export default function ReviewsPage() {
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-full sm:w-32 min-h-[44px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -151,11 +151,11 @@ export default function ReviewsPage() {
         <div className="space-y-4">
           {filteredReviews.map((review) => (
             <Card key={review.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex gap-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <Link 
                     href={`/cars/${review.car.id}`}
-                    className="w-24 h-24 rounded-xl bg-cover bg-center shrink-0 bg-muted"
+                    className="w-full sm:w-24 h-40 sm:h-24 rounded-xl bg-cover bg-center shrink-0 bg-muted"
                     style={{
                       backgroundImage: review.car.images?.[0]?.url 
                         ? `url('${review.car.images[0].url}')`
@@ -163,10 +163,10 @@ export default function ReviewsPage() {
                     }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                      <div className="flex-1 min-w-0">
                         <Link href={`/cars/${review.car.id}`} className="hover:underline">
-                          <h3 className="font-semibold text-lg">
+                          <h3 className="font-semibold text-base sm:text-lg mb-1">
                             {review.car.make} {review.car.model} {review.car.year}
                           </h3>
                         </Link>
@@ -174,7 +174,7 @@ export default function ReviewsPage() {
                           by {review.reviewer.firstName} {review.reviewer.lastName}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
@@ -188,7 +188,7 @@ export default function ReviewsPage() {
                       </div>
                     </div>
                     {review.comment && (
-                      <p className="text-muted-foreground mb-2">{review.comment}</p>
+                      <p className="text-sm sm:text-base text-muted-foreground mb-2">{review.comment}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(review.createdAt), 'MMM d, yyyy')} • 

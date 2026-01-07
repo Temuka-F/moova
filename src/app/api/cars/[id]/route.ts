@@ -60,17 +60,33 @@ export async function GET(
     })
 
     if (!car) {
-      return NextResponse.json({ error: 'Car not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Car not found', message: 'This car does not exist or has been removed.' },
+        { status: 404 }
+      )
     }
 
     // Only show approved cars publicly, or owner/admin can see their own
-    if (car.status !== 'APPROVED') {
+    if (car.status !== 'APPROVED' && car.isActive !== true) {
       if (!user || (user.id !== car.ownerId && user.role !== 'ADMIN')) {
-        return NextResponse.json({ error: 'Car not found' }, { status: 404 })
+        return NextResponse.json(
+          { error: 'Car not available', message: 'This car is not currently available for viewing.' },
+          { status: 404 }
+        )
       }
     }
 
-    return NextResponse.json(car)
+    // Ensure all required fields are present with defaults
+    const carResponse = {
+      ...car,
+      images: car.images || [],
+      reviews: car.reviews || [],
+      features: car.features || [],
+      owner: car.owner || null,
+      _count: car._count || { bookings: 0, reviews: 0 },
+    }
+
+    return NextResponse.json(carResponse)
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Failed to fetch car' },

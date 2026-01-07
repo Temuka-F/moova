@@ -77,6 +77,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isUpgrading, setIsUpgrading] = useState(false)
   const [formData, setFormData] = useState({
@@ -92,35 +93,54 @@ export default function SettingsPage() {
     marketing: false,
   })
 
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch('/api/me')
-        
-        if (!res.ok) {
-          if (res.status === 401) {
-            router.push('/login?redirect=/dashboard/settings')
-            return
-          }
-          throw new Error('Failed to fetch user')
+  const fetchUser = async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const res = await fetch('/api/me')
+      
+      if (!res.ok) {
+        if (res.status === 401) {
+          router.push('/login?redirect=/dashboard/settings')
+          return
         }
-        
-        const data = await res.json()
-        setUser(data)
-        setFormData({
-          firstName: data.firstName || '',
-          lastName: data.lastName || '',
-          phone: data.phone || '',
-          bio: data.bio || '',
-        })
-      } catch (err) {
-        console.error('Error fetching user:', err)
-        toast.error('Failed to load profile')
-      } finally {
-        setLoading(false)
+        let errorMessage = 'Failed to fetch user'
+        try {
+          const errorData = await res.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          if (res.status >= 500) {
+            errorMessage = 'Server error. Please try again later.'
+          }
+        }
+        throw new Error(errorMessage)
       }
+      
+      const data = await res.json()
+      
+      // Validate user data
+      if (!data || !data.id) {
+        throw new Error('Invalid user data received')
+      }
+      
+      setUser(data)
+      setFormData({
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        phone: data.phone || '',
+        bio: data.bio || '',
+      })
+    } catch (err: any) {
+      console.error('Error fetching user:', err)
+      setError(err.message || 'Failed to load profile')
+      toast.error(err.message || 'Failed to load profile')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchUser()
   }, [router])
 
@@ -181,8 +201,25 @@ export default function SettingsPage() {
     return <SettingsSkeleton />
   }
 
-  if (!user) {
-    return null
+  if (error || !user) {
+    return (
+      <div className="min-h-screen bg-muted/30 pt-16">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">{error || 'Failed to load settings'}</h3>
+              <p className="text-muted-foreground mb-4">
+                {error || 'We encountered an error loading your settings. Please try again.'}
+              </p>
+              <Button onClick={fetchUser} className="rounded-full">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   const isHost = user.role === 'OWNER' || user.role === 'ADMIN'
@@ -328,7 +365,7 @@ export default function SettingsPage() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="rounded-full"
+                    className="rounded-full min-h-[44px]"
                     onClick={() => document.getElementById('avatar-upload')?.click()}
                   >
                     <Upload className="w-4 h-4 mr-2" />
@@ -406,141 +443,147 @@ export default function SettingsPage() {
               <CardDescription>Verify your identity to unlock all features</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 bg-muted/50 rounded-xl">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                     user.isEmailVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
                   }`}>
                     <Mail className={`w-5 h-5 ${user.isEmailVerified ? 'text-green-500' : 'text-yellow-500'}`} />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium">Email</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
-                {user.isEmailVerified ? (
-                  <Badge className="bg-green-500/10 text-green-600 border-0">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Verified
-                  </Badge>
-                ) : (
-                  <Button variant="outline" size="sm" className="rounded-full">
-                    Verify
-                  </Button>
-                )}
+                <div className="shrink-0">
+                  {user.isEmailVerified ? (
+                    <Badge className="bg-green-500/10 text-green-600 border-0">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Button variant="outline" size="sm" className="rounded-full min-h-[44px] w-full sm:w-auto">
+                      Verify
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 bg-muted/50 rounded-xl">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                     user.isPhoneVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
                   }`}>
                     <Phone className={`w-5 h-5 ${user.isPhoneVerified ? 'text-green-500' : 'text-yellow-500'}`} />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium">Phone</p>
                     <p className="text-sm text-muted-foreground">{user.phone || 'Not provided'}</p>
                   </div>
                 </div>
-                {user.isPhoneVerified ? (
-                  <Badge className="bg-green-500/10 text-green-600 border-0">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Verified
-                  </Badge>
-                ) : (
-                  <Button variant="outline" size="sm" className="rounded-full" disabled={!user.phone}>
-                    Verify
-                  </Button>
-                )}
+                <div className="shrink-0">
+                  {user.isPhoneVerified ? (
+                    <Badge className="bg-green-500/10 text-green-600 border-0">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Button variant="outline" size="sm" className="rounded-full min-h-[44px] w-full sm:w-auto" disabled={!user.phone}>
+                      Verify
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 bg-muted/50 rounded-xl">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                     user.isLicenseVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
                   }`}>
                     <Shield className={`w-5 h-5 ${user.isLicenseVerified ? 'text-green-500' : 'text-yellow-500'}`} />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium">Driver's License</p>
                     <p className="text-sm text-muted-foreground">
                       {user.drivingLicenseUrl ? 'Document uploaded' : 'Upload your license for verification'}
                     </p>
                   </div>
                 </div>
-                {user.isLicenseVerified ? (
-                  <Badge className="bg-green-500/10 text-green-600 border-0">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    Verified
-                  </Badge>
-                ) : user.verificationStatus === 'PENDING' ? (
-                  <Badge className="bg-yellow-500/10 text-yellow-600 border-0">
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    Pending
-                  </Badge>
-                ) : (
-                  <>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      id="license-upload"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0]
-                        if (!file) return
-                        
-                        if (file.size > 5 * 1024 * 1024) {
-                          toast.error('File size must be less than 5MB')
-                          return
-                        }
-
-                        try {
-                          const formData = new FormData()
-                          formData.append('file', file)
-                          formData.append('folder', 'documents')
-
-                          const uploadRes = await fetch('/api/upload', {
-                            method: 'POST',
-                            body: formData,
-                          })
-
-                          if (!uploadRes.ok) {
-                            throw new Error('Upload failed')
+                <div className="shrink-0">
+                  {user.isLicenseVerified ? (
+                    <Badge className="bg-green-500/10 text-green-600 border-0">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Verified
+                    </Badge>
+                  ) : user.verificationStatus === 'PENDING' ? (
+                    <Badge className="bg-yellow-500/10 text-yellow-600 border-0">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Pending
+                    </Badge>
+                  ) : (
+                    <>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        id="license-upload"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.error('File size must be less than 5MB')
+                            return
                           }
 
-                          const { url } = await uploadRes.json()
+                          try {
+                            const formData = new FormData()
+                            formData.append('file', file)
+                            formData.append('folder', 'documents')
 
-                          // Update user profile with license URL
-                          const updateRes = await fetch('/api/me', {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ drivingLicenseUrl: url }),
-                          })
+                            const uploadRes = await fetch('/api/upload', {
+                              method: 'POST',
+                              body: formData,
+                            })
 
-                          if (!updateRes.ok) {
-                            throw new Error('Failed to update profile')
+                            if (!uploadRes.ok) {
+                              throw new Error('Upload failed')
+                            }
+
+                            const { url } = await uploadRes.json()
+
+                            // Update user profile with license URL
+                            const updateRes = await fetch('/api/me', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ drivingLicenseUrl: url }),
+                            })
+
+                            if (!updateRes.ok) {
+                              throw new Error('Failed to update profile')
+                            }
+
+                            const updatedUser = await updateRes.json()
+                            setUser(updatedUser)
+                            toast.success('Driver\'s license uploaded! Verification pending.')
+                          } catch (err: any) {
+                            console.error('Error uploading license:', err)
+                            toast.error(err.message || 'Failed to upload document')
                           }
-
-                          const updatedUser = await updateRes.json()
-                          setUser(updatedUser)
-                          toast.success('Driver\'s license uploaded! Verification pending.')
-                        } catch (err: any) {
-                          console.error('Error uploading license:', err)
-                          toast.error(err.message || 'Failed to upload document')
-                        }
-                      }}
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="rounded-full"
-                      onClick={() => document.getElementById('license-upload')?.click()}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload
-                    </Button>
-                  </>
-                )}
+                        }}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="rounded-full min-h-[44px] w-full sm:w-auto"
+                        onClick={() => document.getElementById('license-upload')?.click()}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -616,7 +659,7 @@ export default function SettingsPage() {
                   <p className="font-medium">Change Password</p>
                   <p className="text-sm text-muted-foreground">Update your password regularly</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-full">
+                <Button variant="outline" size="sm" className="rounded-full min-h-[44px]">
                   Change
                 </Button>
               </div>
@@ -626,7 +669,7 @@ export default function SettingsPage() {
                   <p className="font-medium">Two-Factor Authentication</p>
                   <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-full">
+                <Button variant="outline" size="sm" className="rounded-full min-h-[44px]">
                   Enable
                 </Button>
               </div>
@@ -634,11 +677,11 @@ export default function SettingsPage() {
           </Card>
 
           {/* Save Button */}
-          <div className="flex justify-end gap-4">
-            <Button variant="outline" className="rounded-full" onClick={() => router.back()}>
+          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+            <Button variant="outline" className="rounded-full min-h-[44px] w-full sm:w-auto" onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isSaving} className="rounded-full">
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-full min-h-[44px] w-full sm:w-auto">
               {isSaving ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

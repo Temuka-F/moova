@@ -72,6 +72,15 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json()
 
+    // Get current user to check role
+    const currentUser = await prisma.user.findUnique({
+      where: { email: authUser.email },
+    })
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     // Fields that users can update themselves
     const allowedFields = [
       'firstName',
@@ -95,6 +104,22 @@ export async function PATCH(request: NextRequest) {
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
+        // Validate activeProfileMode - only OWNER users can switch
+        if (field === 'activeProfileMode') {
+          if (currentUser.role !== 'OWNER') {
+            return NextResponse.json(
+              { error: 'Only owners can switch profile modes' },
+              { status: 403 }
+            )
+          }
+          // Validate the mode value
+          if (body[field] !== 'RENTER' && body[field] !== 'OWNER') {
+            return NextResponse.json(
+              { error: 'Invalid profile mode' },
+              { status: 400 }
+            )
+          }
+        }
         updateData[field] = body[field]
       }
     }

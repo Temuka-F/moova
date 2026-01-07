@@ -154,47 +154,89 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
   const [isBooking, setIsBooking] = useState(false)
   const [isFavoriting, setIsFavoriting] = useState(false)
 
-  useEffect(() => {
-    async function fetchCar() {
-      setLoading(true)
-      setError(null)
+  const fetchCar = async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const res = await fetch(`/api/cars/${carId}`)
       
-      try {
-        const res = await fetch(`/api/cars/${carId}`)
-        
-        if (!res.ok) {
+      if (!res.ok) {
+        let errorMessage = 'Failed to fetch car'
+        try {
+          const errorData = await res.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          // If response is not JSON, use status-based message
           if (res.status === 404) {
-            setError('Car not found')
-          } else {
-            throw new Error('Failed to fetch car')
-          }
-          return
-        }
-        
-        const data = await res.json()
-        setCar(data)
-        
-        // Check if favorited
-        if (isAuthenticated) {
-          try {
-            const favRes = await fetch(`/api/favorites?carId=${carId}`)
-            if (favRes.ok) {
-              const favData = await favRes.json()
-              setIsFavorited(favData.isFavorited)
-            }
-          } catch {
-            // Ignore favorite check errors
+            errorMessage = 'Car not found'
+          } else if (res.status === 403) {
+            errorMessage = 'You do not have permission to view this car'
+          } else if (res.status >= 500) {
+            errorMessage = 'Server error. Please try again later.'
           }
         }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load car')
-        console.error('Error fetching car:', err)
-      } finally {
+        setError(errorMessage)
         setLoading(false)
+        return
       }
+      
+      const data = await res.json()
+      
+      // Validate car data structure
+      if (!data || !data.id) {
+        setError('Invalid car data received')
+        setLoading(false)
+        return
+      }
+      
+      // Ensure required fields have defaults
+      const carData: ApiCar = {
+        ...data,
+        images: data.images || [],
+        reviews: data.reviews || [],
+        features: data.features || [],
+        owner: data.owner || {
+          id: '',
+          firstName: 'Unknown',
+          lastName: 'Owner',
+          avatarUrl: null,
+          verificationStatus: 'UNVERIFIED',
+          createdAt: new Date().toISOString(),
+          responseRate: null,
+          responseTime: null,
+          bio: null,
+          _count: { cars: 0, reviewsReceived: 0 },
+        },
+        _count: data._count || { bookings: 0, reviews: 0 },
+      }
+      
+      setCar(carData)
+      
+      // Check if favorited
+      if (isAuthenticated) {
+        try {
+          const favRes = await fetch(`/api/favorites?carId=${carId}`)
+          if (favRes.ok) {
+            const favData = await favRes.json()
+            setIsFavorited(favData.isFavorited || false)
+          }
+        } catch {
+          // Ignore favorite check errors
+        }
+      }
+    } catch (err: any) {
+      console.error('Error fetching car:', err)
+      setError(err.message || 'Failed to load car. Please check your connection and try again.')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    fetchCar()
+  useEffect(() => {
+    if (carId) {
+      fetchCar()
+    }
   }, [carId, isAuthenticated])
 
   if (loading) {
@@ -203,13 +245,22 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
 
   if (error || !car) {
     return (
-      <div className="min-h-screen pt-20 flex flex-col items-center justify-center">
-        <AlertCircle className="w-16 h-16 text-muted-foreground mb-4" />
-        <h1 className="text-2xl font-bold mb-2">{error || 'Car not found'}</h1>
-        <p className="text-muted-foreground mb-6">This car may no longer be available.</p>
-        <Button asChild>
-          <Link href="/cars">Browse available cars</Link>
-        </Button>
+      <div className="min-h-screen pt-20 px-4 flex flex-col items-center justify-center">
+        <AlertCircle className="w-16 h-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold mb-2 text-center">{error || 'Car not found'}</h1>
+        <p className="text-muted-foreground mb-6 text-center max-w-md">
+          {error === 'Car not found' 
+            ? 'This car may no longer be available or the link is invalid.'
+            : 'We encountered an error loading this car. Please try again.'}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button onClick={fetchCar} variant="outline">
+            Try Again
+          </Button>
+          <Button asChild>
+            <Link href="/cars">Browse Available Cars</Link>
+          </Button>
+        </div>
       </div>
     )
   }
@@ -368,7 +419,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
       </div>
 
       {/* Image Gallery */}
-      <div className="relative h-[45vh] md:h-[55vh] lg:h-[50vh] lg:mx-8 lg:mt-4 lg:rounded-3xl overflow-hidden bg-secondary">
+      <div className="relative h-[40vh] sm:h-[45vh] md:h-[55vh] lg:h-[50vh] lg:mx-8 lg:mt-4 lg:rounded-3xl overflow-hidden bg-secondary">
         <Image
           src={images[currentImageIndex]}
           alt={`${car.make} ${car.model}`}
@@ -457,8 +508,8 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 lg:px-8 py-6 md:py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 lg:px-8 py-6 md:py-8 pb-24 lg:pb-8">
+        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Title & Basic Info */}
@@ -489,30 +540,30 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
             <Separator />
 
             {/* Host Info */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar className="w-14 h-14 border-2 border-primary/20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Avatar className="w-12 h-12 sm:w-14 sm:h-14 border-2 border-primary/20 shrink-0">
                   <AvatarImage src={car.owner.avatarUrl || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-base sm:text-lg">
                     {car.owner.firstName[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-lg">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-base sm:text-lg">
                       Hosted by {car.owner.firstName}
                     </span>
                     {car.owner.verificationStatus === 'VERIFIED' && (
-                      <CheckCircle2 className="w-5 h-5 text-primary" />
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                     <span>{car.owner._count?.cars || 0} cars</span>
-                    <span>•</span>
+                    <span className="hidden sm:inline">•</span>
                     <span>Member since {new Date(car.owner.createdAt).getFullYear()}</span>
                     {car.owner.responseTime && (
                       <>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>Responds {car.owner.responseTime}</span>
                       </>
                     )}
@@ -521,7 +572,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               </div>
               <Button 
                 variant="outline" 
-                className="hidden sm:flex rounded-full min-h-[44px]"
+                className="w-full sm:w-auto rounded-full min-h-[44px]"
                 onClick={handleMessage}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
@@ -533,8 +584,8 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
 
             {/* Specs */}
             <div>
-              <h2 className="text-xl font-semibold mb-4">Specifications</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">Specifications</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
                   <Users className="w-6 h-6 text-primary" />
                   <div>
@@ -572,8 +623,8 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
             {car.features.length > 0 && (
               <>
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Features</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4">Features</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {car.features.map((feature) => (
                       <div key={feature} className="flex items-center gap-2">
                         <Check className="w-5 h-5 text-primary" />

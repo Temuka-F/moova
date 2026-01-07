@@ -18,7 +18,8 @@ import {
   XCircle,
   Car,
   Star,
-  MapPin
+  MapPin,
+  AlertCircle
 } from 'lucide-react'
 import { format } from 'date-fns'
 import Link from 'next/link'
@@ -97,11 +98,18 @@ export default function ProfilePage() {
     )
   }
 
-  if (!user) {
+  if (error || !user) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <p className="text-muted-foreground">Failed to load profile</p>
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive opacity-50" />
+          <h3 className="text-lg font-semibold mb-2">{error || 'Failed to load profile'}</h3>
+          <p className="text-muted-foreground mb-4">
+            {error || 'We encountered an error loading your profile. Please try again.'}
+          </p>
+          <Button onClick={fetchUser} className="rounded-full">
+            Try Again
+          </Button>
         </CardContent>
       </Card>
     )
@@ -214,32 +222,16 @@ export default function ProfilePage() {
           <CardDescription>Your account verification details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-muted-foreground" />
-              <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Mail className="w-5 h-5 text-muted-foreground shrink-0" />
+              <div className="min-w-0 flex-1">
                 <p className="font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
               </div>
             </div>
-            {user.isEmailVerified ? (
-              <Badge className="bg-green-500/10 text-green-600 border-0">
-                <CheckCircle2 className="w-3 h-3 mr-1" />Verified
-              </Badge>
-            ) : (
-              <Badge variant="outline">Unverified</Badge>
-            )}
-          </div>
-          {user.phone && (
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Phone</p>
-                  <p className="text-sm text-muted-foreground">{user.phone}</p>
-                </div>
-              </div>
-              {user.isPhoneVerified ? (
+            <div className="shrink-0">
+              {user.isEmailVerified ? (
                 <Badge className="bg-green-500/10 text-green-600 border-0">
                   <CheckCircle2 className="w-3 h-3 mr-1" />Verified
                 </Badge>
@@ -247,38 +239,62 @@ export default function ProfilePage() {
                 <Badge variant="outline">Unverified</Badge>
               )}
             </div>
+          </div>
+          {user.phone && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Phone className="w-5 h-5 text-muted-foreground shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">Phone</p>
+                  <p className="text-sm text-muted-foreground">{user.phone}</p>
+                </div>
+              </div>
+              <div className="shrink-0">
+                {user.isPhoneVerified ? (
+                  <Badge className="bg-green-500/10 text-green-600 border-0">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="outline">Unverified</Badge>
+                )}
+              </div>
+            </div>
           )}
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-muted-foreground" />
-              <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <User className="w-5 h-5 text-muted-foreground shrink-0" />
+              <div className="min-w-0 flex-1">
                 <p className="font-medium">ID Document</p>
                 <p className="text-sm text-muted-foreground">Identity verification</p>
               </div>
             </div>
-            {user.isIdVerified ? (
-              <Badge className="bg-green-500/10 text-green-600 border-0">
-                <CheckCircle2 className="w-3 h-3 mr-1" />Verified
-              </Badge>
-            ) : (
-              <Badge variant="outline">Unverified</Badge>
-            )}
+            <div className="shrink-0">
+              {user.isIdVerified ? (
+                <Badge className="bg-green-500/10 text-green-600 border-0">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />Verified
+                </Badge>
+              ) : (
+                <Badge variant="outline">Unverified</Badge>
+              )}
+            </div>
           </div>
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-              <Car className="w-5 h-5 text-muted-foreground" />
-              <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Car className="w-5 h-5 text-muted-foreground shrink-0" />
+              <div className="min-w-0 flex-1">
                 <p className="font-medium">Driving License</p>
                 <p className="text-sm text-muted-foreground">License verification</p>
               </div>
             </div>
-            {user.isLicenseVerified ? (
-              <Badge className="bg-green-500/10 text-green-600 border-0">
-                <CheckCircle2 className="w-3 h-3 mr-1" />Verified
-              </Badge>
-            ) : (
-              <Badge variant="outline">Unverified</Badge>
-            )}
+            <div className="shrink-0">
+              {user.isLicenseVerified ? (
+                <Badge className="bg-green-500/10 text-green-600 border-0">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />Verified
+                </Badge>
+              ) : (
+                <Badge variant="outline">Unverified</Badge>
+              )}
+            </div>
           </div>
           {user.verificationStatus === 'UNVERIFIED' && (
             <Button asChild className="w-full">

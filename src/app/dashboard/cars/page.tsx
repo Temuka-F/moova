@@ -119,11 +119,11 @@ export default function CarsPage() {
 
   const CarCard = ({ car }: { car: CarData }) => (
     <Card className="hover:shadow-lg transition-shadow">
-      <CardContent className="p-4">
+      <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <Link 
             href={`/cars/${car.id}`}
-            className="w-full sm:w-32 h-32 rounded-xl bg-cover bg-center shrink-0 bg-muted"
+            className="w-full sm:w-32 h-40 sm:h-32 rounded-xl bg-cover bg-center shrink-0 bg-muted"
             style={{
               backgroundImage: car.images?.[0]?.url 
                 ? `url('${car.images[0].url}')`
@@ -131,40 +131,42 @@ export default function CarsPage() {
             }}
           />
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+              <div className="flex-1 min-w-0">
                 <Link href={`/cars/${car.id}`} className="hover:underline">
-                  <h3 className="font-semibold text-lg">
+                  <h3 className="font-semibold text-base sm:text-lg mb-1">
                     {car.make} {car.model} {car.year}
                   </h3>
                 </Link>
                 <p className="text-sm text-muted-foreground">{car.city}</p>
               </div>
-              {getStatusBadge(car.status, car.isActive)}
+              <div className="shrink-0">{getStatusBadge(car.status, car.isActive)}</div>
             </div>
-            <div className="grid sm:grid-cols-2 gap-2 text-sm mb-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                <span className="font-semibold">₾{car.pricePerDay}</span>
-                <span className="text-muted-foreground">/day</span>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <TrendingUp className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div>
+                  <span className="font-semibold">₾{car.pricePerDay}</span>
+                  <span className="text-muted-foreground text-xs">/day</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
                 <span>{car._count?.bookings || 0} bookings</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-muted-foreground" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <Star className="w-4 h-4 text-muted-foreground shrink-0" />
                 <span>{car._count?.reviews || 0} reviews</span>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button size="sm" variant="outline" asChild>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" asChild className="min-h-[44px] flex-1 sm:flex-initial">
                 <Link href={`/cars/${car.id}`}>
                   <Eye className="w-4 h-4 mr-1" />
                   View
                 </Link>
               </Button>
-              <Button size="sm" variant="outline" asChild>
+              <Button size="sm" variant="outline" asChild className="min-h-[44px] flex-1 sm:flex-initial">
                 <Link href={`/dashboard/cars/${car.id}/edit`}>
                   <Edit className="w-4 h-4 mr-1" />
                   Edit
@@ -175,6 +177,7 @@ export default function CarsPage() {
                 variant="outline"
                 onClick={() => handleToggleActive(car.id, car.isActive)}
                 disabled={actionLoading === car.id}
+                className="min-h-[44px] flex-1 sm:flex-initial"
               >
                 {actionLoading === car.id ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

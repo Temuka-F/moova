@@ -234,13 +234,13 @@ export function DashboardOverview() {
           <div className="flex flex-wrap gap-2">
             {isHost ? (
               <>
-                <Button asChild className="rounded-full">
+                <Button asChild className="rounded-full min-h-[44px]">
                   <Link href="/list-your-car">
                     <Plus className="w-4 h-4 mr-2" />
                     Add new car
                   </Link>
                 </Button>
-                <Button variant="outline" asChild className="rounded-full">
+                <Button variant="outline" asChild className="rounded-full min-h-[44px]">
                   <Link href="/dashboard/bookings">
                     <Wallet className="w-4 h-4 mr-2" />
                     View bookings
@@ -249,7 +249,7 @@ export function DashboardOverview() {
               </>
             ) : (
               <>
-                <Button asChild className="rounded-full">
+                <Button asChild className="rounded-full min-h-[44px]">
                   <Link href="/cars">
                     <Car className="w-4 h-4 mr-2" />
                     Browse cars
@@ -257,7 +257,7 @@ export function DashboardOverview() {
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="rounded-full"
+                  className="rounded-full min-h-[44px]"
                   onClick={handleUpgradeToOwner}
                   disabled={isUpgrading}
                 >
@@ -270,7 +270,7 @@ export function DashboardOverview() {
                 </Button>
               </>
             )}
-            <Button variant="ghost" asChild className="rounded-full">
+            <Button variant="ghost" asChild className="rounded-full min-h-[44px]">
               <Link href="/dashboard/messages">
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Messages
@@ -315,7 +315,7 @@ export function DashboardOverview() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {isHost ? (
             <>
               <Card>
@@ -470,7 +470,7 @@ export function DashboardOverview() {
                     Your scheduled {isHost ? 'rentals' : 'trips'}
                   </CardDescription>
                 </div>
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" asChild className="min-h-[44px]">
                   <Link href="/dashboard/bookings">
                     View all
                     <ArrowRight className="w-4 h-4 ml-2" />
