@@ -18,6 +18,7 @@ import {
   getHybridElectricCars,
   getCarsByPriceRange
 } from '@/lib/map-cars'
+import { fetchCarsWithFallback } from '@/lib/car-data'
 
 export function MapHomePage() {
   // ===== CENTRALIZED STATE =====
@@ -27,6 +28,8 @@ export function MapHomePage() {
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [showCarPopup, setShowCarPopup] = useState(false)
+  const [cityCars, setCityCars] = useState<MapCar[]>([])
+  const [isLoadingCars, setIsLoadingCars] = useState(true)
   
   // Date state for booking
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
@@ -44,9 +47,22 @@ export function MapHomePage() {
     setIsClient(true)
   }, [])
 
-  // Get cars for current city
-  const cityCars = useMemo(() => {
-    return getCarsByCity(currentCity)
+  // Fetch cars from database (with fallback to mock data)
+  useEffect(() => {
+    async function loadCars() {
+      setIsLoadingCars(true)
+      try {
+        const result = await fetchCarsWithFallback({ city: currentCity })
+        setCityCars(result.cars)
+      } catch (error) {
+        console.error('Error loading cars:', error)
+        // Fallback to mock data on error
+        setCityCars(getCarsByCity(currentCity))
+      } finally {
+        setIsLoadingCars(false)
+      }
+    }
+    loadCars()
   }, [currentCity])
 
   // Calculate dynamic price range based on city cars
@@ -194,8 +210,8 @@ export function MapHomePage() {
     mapRef.current?.flyToCity(currentCity)
   }, [currentCity])
 
-  // Show loading state until client-side
-  if (!isClient) {
+  // Show loading state until client-side or cars are loading
+  if (!isClient || isLoadingCars) {
     return (
       <div className="fixed inset-0 bg-gray-100 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -203,7 +219,9 @@ export function MapHomePage() {
             <div className="absolute inset-0 border-4 border-gray-200 rounded-full" />
             <div className="absolute inset-0 border-4 border-black border-t-transparent rounded-full animate-spin" />
           </div>
-          <p className="text-gray-600 font-medium">Loading map...</p>
+          <p className="text-gray-600 font-medium">
+            {!isClient ? 'Loading map...' : 'Loading cars...'}
+          </p>
         </div>
       </div>
     )
