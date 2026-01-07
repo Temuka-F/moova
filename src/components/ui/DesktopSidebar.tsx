@@ -188,52 +188,63 @@ export function DesktopSidebar({
 
   return (
     <motion.div 
-      className="hidden lg:flex flex-col h-full absolute left-0 top-0 bottom-0 z-40"
+      className="hidden lg:block absolute left-4 top-4 bottom-4 z-40"
       initial={false}
       animate={{ 
-        width: isCollapsed ? 56 : 380,
+        width: isCollapsed ? 64 : 380,
       }}
       transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
     >
-      {/* Collapse/Expand Toggle */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-4 top-1/2 -translate-y-1/2 z-50 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-      >
-        {isCollapsed ? (
-          <ChevronRight className="w-4 h-4 text-gray-600" />
-        ) : (
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
-        )}
-      </button>
-
-      {/* Collapsed state - just icons */}
-      {isCollapsed && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="flex flex-col h-full bg-white/95 backdrop-blur-md border-r border-gray-200/50 shadow-xl p-2 pt-20 gap-2"
+      {/* Floating Panel Container */}
+      <div className="relative h-full">
+        {/* Collapse/Expand Toggle */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-20 z-50 w-6 h-12 bg-white rounded-r-lg shadow-lg border border-l-0 border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
         >
-          <button
-            onClick={() => setIsCollapsed(false)}
-            className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-          >
-            <Car className="w-5 h-5 text-gray-700" />
-          </button>
-          <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center text-sm font-bold">
-            {cars.length}
-          </div>
-        </motion.div>
-      )}
+          {isCollapsed ? (
+            <ChevronRight className="w-4 h-4 text-gray-600" />
+          ) : (
+            <ChevronLeft className="w-4 h-4 text-gray-600" />
+          )}
+        </button>
 
-      {/* Expanded state - full sidebar */}
-      <motion.div
-        className={`flex flex-col h-full bg-white/95 backdrop-blur-md border-r border-gray-200/50 shadow-xl overflow-hidden ${isCollapsed ? 'hidden' : ''}`}
-        initial={false}
-        animate={{ opacity: isCollapsed ? 0 : 1 }}
-        transition={{ duration: 0.2 }}
-      >
+        {/* Collapsed state - compact floating bar */}
+        {isCollapsed && (
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="flex flex-col h-full bg-white rounded-2xl shadow-2xl border border-gray-200/50 p-3 gap-3"
+          >
+            <button
+              onClick={() => setIsCollapsed(false)}
+              className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              title="Expand sidebar"
+            >
+              <Car className="w-5 h-5 text-gray-700" />
+            </button>
+            <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center text-sm font-bold" title={`${cars.length} cars`}>
+              {cars.length}
+            </div>
+            <div className="flex-1" />
+            <button
+              onClick={() => setIsCollapsed(false)}
+              className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              title="Filters"
+            >
+              <SlidersHorizontal className="w-5 h-5 text-gray-700" />
+            </button>
+          </motion.div>
+        )}
+
+        {/* Expanded state - full floating sidebar */}
+        <motion.div
+          className={`flex flex-col h-full bg-white rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden ${isCollapsed ? 'hidden' : ''}`}
+          initial={false}
+          animate={{ opacity: isCollapsed ? 0 : 1 }}
+          transition={{ duration: 0.2 }}
+        >
       {/* Header */}
       <div className="p-4 bg-white border-b border-gray-100 rounded-br-3xl">
         <div className="flex items-center justify-between mb-3">
@@ -551,7 +562,8 @@ export function DesktopSidebar({
           )}
         </AnimatePresence>
       </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </motion.div>
   )
 }

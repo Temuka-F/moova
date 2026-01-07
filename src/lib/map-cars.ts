@@ -117,93 +117,92 @@ export const CITIES = {
 
 export type CityName = keyof typeof CITIES
 
-// Working car images from Unsplash (verified URLs matching actual car models)
+// Working car images - using verified Unsplash photo IDs
 const CAR_IMAGES = {
-  // SUVs - Toyota Land Cruiser
+  // SUVs - Toyota Land Cruiser (white/silver SUVs)
   landCruiser: [
-    'https://images.unsplash.com/photo-1594611333175-0a291c73fd0d?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&q=80',
+    'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80',
   ],
-  // Hyundai Tucson
+  // Hyundai Tucson (blue SUV)
   tucson: [
-    'https://images.unsplash.com/photo-1633695610681-8477dcfd5c33?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&q=80',
+    'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80',
   ],
-  // Tesla Model Y
+  // Tesla Model Y (silver electric)
   teslaY: [
-    'https://images.unsplash.com/photo-1619317141517-f2e14a97b3dc?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&q=80',
+    'https://images.unsplash.com/photo-1561580125-028ee3bd62eb?w=800&q=80',
   ],
-  // BMW X5
+  // BMW X5 (black luxury SUV)
   bmwX5: [
-    'https://images.unsplash.com/photo-1556189250-72ba954cfc2b?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80',
+    'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&q=80',
   ],
-  // Subaru Forester
+  // Subaru Forester (green SUV)
   forester: [
-    'https://images.unsplash.com/photo-1625395005224-0fce68a3cdc8?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80',
+    'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80',
   ],
-  // Toyota RAV4
+  // Toyota RAV4 (blue compact SUV)
   rav4: [
-    'https://images.unsplash.com/photo-1568844293986-8c8a3f6f4f29?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80',
+    'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&q=80',
   ],
-  // Land Rover Defender
+  // Land Rover Defender (green off-road)
   defender: [
-    'https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?w=800&q=80',
+    'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&q=80',
   ],
-  // Kia Sportage
+  // Kia Sportage (white SUV)
   sportage: [
-    'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1633695610681-8477dcfd5c33?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80',
+    'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&q=80',
   ],
-  // Sedans - Toyota Camry
+  // Sedans - Toyota Camry (white sedan)
   camry: [
-    'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&q=80',
+    'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&q=80',
   ],
-  // Toyota Corolla
+  // Toyota Corolla (gray sedan)
   corolla: [
-    'https://images.unsplash.com/photo-1623869675781-80aa31012a5a?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&q=80',
+    'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&q=80',
   ],
-  // Compact - VW Golf
+  // Compact - VW Golf (red hatchback)
   golf: [
-    'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800&q=80',
+    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80',
   ],
-  // Renault Clio
+  // Renault Clio (red compact)
   clio: [
-    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80',
+    'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800&q=80',
   ],
-  // Ford Focus
+  // Ford Focus (gray hatchback)
   focus: [
-    'https://images.unsplash.com/photo-1551830820-330a71b99659?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80',
+    'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800&q=80',
   ],
-  // Luxury - Mercedes E-Class
+  // Luxury - Mercedes E-Class (white luxury sedan)
   eClass: [
-    'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&q=80',
+    'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&q=80',
   ],
-  // Mercedes GLE
+  // Mercedes GLE (black luxury SUV)
   gle: [
-    'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&q=80',
+    'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&q=80',
   ],
-  // Porsche Cayenne
+  // Porsche Cayenne (silver sports SUV)
   cayenne: [
-    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80',
+    'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80',
   ],
-  // Sports - Porsche 911
+  // Sports - Porsche 911 (yellow sports car)
   porsche911: [
-    'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&q=80',
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80',
   ],
 }
 

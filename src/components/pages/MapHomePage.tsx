@@ -213,7 +213,6 @@ export function MapHomePage() {
     <div className="fixed inset-0 bg-gray-100 overflow-hidden">
       {/* Full-screen map as base layer */}
       <div className="absolute inset-0" style={{ touchAction: 'none' }}>
-        {/* Map canvas */}
         <MapCanvas
           ref={mapRef}
           cars={filteredCars}
@@ -223,8 +222,10 @@ export function MapHomePage() {
           onMapClick={handleMapClick}
           currentCity={currentCity}
         />
+      </div>
 
-        {/* Top navigation */}
+      {/* Top navigation - positioned to avoid sidebar on desktop */}
+      <div className="absolute top-0 left-0 right-0 z-50 lg:left-[400px]">
         <TopNav
           currentCity={currentCity}
           onCityChange={handleCityChange}
@@ -233,28 +234,19 @@ export function MapHomePage() {
           endDate={endDate}
           onDateChange={handleDateChange}
         />
+      </div>
 
-        {/* Map controls */}
+      {/* Map controls - positioned to avoid sidebar */}
+      <div className="absolute bottom-24 lg:bottom-8 right-4 z-40">
         <MapControls
           onRecenter={handleRecenter}
           currentCity={currentCity}
           carCount={filteredCars.length}
           winterReadyCount={winterReadyCount}
         />
-
-        {/* Mobile Bottom drawer */}
-        <div className="lg:hidden">
-          <CarDrawer
-            cars={filteredCars}
-            selectedCar={selectedCar}
-            onCarSelect={handleCarSelect}
-            activeFilter={activeFilter}
-            onFilterChange={handleFilterChange}
-          />
-        </div>
       </div>
 
-      {/* Desktop Sidebar - Overlays on top of map */}
+      {/* Desktop Sidebar - Floating panel on the left */}
       <DesktopSidebar
         cars={filteredCars}
         selectedCar={selectedCar}
@@ -267,6 +259,17 @@ export function MapHomePage() {
         sortBy={sortBy}
         onSortChange={setSortBy}
       />
+
+      {/* Mobile Bottom drawer */}
+      <div className="lg:hidden absolute inset-x-0 bottom-0 z-40">
+        <CarDrawer
+          cars={filteredCars}
+          selectedCar={selectedCar}
+          onCarSelect={handleCarSelect}
+          activeFilter={activeFilter}
+          onFilterChange={handleFilterChange}
+        />
+      </div>
 
       {/* Car popup modal */}
       {showCarPopup && (

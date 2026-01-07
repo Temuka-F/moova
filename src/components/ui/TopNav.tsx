@@ -74,8 +74,8 @@ export function TopNav({
   }
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-50 p-4 pointer-events-none safe-pt">
-      <div className="flex items-center gap-3 pointer-events-auto">
+    <div className="p-4 pointer-events-none safe-pt">
+      <div className="flex items-center gap-3 pointer-events-auto max-w-2xl mx-auto lg:mx-0">
         {/* Main Search Card */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
