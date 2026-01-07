@@ -288,6 +288,7 @@ export default function BookingsPage() {
                   Leave Review
                 </Button>
               )}
+              </div>
             </div>
           </div>
         </div>

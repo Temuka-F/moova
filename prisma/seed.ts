@@ -11,7 +11,7 @@ async function main() {
 
   // Create seed users
   console.log('👥 Creating seed users...')
-  const seedUsers = []
+  const seedUsers: any[] = []
   
   for (const dummyUser of DUMMY_USERS) {
     // Check if user already exists
