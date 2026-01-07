@@ -14,10 +14,17 @@ async function main() {
   const seedUsers: any[] = []
   
   for (const dummyUser of DUMMY_USERS) {
-    // Check if user already exists
+    // Check if user already exists by ID first (for seeded users)
     let user = await prisma.user.findUnique({
-      where: { email: dummyUser.email },
+      where: { id: dummyUser.id },
     })
+
+    // If not found by ID, check by email
+    if (!user) {
+      user = await prisma.user.findUnique({
+        where: { email: dummyUser.email },
+      })
+    }
 
     if (!user) {
       // Create user with a deterministic UUID based on email for consistency
@@ -126,11 +133,25 @@ async function main() {
 
   if (DUMMY_BOOKINGS && DUMMY_BOOKINGS.length > 0) {
     for (const dummyBooking of DUMMY_BOOKINGS) {
-      const car = seedCars.find(c => c.id === dummyBooking.carId)
-      const renter = seedUsers.find(u => u.id === dummyBooking.renterId)
+      // Fetch car from database instead of relying on seedCars array
+      // This ensures we get cars that already exist in the database
+      const car = await prisma.car.findUnique({
+        where: { id: dummyBooking.carId },
+      })
+      
+      // Also check seedCars as fallback (for newly created cars)
+      const carFromSeed = car || seedCars.find(c => c.id === dummyBooking.carId)
+      
+      // Find renter - check database first, then seedUsers array
+      let renter = seedUsers.find(u => u.id === dummyBooking.renterId)
+      if (!renter) {
+        renter = await prisma.user.findUnique({
+          where: { id: dummyBooking.renterId },
+        })
+      }
 
-      if (!car || !renter) {
-        console.warn(`⚠️  Car or renter not found for booking ${dummyBooking.id}`)
+      if (!carFromSeed || !renter) {
+        console.warn(`⚠️  Car or renter not found for booking ${dummyBooking.id}. Car: ${carFromSeed ? 'found' : 'not found'}, Renter: ${renter ? 'found' : 'not found'}`)
         continue
       }
 
@@ -144,24 +165,24 @@ async function main() {
         (new Date(dummyBooking.endDate).getTime() - new Date(dummyBooking.startDate).getTime()) / (1000 * 60 * 60 * 24)
       )
       const bookingData = dummyBooking as any
-      const subtotal = bookingData.subtotal || (car.pricePerDay * totalDays)
+      const subtotal = bookingData.subtotal || (carFromSeed.pricePerDay * totalDays)
       const serviceFee = dummyBooking.serviceFee || Math.round(subtotal * 0.15)
       const totalAmount = dummyBooking.totalAmount || (subtotal + serviceFee)
 
       await prisma.booking.create({
         data: {
           id: dummyBooking.id,
-          carId: car.id,
+          carId: carFromSeed.id,
           renterId: renter.id,
           startDate: new Date(dummyBooking.startDate),
           endDate: new Date(dummyBooking.endDate),
           pickupLocation: dummyBooking.pickupLocation,
-          dailyRate: dummyBooking.dailyRate || car.pricePerDay,
+          dailyRate: dummyBooking.dailyRate || carFromSeed.pricePerDay,
           totalDays,
           subtotal,
           serviceFee,
           totalAmount,
-          securityDeposit: car.securityDeposit,
+          securityDeposit: carFromSeed.securityDeposit,
           status: dummyBooking.status as 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED',
           paymentStatus: (bookingData.paymentStatus || 'COMPLETED') as 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED',
           createdAt: new Date((dummyBooking as any).createdAt || Date.now()),
