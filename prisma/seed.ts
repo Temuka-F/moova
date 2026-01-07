@@ -161,7 +161,7 @@ async function main() {
           totalAmount,
           securityDeposit: car.securityDeposit,
           status: dummyBooking.status as 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED',
-          paymentStatus: (dummyBooking.paymentStatus || 'COMPLETED') as 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED',
+          paymentStatus: (bookingData.paymentStatus || 'COMPLETED') as 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED',
           createdAt: new Date((dummyBooking as any).createdAt || Date.now()),
         },
       })
