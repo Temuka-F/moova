@@ -156,7 +156,7 @@ export default function FavoritesPage() {
                   fuelType: favorite.car.fuelType,
                   seats: favorite.car.seats,
                   category: favorite.car.category,
-                  images: favorite.car.images,
+                  images: favorite.car.images.map(img => ({ url: img.url, isPrimary: false })),
                   owner: favorite.car.owner ? {
                     firstName: favorite.car.owner.firstName,
                     lastName: favorite.car.owner.lastName,
