@@ -50,27 +50,47 @@ export default function ProfilePage() {
   const router = useRouter()
   const [user, setUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchUser = async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const res = await fetch('/api/me')
+      if (!res.ok) {
+        if (res.status === 401) {
+          router.push('/login?redirect=/dashboard/profile')
+          return
+        }
+        let errorMessage = 'Failed to fetch profile'
+        try {
+          const errorData = await res.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          if (res.status >= 500) {
+            errorMessage = 'Server error. Please try again later.'
+          }
+        }
+        throw new Error(errorMessage)
+      }
+      const data = await res.json()
+      
+      // Validate user data
+      if (!data || !data.id) {
+        throw new Error('Invalid user data received')
+      }
+      
+      setUser(data)
+    } catch (err: any) {
+      console.error('Error fetching profile:', err)
+      setError(err.message || 'Failed to load profile')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch('/api/me')
-        if (!res.ok) {
-          if (res.status === 401) {
-            router.push('/login?redirect=/dashboard/profile')
-            return
-          }
-          throw new Error('Failed to fetch profile')
-        }
-        const data = await res.json()
-        setUser(data)
-      } catch (err) {
-        console.error('Error fetching profile:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchUser()
   }, [router])
 
