@@ -275,7 +275,62 @@ export default function SettingsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <Button variant="outline" size="sm" className="rounded-full">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="avatar-upload"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error('File size must be less than 5MB')
+                        return
+                      }
+
+                      try {
+                        const formData = new FormData()
+                        formData.append('file', file)
+                        formData.append('folder', 'avatars')
+
+                        const uploadRes = await fetch('/api/upload', {
+                          method: 'POST',
+                          body: formData,
+                        })
+
+                        if (!uploadRes.ok) {
+                          throw new Error('Upload failed')
+                        }
+
+                        const { url } = await uploadRes.json()
+
+                        // Update user profile with new avatar URL
+                        const updateRes = await fetch('/api/me', {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ avatarUrl: url }),
+                        })
+
+                        if (!updateRes.ok) {
+                          throw new Error('Failed to update profile')
+                        }
+
+                        const updatedUser = await updateRes.json()
+                        setUser(updatedUser)
+                        toast.success('Profile photo updated!')
+                      } catch (err: any) {
+                        console.error('Error uploading avatar:', err)
+                        toast.error(err.message || 'Failed to upload photo')
+                      }
+                    }}
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="rounded-full"
+                    onClick={() => document.getElementById('avatar-upload')?.click()}
+                  >
                     <Upload className="w-4 h-4 mr-2" />
                     Change Photo
                   </Button>
@@ -424,10 +479,67 @@ export default function SettingsPage() {
                     Pending
                   </Badge>
                 ) : (
-                  <Button variant="outline" size="sm" className="rounded-full">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload
-                  </Button>
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      id="license-upload"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error('File size must be less than 5MB')
+                          return
+                        }
+
+                        try {
+                          const formData = new FormData()
+                          formData.append('file', file)
+                          formData.append('folder', 'documents')
+
+                          const uploadRes = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData,
+                          })
+
+                          if (!uploadRes.ok) {
+                            throw new Error('Upload failed')
+                          }
+
+                          const { url } = await uploadRes.json()
+
+                          // Update user profile with license URL
+                          const updateRes = await fetch('/api/me', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ drivingLicenseUrl: url }),
+                          })
+
+                          if (!updateRes.ok) {
+                            throw new Error('Failed to update profile')
+                          }
+
+                          const updatedUser = await updateRes.json()
+                          setUser(updatedUser)
+                          toast.success('Driver\'s license uploaded! Verification pending.')
+                        } catch (err: any) {
+                          console.error('Error uploading license:', err)
+                          toast.error(err.message || 'Failed to upload document')
+                        }
+                      }}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-full"
+                      onClick={() => document.getElementById('license-upload')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload
+                    </Button>
+                  </>
                 )}
               </div>
             </CardContent>

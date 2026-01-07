@@ -109,11 +109,61 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { action, reason } = body
+    const { action, status, reason } = body
     const updateData: any = {}
     let notificationData: any = null
 
-    switch (action) {
+    // Support both action-based and direct status updates
+    let targetAction = action
+    let targetStatus = status
+
+    // If status is provided directly, map it to an action
+    if (targetStatus && !targetAction) {
+      if (targetStatus === 'CONFIRMED' && booking.status === 'PENDING') {
+        targetAction = 'confirm'
+      } else if (targetStatus === 'ACTIVE' && booking.status === 'CONFIRMED') {
+        targetAction = 'start'
+      } else if (targetStatus === 'COMPLETED' && booking.status === 'ACTIVE') {
+        targetAction = 'complete'
+      } else if (targetStatus === 'CANCELLED') {
+        targetAction = 'cancel'
+      } else {
+        // Direct status update for other cases
+        updateData.status = targetStatus
+        const updatedBooking = await prisma.booking.update({
+          where: { id },
+          data: updateData,
+          include: {
+            car: {
+              include: {
+                images: { take: 1 },
+                owner: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    avatarUrl: true,
+                    phone: true,
+                  },
+                },
+              },
+            },
+            renter: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+                phone: true,
+              },
+            },
+          },
+        })
+        return NextResponse.json(updatedBooking)
+      }
+    }
+
+    switch (targetAction) {
       case 'confirm':
         // Only owner or admin can confirm
         if (!isOwner && !isAdmin) {

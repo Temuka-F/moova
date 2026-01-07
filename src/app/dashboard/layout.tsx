@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
+import { ProfileSwitcher } from '@/components/ui/profile-switcher'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -18,6 +19,7 @@ interface UserData {
   email: string
   avatarUrl?: string | null
   role: UserRole
+  activeProfileMode?: UserRole | null
 }
 
 // Demo user for when API is not available
@@ -97,7 +99,7 @@ export default function DashboardLayout({
     return null
   }
 
-  const navigation = getDashboardNavigation(user.role)
+  const navigation = getDashboardNavigation(user.role, user.activeProfileMode)
 
   return (
     <div className="min-h-screen flex bg-muted/30">
@@ -142,6 +144,23 @@ export default function DashboardLayout({
 
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-8">
+          {user.role === 'OWNER' && (
+            <div className="mb-6">
+              <ProfileSwitcher
+                currentRole={user.role}
+                activeProfileMode={user.activeProfileMode || null}
+                onSwitch={() => {
+                  // Refetch user data
+                  fetch('/api/me')
+                    .then(res => res.json())
+                    .then(data => {
+                      setUser(data)
+                      window.location.reload()
+                    })
+                }}
+              />
+            </div>
+          )}
           {children}
         </main>
       </div>

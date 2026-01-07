@@ -88,6 +88,7 @@ export async function PATCH(request: NextRequest) {
       'bankName',
       'bankAccountNumber',
       'bankAccountName',
+      'activeProfileMode',
     ]
 
     const updateData: any = {}

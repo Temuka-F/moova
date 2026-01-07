@@ -300,8 +300,8 @@ export const CAR_CATEGORIES = [
   'PICKUP',
 ] as const
 
-// Dashboard navigation based on role
-export const getDashboardNavigation = (role: UserRole) => {
+// Dashboard navigation based on role and active profile mode
+export const getDashboardNavigation = (role: UserRole, activeProfileMode?: UserRole | null) => {
   const common = [
     { name: 'Overview', href: '/dashboard', icon: 'LayoutDashboard' },
     { name: 'Messages', href: '/dashboard/messages', icon: 'MessageCircle' },
@@ -333,7 +333,10 @@ export const getDashboardNavigation = (role: UserRole) => {
     { name: 'Settings', href: '/admin/settings', icon: 'Settings' },
   ]
 
-  switch (role) {
+  // For OWNER users, use activeProfileMode if set, otherwise use role
+  const effectiveMode = role === 'OWNER' && activeProfileMode ? activeProfileMode : role
+
+  switch (effectiveMode) {
     case 'ADMIN':
       return adminNav
     case 'OWNER':

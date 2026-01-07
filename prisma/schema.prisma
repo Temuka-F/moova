@@ -26,6 +26,7 @@ model User {
   
   // Role & Permissions
   role              UserRole  @default(RENTER)
+  activeProfileMode UserRole? // For OWNER users to switch between renter/owner views
   
   // Verification Documents
   drivingLicenseNo  String?

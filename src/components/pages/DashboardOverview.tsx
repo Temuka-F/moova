@@ -37,6 +37,7 @@ interface User {
   lastName: string
   avatarUrl: string | null
   role: 'RENTER' | 'OWNER' | 'ADMIN'
+  activeProfileMode?: 'RENTER' | 'OWNER' | null
   verificationStatus: string
   _count?: {
     cars: number
@@ -91,7 +92,11 @@ export function DashboardOverview() {
   const [loading, setLoading] = useState(true)
   const [isUpgrading, setIsUpgrading] = useState(false)
 
-  const isHost = user?.role === 'OWNER' || user?.role === 'ADMIN'
+  // For OWNER users, check activeProfileMode to determine view
+  const effectiveMode = user?.role === 'OWNER' && user?.activeProfileMode 
+    ? user.activeProfileMode 
+    : user?.role || 'RENTER'
+  const isHost = effectiveMode === 'OWNER' || user?.role === 'ADMIN'
 
   useEffect(() => {
     async function fetchData() {

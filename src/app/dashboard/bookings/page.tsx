@@ -206,7 +206,7 @@ export default function BookingsPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-2">
               <div>
-                <Link href={`/cars/${booking.car.id}`} className="hover:underline">
+                <Link href={`/dashboard/bookings/${booking.id}`} className="hover:underline">
                   <h3 className="font-semibold text-lg">
                     {booking.car?.make} {booking.car?.model}
                   </h3>
@@ -233,7 +233,13 @@ export default function BookingsPage() {
               <p className="font-bold text-lg">₾{booking.totalAmount}</p>
               <p className="text-xs text-muted-foreground">{booking.totalDays} days</p>
             </div>
-            <div className="flex gap-2 mt-2">
+            <div className="flex flex-col gap-2 mt-2">
+              <Button size="sm" variant="outline" asChild className="rounded-full">
+                <Link href={`/dashboard/bookings/${booking.id}`}>
+                  View Details
+                </Link>
+              </Button>
+              <div className="flex gap-2 flex-wrap">
               {booking.status === 'PENDING' && (
                 <>
                   <Button 
