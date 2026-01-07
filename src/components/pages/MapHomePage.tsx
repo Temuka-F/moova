@@ -210,23 +210,9 @@ export function MapHomePage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-100 overflow-hidden flex">
-      {/* Desktop Sidebar - Left side car list */}
-      <DesktopSidebar
-        cars={filteredCars}
-        selectedCar={selectedCar}
-        onCarSelect={handleCarSelect}
-        onCarHover={handleCarHover}
-        activeFilter={activeFilter}
-        onFilterChange={handleFilterChange}
-        priceRange={priceRange}
-        onPriceRangeChange={setPriceRange}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
-
-      {/* Main map area */}
-      <div className="flex-1 relative" style={{ touchAction: 'none' }}>
+    <div className="fixed inset-0 bg-gray-100 overflow-hidden">
+      {/* Full-screen map as base layer */}
+      <div className="absolute inset-0" style={{ touchAction: 'none' }}>
         {/* Map canvas */}
         <MapCanvas
           ref={mapRef}
@@ -267,6 +253,20 @@ export function MapHomePage() {
           />
         </div>
       </div>
+
+      {/* Desktop Sidebar - Overlays on top of map */}
+      <DesktopSidebar
+        cars={filteredCars}
+        selectedCar={selectedCar}
+        onCarSelect={handleCarSelect}
+        onCarHover={handleCarHover}
+        activeFilter={activeFilter}
+        onFilterChange={handleFilterChange}
+        priceRange={priceRange}
+        onPriceRangeChange={setPriceRange}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
 
       {/* Car popup modal */}
       {showCarPopup && (

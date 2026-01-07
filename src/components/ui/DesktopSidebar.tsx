@@ -9,6 +9,8 @@ import {
   Snowflake, 
   Zap,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   SlidersHorizontal,
   X,
   Car,
@@ -173,6 +175,7 @@ export function DesktopSidebar({
 }: DesktopSidebarProps) {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showSortDropdown, setShowSortDropdown] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   // Calculate price range from all cars for the slider
   const globalPriceRange = useMemo(() => {
@@ -184,7 +187,53 @@ export function DesktopSidebar({
   }, [])
 
   return (
-    <div className="hidden lg:flex flex-col w-[380px] h-full bg-gray-50 border-r border-gray-200 z-40">
+    <motion.div 
+      className="hidden lg:flex flex-col h-full absolute left-0 top-0 bottom-0 z-40"
+      initial={false}
+      animate={{ 
+        width: isCollapsed ? 56 : 380,
+      }}
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+    >
+      {/* Collapse/Expand Toggle */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -right-4 top-1/2 -translate-y-1/2 z-50 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+      >
+        {isCollapsed ? (
+          <ChevronRight className="w-4 h-4 text-gray-600" />
+        ) : (
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
+        )}
+      </button>
+
+      {/* Collapsed state - just icons */}
+      {isCollapsed && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex flex-col h-full bg-white/95 backdrop-blur-md border-r border-gray-200/50 shadow-xl p-2 pt-20 gap-2"
+        >
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+          >
+            <Car className="w-5 h-5 text-gray-700" />
+          </button>
+          <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center text-sm font-bold">
+            {cars.length}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Expanded state - full sidebar */}
+      <motion.div
+        className={`flex flex-col h-full bg-white/95 backdrop-blur-md border-r border-gray-200/50 shadow-xl overflow-hidden ${isCollapsed ? 'hidden' : ''}`}
+        initial={false}
+        animate={{ opacity: isCollapsed ? 0 : 1 }}
+        transition={{ duration: 0.2 }}
+      >
       {/* Header */}
       <div className="p-4 bg-white border-b border-gray-100 rounded-br-3xl">
         <div className="flex items-center justify-between mb-3">
@@ -254,58 +303,134 @@ export function DesktopSidebar({
               className="overflow-hidden"
             >
               <div className="pt-4 space-y-4">
-                {/* Price range */}
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <label className="text-sm font-medium text-gray-700 mb-3 block">
-                    Price Range
-                  </label>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="bg-white rounded-xl px-3 py-2 border border-gray-200">
-                      <span className="text-xs text-gray-500">Min</span>
-                      <p className="font-semibold text-gray-900">{priceRange[0]}₾</p>
+                {/* Price range - Improved intuitive design */}
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-sm font-semibold text-gray-800">
+                      Daily Price
+                    </label>
+                    <button 
+                      onClick={() => onPriceRangeChange([globalPriceRange.min, globalPriceRange.max])}
+                      className="text-xs text-gray-500 hover:text-black underline transition-colors"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  
+                  {/* Price display with inputs */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex-1 relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₾</span>
+                      <input
+                        type="number"
+                        min={globalPriceRange.min}
+                        max={priceRange[1] - 10}
+                        value={priceRange[0]}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || globalPriceRange.min
+                          if (val < priceRange[1] && val >= globalPriceRange.min) {
+                            onPriceRangeChange([val, priceRange[1]])
+                          }
+                        }}
+                        className="w-full bg-white rounded-xl pl-8 pr-3 py-2.5 border border-gray-200 text-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-300 transition-all"
+                      />
                     </div>
-                    <div className="flex-1 mx-3 h-[2px] bg-gray-200" />
-                    <div className="bg-white rounded-xl px-3 py-2 border border-gray-200">
-                      <span className="text-xs text-gray-500">Max</span>
-                      <p className="font-semibold text-gray-900">{priceRange[1]}₾</p>
+                    <div className="text-gray-400 font-medium">—</div>
+                    <div className="flex-1 relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₾</span>
+                      <input
+                        type="number"
+                        min={priceRange[0] + 10}
+                        max={globalPriceRange.max}
+                        value={priceRange[1]}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || globalPriceRange.max
+                          if (val > priceRange[0] && val <= globalPriceRange.max) {
+                            onPriceRangeChange([priceRange[0], val])
+                          }
+                        }}
+                        className="w-full bg-white rounded-xl pl-8 pr-3 py-2.5 border border-gray-200 text-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-300 transition-all"
+                      />
                     </div>
                   </div>
-                  <div className="relative h-2 bg-gray-200 rounded-full">
+
+                  {/* Dual slider track */}
+                  <div className="relative h-2 bg-gray-200 rounded-full mb-2">
                     <div 
-                      className="absolute h-full bg-black rounded-full"
+                      className="absolute h-full bg-gradient-to-r from-gray-800 to-black rounded-full transition-all duration-150"
                       style={{
                         left: `${((priceRange[0] - globalPriceRange.min) / (globalPriceRange.max - globalPriceRange.min)) * 100}%`,
                         right: `${100 - ((priceRange[1] - globalPriceRange.min) / (globalPriceRange.max - globalPriceRange.min)) * 100}%`
                       }}
                     />
+                    {/* Slider handles */}
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-gray-800 rounded-full shadow-md cursor-pointer hover:scale-110 transition-transform"
+                      style={{
+                        left: `calc(${((priceRange[0] - globalPriceRange.min) / (globalPriceRange.max - globalPriceRange.min)) * 100}% - 10px)`
+                      }}
+                    />
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white border-2 border-gray-800 rounded-full shadow-md cursor-pointer hover:scale-110 transition-transform"
+                      style={{
+                        left: `calc(${((priceRange[1] - globalPriceRange.min) / (globalPriceRange.max - globalPriceRange.min)) * 100}% - 10px)`
+                      }}
+                    />
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  
+                  {/* Hidden range inputs for interaction */}
+                  <div className="relative h-6">
                     <input
                       type="range"
                       min={globalPriceRange.min}
                       max={globalPriceRange.max}
+                      step={5}
                       value={priceRange[0]}
                       onChange={(e) => {
                         const val = parseInt(e.target.value)
-                        if (val < priceRange[1]) {
+                        if (val < priceRange[1] - 10) {
                           onPriceRangeChange([val, priceRange[1]])
                         }
                       }}
-                      className="flex-1 accent-black"
+                      className="absolute inset-0 w-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-transparent [&::-webkit-slider-thumb]:cursor-pointer"
                     />
                     <input
                       type="range"
                       min={globalPriceRange.min}
                       max={globalPriceRange.max}
+                      step={5}
                       value={priceRange[1]}
                       onChange={(e) => {
                         const val = parseInt(e.target.value)
-                        if (val > priceRange[0]) {
+                        if (val > priceRange[0] + 10) {
                           onPriceRangeChange([priceRange[0], val])
                         }
                       }}
-                      className="flex-1 accent-black"
+                      className="absolute inset-0 w-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-transparent [&::-webkit-slider-thumb]:cursor-pointer"
                     />
+                  </div>
+
+                  {/* Quick presets */}
+                  <div className="flex gap-2 mt-3">
+                    {[
+                      { label: 'Budget', range: [globalPriceRange.min, 80] as [number, number] },
+                      { label: 'Mid-range', range: [80, 150] as [number, number] },
+                      { label: 'Premium', range: [150, globalPriceRange.max] as [number, number] },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        onClick={() => onPriceRangeChange(preset.range)}
+                        className={`
+                          flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all
+                          ${priceRange[0] === preset.range[0] && priceRange[1] === preset.range[1]
+                            ? 'bg-black text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                          }
+                        `}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -426,6 +551,7 @@ export function DesktopSidebar({
           )}
         </AnimatePresence>
       </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
