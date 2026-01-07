@@ -155,7 +155,7 @@ function transformApiCarsToMapCars(apiCars: ApiCar[]): MapCar[] {
     seats: car.seats || 5,
     doors: car.doors || 4,
     securityDeposit: car.securityDeposit || 200,
-    mileageLimit: car.mileageLimit,
+    mileageLimit: car.mileageLimit ?? null,
     owner: {
       id: car.owner?.id || 'unknown',
       firstName: car.owner?.firstName || 'Host',
