@@ -147,8 +147,9 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / (filters.limit || 20)),
     })
   } catch (error: any) {
+    console.error('Error in GET /api/cars:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch cars' },
+      { error: error.message || 'Failed to fetch cars', details: process.env.NODE_ENV === 'development' ? error.stack : undefined },
       { status: 500 }
     )
   }

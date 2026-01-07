@@ -88,8 +88,9 @@ export async function GET(
 
     return NextResponse.json(carResponse)
   } catch (error: any) {
+    console.error('Error in GET /api/cars/[id]:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch car' },
+      { error: error.message || 'Failed to fetch car', details: process.env.NODE_ENV === 'development' ? error.stack : undefined },
       { status: 500 }
     )
   }
