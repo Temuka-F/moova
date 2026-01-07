@@ -30,7 +30,7 @@ function LoginForm() {
   const [supabaseError, setSupabaseError] = useState<string | null>(null)
   
   // Initialize Supabase client with error handling
-  let supabase
+  let supabase: ReturnType<typeof createClient> | null = null
   try {
     supabase = createClient()
   } catch (error: any) {
