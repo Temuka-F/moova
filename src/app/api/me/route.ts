@@ -149,6 +149,23 @@ export async function PATCH(request: NextRequest) {
       },
     })
 
+    // Also update Supabase user metadata for profile fields
+    if (body.firstName || body.lastName || body.avatarUrl || body.phone) {
+      try {
+        await supabase.auth.updateUser({
+          data: {
+            first_name: updatedUser.firstName,
+            last_name: updatedUser.lastName,
+            avatar_url: updatedUser.avatarUrl,
+            phone: updatedUser.phone,
+          },
+        })
+      } catch (metadataError) {
+        console.error('Failed to sync user metadata to Supabase:', metadataError)
+        // Continue even if metadata sync fails - the main database is the source of truth
+      }
+    }
+
     return NextResponse.json(updatedUser)
   } catch (error: any) {
     return NextResponse.json(

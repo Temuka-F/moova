@@ -40,6 +40,7 @@ async function main() {
           responseRate: dummyUser.responseRate || null,
           bio: `Hi! I'm ${dummyUser.firstName}, ${dummyUser.role === 'OWNER' ? 'a car owner' : 'a renter'} on Moova.`,
           createdAt: new Date(dummyUser.createdAt),
+          isSeedData: true, // Mark as seed data for easy cleanup
         },
       })
     }
@@ -97,6 +98,7 @@ async function main() {
           status: dummyCar.status as 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED',
           isActive: dummyCar.isActive,
           isInstantBook: dummyCar.isInstantBook,
+          isSeedData: true, // Mark as seed data for easy cleanup
         },
       })
 
@@ -163,6 +165,7 @@ async function main() {
           status: dummyBooking.status as 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED',
           paymentStatus: (bookingData.paymentStatus || 'COMPLETED') as 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED',
           createdAt: new Date((dummyBooking as any).createdAt || Date.now()),
+          isSeedData: true, // Mark as seed data for easy cleanup
         },
       })
         bookingCount++
@@ -211,6 +214,7 @@ async function main() {
           securityDeposit: booking.car.securityDeposit,
           status: booking.status,
           paymentStatus: booking.status === 'CONFIRMED' ? 'COMPLETED' : 'PENDING',
+          isSeedData: true, // Mark as seed data for easy cleanup
         },
       })
       bookingCount++

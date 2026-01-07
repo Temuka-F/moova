@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
 import { ProfileSwitcher } from '@/components/ui/profile-switcher'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Menu, Bell } from 'lucide-react'
 import { getDashboardNavigation } from '@/types'
@@ -22,22 +22,13 @@ interface UserData {
   activeProfileMode?: UserRole | null
 }
 
-// Demo user for when API is not available
-const demoUser: UserData = {
-  id: 'demo-user',
-  firstName: 'Demo',
-  lastName: 'User',
-  email: 'demo@moova.ge',
-  avatarUrl: null,
-  role: 'OWNER',
-}
-
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<UserData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -48,28 +39,27 @@ export default function DashboardLayout({
       try {
         const response = await fetch('/api/me')
         if (!response.ok) {
-          // Use demo user instead of redirecting
-          setUser(demoUser)
-          setIsLoading(false)
+          // Redirect to login if not authenticated
+          router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
           return
         }
         const data = await response.json()
         setUser(data)
 
         // Redirect admin to admin dashboard
-        if (data.role === 'ADMIN' && window.location.pathname === '/dashboard') {
+        if (data.role === 'ADMIN' && pathname === '/dashboard') {
           router.push('/admin')
         }
       } catch (error) {
-        // Use demo user on error
-        setUser(demoUser)
+        // Redirect to login on error
+        router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchUser()
-  }, [router])
+  }, [router, pathname])
 
   if (isLoading) {
     return (

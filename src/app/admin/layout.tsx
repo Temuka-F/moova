@@ -61,32 +61,16 @@ export default function AdminLayout({
         ])
 
         if (!userRes.ok) {
-          // Demo mode - use admin user
-          setUser({
-            id: 'demo-admin',
-            firstName: 'Admin',
-            lastName: 'User',
-            email: 'admin@moova.ge',
-            role: 'ADMIN',
-            avatarUrl: null,
-          })
-          setStats({
-            pendingVerifications: 8,
-            pendingCarApprovals: 12,
-          })
-          setIsLoading(false)
+          // Redirect to login if not authenticated
+          router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
           return
         }
 
         const userData = await userRes.json()
 
         if (userData.role !== 'ADMIN') {
-          // Demo mode for testing
-          setUser({
-            ...userData,
-            role: 'ADMIN',
-          })
-          setIsLoading(false)
+          // Non-admin users should not access admin dashboard
+          router.push('/dashboard')
           return
         }
 
@@ -96,19 +80,8 @@ export default function AdminLayout({
           setStats(await statsRes.json())
         }
       } catch (error) {
-        // Demo mode on error
-        setUser({
-          id: 'demo-admin',
-          firstName: 'Admin',
-          lastName: 'User',
-          email: 'admin@moova.ge',
-          role: 'ADMIN',
-          avatarUrl: null,
-        })
-        setStats({
-          pendingVerifications: 8,
-          pendingCarApprovals: 12,
-        })
+        // Redirect to login on error
+        router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
       } finally {
         setIsLoading(false)
       }
