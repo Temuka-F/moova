@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/error-utils'
 
 interface User {
   id: string
@@ -157,8 +158,8 @@ export function DashboardOverview() {
       setUser(updatedUser)
       toast.success('Congratulations! You are now a host. Start listing your first car!')
       router.push('/list-your-car')
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to upgrade to owner')
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to upgrade to owner'))
     } finally {
       setIsUpgrading(false)
     }

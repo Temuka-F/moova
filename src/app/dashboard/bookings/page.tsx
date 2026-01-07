@@ -22,6 +22,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { getErrorMessage } from '@/lib/error-utils'
 
 interface BookingCar {
   id: string
@@ -45,6 +46,12 @@ interface BookingRenter {
   verificationStatus: string
 }
 
+interface BookingReview {
+  id: string
+  rating: number
+  comment?: string | null
+}
+
 interface Booking {
   id: string
   carId: string
@@ -57,7 +64,7 @@ interface Booking {
   pickupLocation: string
   car: BookingCar
   renter?: BookingRenter
-  review?: any
+  review?: BookingReview | null
 }
 
 function BookingsSkeleton() {
@@ -107,8 +114,8 @@ export default function BookingsPage() {
         
         const data = await res.json()
         setBookings(data.bookings || [])
-      } catch (err: any) {
-        setError(err.message || 'Failed to load bookings')
+      } catch (err) {
+        setError(getErrorMessage(err, 'Failed to load bookings'))
         console.error('Error fetching bookings:', err)
       } finally {
         setLoading(false)
@@ -137,8 +144,8 @@ export default function BookingsPage() {
         b.id === bookingId ? { ...b, status: 'CONFIRMED' } : b
       ))
       toast.success('Booking confirmed!')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to confirm booking')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to confirm booking'))
     } finally {
       setActionLoading(null)
     }
@@ -163,8 +170,8 @@ export default function BookingsPage() {
         b.id === bookingId ? { ...b, status: 'CANCELLED' } : b
       ))
       toast.success('Booking cancelled')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to cancel booking')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to cancel booking'))
     } finally {
       setActionLoading(null)
     }

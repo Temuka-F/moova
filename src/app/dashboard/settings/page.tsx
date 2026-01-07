@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -288,7 +289,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <Button variant="outline" className="rounded-full" asChild>
-                  <a href="/list-your-car">List a Car</a>
+                  <Link href="/list-your-car">List a Car</Link>
                 </Button>
               </CardContent>
             </Card>

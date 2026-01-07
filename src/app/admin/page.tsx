@@ -20,6 +20,37 @@ import {
 import { format } from 'date-fns'
 import { formatPrice } from '@/lib/flitt'
 
+interface AdminUser {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  role: string
+  createdAt: string
+  avatarUrl: string | null
+}
+
+interface AdminCar {
+  id: string
+  make: string
+  model: string
+  year: number
+  pricePerDay: number
+  status: string
+  owner: { firstName: string; lastName: string }
+  images: { url: string }[]
+}
+
+interface AdminBooking {
+  id: string
+  startDate: string
+  endDate: string
+  status: string
+  totalAmount: number
+  car: { make: string; model: string; images: { url: string }[] }
+  renter: { firstName: string; avatarUrl: string | null }
+}
+
 interface AdminStats {
   totalUsers: number
   totalCars: number
@@ -31,9 +62,9 @@ interface AdminStats {
   newUsersThisMonth: number
   newCarsThisMonth: number
   bookingsThisMonth: number
-  recentUsers: any[]
-  recentCars: any[]
-  recentBookings: any[]
+  recentUsers: AdminUser[]
+  recentCars: AdminCar[]
+  recentBookings: AdminBooking[]
 }
 
 // Demo stats for when API is not available

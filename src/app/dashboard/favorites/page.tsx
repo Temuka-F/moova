@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { CarCard } from '@/components/cars/CarCard'
 import { Heart, Car, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/error-utils'
 
 interface FavoriteCar {
   id: string
@@ -80,8 +81,8 @@ export default function FavoritesPage() {
         
         const data = await res.json()
         setFavorites(data.favorites || [])
-      } catch (err: any) {
-        setError(err.message || 'Failed to load favorites')
+      } catch (err) {
+        setError(getErrorMessage(err, 'Failed to load favorites'))
         console.error('Error fetching favorites:', err)
       } finally {
         setLoading(false)
@@ -103,8 +104,8 @@ export default function FavoritesPage() {
       
       setFavorites(prev => prev.filter(f => f.car.id !== carId))
       toast.success('Removed from favorites')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to remove favorite')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to remove favorite'))
     }
   }
 

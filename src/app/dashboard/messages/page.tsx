@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { getErrorMessage } from '@/lib/error-utils'
 
 interface User {
   id: string
@@ -131,8 +132,8 @@ export default function MessagesPage() {
         }
         const data = await res.json()
         setConversations(data.conversations || [])
-      } catch (err: any) {
-        setError(err.message || 'Failed to load messages')
+      } catch (err) {
+        setError(getErrorMessage(err, 'Failed to load messages'))
         console.error('Error fetching conversations:', err)
       } finally {
         setLoading(false)
@@ -209,8 +210,8 @@ export default function MessagesPage() {
         }
         return prev
       })
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to send message')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to send message'))
       setNewMessage(messageContent)
     } finally {
       setSending(false)

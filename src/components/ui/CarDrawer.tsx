@@ -394,7 +394,7 @@ export function CarDrawer({
     >
       <Drawer.Portal>
         <Drawer.Content 
-          className="fixed bottom-0 left-0 right-0 z-[60] flex flex-col bg-white rounded-t-[24px] outline-none shadow-2xl"
+          className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-white rounded-t-[24px] outline-none shadow-2xl"
           style={{ 
             height: '96%',
             maxHeight: '96vh',

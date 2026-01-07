@@ -25,6 +25,14 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { getErrorMessage } from '@/lib/error-utils'
+
+interface BookingReview {
+  id: string
+  rating: number
+  comment?: string | null
+  createdAt: string
+}
 
 interface BookingDetail {
   id: string
@@ -61,7 +69,7 @@ interface BookingDetail {
     email: string
     verificationStatus: string
   }
-  review?: any
+  review?: BookingReview | null
 }
 
 export default function BookingDetailPage() {
@@ -90,9 +98,9 @@ export default function BookingDetailPage() {
         }
         const data = await res.json()
         setBooking(data)
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching booking:', err)
-        toast.error(err.message || 'Failed to load booking')
+        toast.error(getErrorMessage(err, 'Failed to load booking'))
       } finally {
         setLoading(false)
       }
@@ -120,8 +128,8 @@ export default function BookingDetailPage() {
       const updated = await res.json()
       setBooking(updated)
       toast.success('Booking updated successfully')
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update booking')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update booking'))
     } finally {
       setActionLoading(false)
     }

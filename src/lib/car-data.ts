@@ -8,6 +8,59 @@
 
 import { ALL_CARS, MapCar, CityName, getCarsByCity as getMockCarsByCity } from './map-cars'
 
+// API response types for type safety
+interface ApiCarImage {
+  id: string
+  url: string
+  isPrimary: boolean
+}
+
+interface ApiCarOwner {
+  id: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+  verificationStatus?: string
+}
+
+interface ApiCarReview {
+  id: string
+  rating: number
+  comment?: string
+}
+
+interface ApiCar {
+  id: string
+  make: string
+  model: string
+  year: number
+  color: string
+  latitude: number
+  longitude: number
+  pricePerDay: number
+  pricePerHour?: number | null
+  city: string
+  address: string
+  category?: string
+  fuelType?: string
+  transmission?: string
+  features?: string[]
+  isInstantBook?: boolean
+  seats?: number
+  doors?: number
+  securityDeposit?: number
+  mileageLimit?: number | null
+  description?: string | null
+  createdAt?: string
+  images?: ApiCarImage[]
+  owner?: ApiCarOwner
+  reviews?: ApiCarReview[]
+  _count?: {
+    bookings?: number
+    reviews?: number
+  }
+}
+
 interface FetchCarsOptions {
   city?: CityName
   category?: string
@@ -77,7 +130,7 @@ export async function fetchCarsWithFallback(options: FetchCarsOptions = {}): Pro
 /**
  * Transforms API car data to MapCar format
  */
-function transformApiCarsToMapCars(apiCars: any[]): MapCar[] {
+function transformApiCarsToMapCars(apiCars: ApiCar[]): MapCar[] {
   return apiCars.map((car): MapCar => ({
     id: car.id,
     lat: car.latitude,
@@ -89,7 +142,7 @@ function transformApiCarsToMapCars(apiCars: any[]): MapCar[] {
     year: car.year,
     color: car.color,
     isWinterReady: car.features?.includes('4WD/AWD') || car.features?.includes('Snow Tires') || false,
-    images: car.images?.map((img: any) => img.url) || [],
+    images: car.images?.map((img) => img.url) || [],
     category: car.category || 'SEDAN',
     fuelType: car.fuelType || 'PETROL',
     rating: calculateAverageRating(car.reviews) || 4.5,
@@ -121,7 +174,7 @@ function transformApiCarsToMapCars(apiCars: any[]): MapCar[] {
 /**
  * Calculates average rating from reviews
  */
-function calculateAverageRating(reviews?: any[]): number {
+function calculateAverageRating(reviews?: ApiCarReview[]): number {
   if (!reviews || reviews.length === 0) return 0
   const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0)
   return Math.round((sum / reviews.length) * 10) / 10

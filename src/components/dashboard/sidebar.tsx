@@ -34,7 +34,9 @@ interface NavItem {
   badge?: number
 }
 
-const iconMap: Record<string, any> = {
+import type { LucideIcon } from 'lucide-react'
+
+const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard,
   Calendar,
   Car,

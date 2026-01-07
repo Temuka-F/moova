@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { UserRole } from '@prisma/client'
 import { toast } from 'sonner'
 import { Loader2, User, Car, Check } from 'lucide-react'
+import { getErrorMessage } from '@/lib/error-utils'
 import { cn } from '@/lib/utils'
 
 interface ProfileSwitcherProps {
@@ -54,9 +55,9 @@ export function ProfileSwitcher({ currentRole, activeProfileMode, onSwitch }: Pr
       if (onSwitch) {
         onSwitch(newMode)
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error switching profile mode:', error)
-      toast.error(error.message || 'Failed to switch profile mode')
+      toast.error(getErrorMessage(error, 'Failed to switch profile mode'))
     } finally {
       setLoading(false)
     }

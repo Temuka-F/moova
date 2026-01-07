@@ -194,7 +194,7 @@ export function CarMap({
 
       {/* Map Controls */}
       {showControls && (
-        <div className="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-30">
           <Button
             size="icon"
             variant="secondary"
@@ -223,7 +223,7 @@ export function CarMap({
       )}
 
       {/* Car Count Badge */}
-      <div className="absolute bottom-4 left-4 z-[1000]">
+      <div className="absolute bottom-4 left-4 z-30">
         <Badge variant="secondary" className="px-3 py-1.5 bg-white shadow-lg">
           {cars.length} cars nearby
         </Badge>
