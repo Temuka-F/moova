@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CarCard } from '@/components/cars/car-card'
+import { CarCard } from '@/components/cars/CarCard'
 import { Heart, Car, ArrowRight } from 'lucide-react'
 import { DUMMY_CARS } from '@/lib/dummy-data'
 
