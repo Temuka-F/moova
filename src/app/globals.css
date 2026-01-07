@@ -465,15 +465,16 @@ input:-webkit-autofill:focus {
 /* Bottom navigation for mobile */
 .bottom-nav {
   @apply fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-xl;
-  @apply border-t border-border z-50 pb-safe;
-}
-
-/* Safe area padding */
-.pb-safe {
+  @apply border-t border-border z-50;
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
 
-.pt-safe {
+/* Safe area padding */
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.safe-pt {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
