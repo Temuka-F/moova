@@ -141,7 +141,8 @@ async function main() {
       const totalDays = dummyBooking.totalDays || Math.ceil(
         (new Date(dummyBooking.endDate).getTime() - new Date(dummyBooking.startDate).getTime()) / (1000 * 60 * 60 * 24)
       )
-      const subtotal = dummyBooking.subtotal || (car.pricePerDay * totalDays)
+      const bookingData = dummyBooking as any
+      const subtotal = bookingData.subtotal || (car.pricePerDay * totalDays)
       const serviceFee = dummyBooking.serviceFee || Math.round(subtotal * 0.15)
       const totalAmount = dummyBooking.totalAmount || (subtotal + serviceFee)
 
