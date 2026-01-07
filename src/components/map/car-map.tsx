@@ -66,8 +66,14 @@ export function CarMap({
     import('leaflet').then((leaflet) => {
       setL(leaflet.default)
     })
-    // Import Leaflet CSS
-    import('leaflet/dist/leaflet.css')
+    // Add Leaflet CSS via link tag
+    if (typeof document !== 'undefined' && !document.getElementById('leaflet-css')) {
+      const link = document.createElement('link')
+      link.id = 'leaflet-css'
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
   }, [])
 
   const createCustomIcon = useMemo(() => {
@@ -240,7 +246,14 @@ export function MiniCarMap({
 
   useEffect(() => {
     setIsClient(true)
-    import('leaflet/dist/leaflet.css')
+    // Add Leaflet CSS via link tag
+    if (typeof document !== 'undefined' && !document.getElementById('leaflet-css')) {
+      const link = document.createElement('link')
+      link.id = 'leaflet-css'
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
   }, [])
 
   if (!isClient) {
