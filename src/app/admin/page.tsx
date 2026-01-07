@@ -314,7 +314,7 @@ export default function AdminDashboardPage() {
                   className="flex items-center gap-4 p-3 rounded-lg border"
                 >
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={user.avatarUrl} />
+                    <AvatarImage src={user.avatarUrl || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {user.firstName[0]}
                     </AvatarFallback>
