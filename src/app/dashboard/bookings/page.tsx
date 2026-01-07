@@ -283,10 +283,11 @@ export default function BookingsPage() {
                 </>
               )}
               {booking.status === 'COMPLETED' && !booking.review && (
-                <Button size="sm" variant="outline" className="rounded-full">
+                <Button size="sm" variant="outline" className="rounded-full min-h-[44px]">
                   Leave Review
                 </Button>
               )}
+                </div>
               </div>
             </div>
           </div>
