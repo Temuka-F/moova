@@ -1,27 +1,38 @@
-import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Outfit } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import './globals.css'
 
-const plusJakarta = Plus_Jakarta_Sans({
+const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap',
+  weight: ['300', '400', '500', '600', '700', '800'],
 })
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
+}
 
 export const metadata: Metadata = {
   title: {
-    default: 'Moova - Car Rental in Georgia',
+    default: 'Moova - Premium Car Sharing in Georgia',
     template: '%s | Moova',
   },
-  description: 'Rent cars from trusted local hosts in Georgia. Find the perfect car for your trip in Tbilisi, Batumi, Kutaisi, and more.',
-  keywords: ['car rental', 'Georgia', 'Tbilisi', 'car sharing', 'rent a car', 'peer to peer'],
+  description: 'The smartest way to rent a car in Georgia. Discover nearby cars, book instantly, and drive within minutes. Premium car sharing made simple.',
+  keywords: ['car rental', 'Georgia', 'Tbilisi', 'car sharing', 'rent a car', 'peer to peer', 'instant booking'],
   authors: [{ name: 'Moova' }],
   openGraph: {
-    title: 'Moova - Car Rental in Georgia',
-    description: 'Rent cars from trusted local hosts in Georgia',
+    title: 'Moova - Premium Car Sharing in Georgia',
+    description: 'Discover nearby cars, book instantly, and drive within minutes',
     url: 'https://moova.ge',
     siteName: 'Moova',
     locale: 'en_US',
@@ -29,8 +40,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Moova - Car Rental in Georgia',
-    description: 'Rent cars from trusted local hosts in Georgia',
+    title: 'Moova - Premium Car Sharing',
+    description: 'Discover nearby cars, book instantly, and drive within minutes',
   },
   robots: {
     index: true,
@@ -45,13 +56,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${plusJakarta.variable} font-sans min-h-screen flex flex-col`}>
+      <body className={`${outfit.variable} font-sans min-h-screen flex flex-col`}>
         <Header />
         <main className="flex-1">
           {children}
         </main>
         <Footer />
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-center" richColors closeButton />
       </body>
     </html>
   )

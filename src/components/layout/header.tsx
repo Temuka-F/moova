@@ -15,20 +15,22 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { 
   Menu, 
-  User, 
   LogOut, 
   Settings,
   LayoutDashboard,
   Plus,
-  ChevronDown
+  ChevronDown,
+  Car,
+  Heart,
+  MessageCircle,
+  HelpCircle
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const navigation = [
-  { name: 'Browse cars', href: '/cars' },
-  { name: 'List your car', href: '/list-your-car' },
-  { name: 'How it works', href: '/#how-it-works' },
+  { name: 'Browse Cars', href: '/cars' },
+  { name: 'List Your Car', href: '/list-your-car' },
 ]
 
 export function Header() {
@@ -77,24 +79,30 @@ export function Header() {
 
   const isHomePage = pathname === '/'
   const isAuthPage = pathname === '/login' || pathname === '/register'
+  const isDashboard = pathname.startsWith('/dashboard') || pathname.startsWith('/admin')
 
   // Don't show header on auth pages
   if (isAuthPage) return null
 
+  // Different header for dashboard
+  const headerBg = isDashboard 
+    ? 'bg-white border-b shadow-sm' 
+    : isScrolled || !isHomePage
+      ? 'bg-white/95 backdrop-blur-xl border-b border-border shadow-sm'
+      : 'bg-transparent'
+
+  const textColor = isDashboard || isScrolled || !isHomePage 
+    ? 'text-foreground' 
+    : 'text-white'
+
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled || !isHomePage
-          ? 'bg-white/95 backdrop-blur-md border-b border-border shadow-sm'
-          : 'bg-transparent'
-      }`}
-    >
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBg}`}>
       <nav className="container mx-auto px-4 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 group">
             <span className={`text-2xl font-bold tracking-tight transition-colors ${
-              isScrolled || !isHomePage ? 'text-primary' : 'text-white'
+              isDashboard || isScrolled || !isHomePage ? 'text-primary' : 'text-white'
             }`}>
               moova
             </span>
@@ -106,10 +114,10 @@ export function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   pathname === item.href
                     ? 'bg-primary/10 text-primary'
-                    : isScrolled || !isHomePage
+                    : isDashboard || isScrolled || !isHomePage
                     ? 'text-muted-foreground hover:text-foreground hover:bg-muted'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
                 }`}
@@ -120,7 +128,7 @@ export function Header() {
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-3">
             {loading ? (
               <div className="w-20 h-10 bg-muted rounded-full animate-pulse" />
             ) : user ? (
@@ -129,7 +137,7 @@ export function Header() {
                   <Button 
                     variant="ghost" 
                     className={`flex items-center gap-2 rounded-full pl-2 pr-3 ${
-                      isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'
+                      isDashboard || isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'
                     }`}
                   >
                     <Avatar className="h-8 w-8">
@@ -138,11 +146,14 @@ export function Header() {
                         {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
+                    <span className="hidden lg:inline font-medium">
+                      {user.user_metadata?.first_name || 'Account'}
+                    </span>
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
-                  <div className="px-2 py-3 border-b">
+                  <div className="px-3 py-3 border-b">
                     <p className="font-semibold">
                       {user.user_metadata?.first_name || 'User'} {user.user_metadata?.last_name || ''}
                     </p>
@@ -150,27 +161,53 @@ export function Header() {
                       {user.email}
                     </p>
                   </div>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="cursor-pointer">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/dashboard">
+                      <LayoutDashboard className="mr-3 h-4 w-4" />
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/list-your-car" className="cursor-pointer">
-                      <Plus className="mr-2 h-4 w-4" />
-                      List your car
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/dashboard/bookings">
+                      <Car className="mr-3 h-4 w-4" />
+                      My Bookings
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/dashboard/messages">
+                      <MessageCircle className="mr-3 h-4 w-4" />
+                      Messages
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/dashboard/favorites">
+                      <Heart className="mr-3 h-4 w-4" />
+                      Saved Cars
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/list-your-car">
+                      <Plus className="mr-3 h-4 w-4" />
+                      List Your Car
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/dashboard/settings">
+                      <Settings className="mr-3 h-4 w-4" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/help">
+                      <HelpCircle className="mr-3 h-4 w-4" />
+                      Help
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="mr-3 h-4 w-4" />
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -180,7 +217,7 @@ export function Header() {
                 <Button 
                   variant="ghost" 
                   className={`rounded-full ${
-                    isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'
+                    isDashboard || isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'
                   }`}
                   asChild
                 >
@@ -199,7 +236,7 @@ export function Header() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                className={isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'}
+                className={isDashboard || isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'}
               >
                 <Menu className="h-6 w-6" />
               </Button>
@@ -214,20 +251,59 @@ export function Header() {
 
                 <div className="flex-1 p-6">
                   <div className="space-y-1">
-                    {navigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`block px-4 py-3 rounded-xl text-lg font-medium transition-colors ${
-                          pathname === item.href
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                        }`}
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
+                    <Link
+                      href="/cars"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-lg font-medium transition-colors hover:bg-muted"
+                    >
+                      <Car className="w-5 h-5" />
+                      Browse Cars
+                    </Link>
+                    <Link
+                      href="/list-your-car"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-lg font-medium transition-colors hover:bg-muted"
+                    >
+                      <Plus className="w-5 h-5" />
+                      List Your Car
+                    </Link>
+                    {user && (
+                      <>
+                        <div className="h-px bg-border my-4" />
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl text-lg font-medium transition-colors hover:bg-muted"
+                        >
+                          <LayoutDashboard className="w-5 h-5" />
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/dashboard/bookings"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors hover:bg-muted text-muted-foreground"
+                        >
+                          <Car className="w-5 h-5" />
+                          My Bookings
+                        </Link>
+                        <Link
+                          href="/dashboard/messages"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors hover:bg-muted text-muted-foreground"
+                        >
+                          <MessageCircle className="w-5 h-5" />
+                          Messages
+                        </Link>
+                        <Link
+                          href="/dashboard/settings"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors hover:bg-muted text-muted-foreground"
+                        >
+                          <Settings className="w-5 h-5" />
+                          Settings
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -245,20 +321,16 @@ export function Header() {
                           <p className="font-semibold">
                             {user.user_metadata?.first_name} {user.user_metadata?.last_name}
                           </p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <p className="text-sm text-muted-foreground truncate max-w-[180px]">{user.email}</p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant="outline" className="rounded-xl" asChild onClick={() => setMobileMenuOpen(false)}>
-                          <Link href="/dashboard">Dashboard</Link>
-                        </Button>
-                        <Button variant="destructive" className="rounded-xl" onClick={handleLogout}>
-                          Log out
-                        </Button>
-                      </div>
+                      <Button variant="destructive" className="w-full rounded-xl" onClick={handleLogout}>
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Log out
+                      </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       <Button variant="outline" className="rounded-xl" asChild onClick={() => setMobileMenuOpen(false)}>
                         <Link href="/login">Log in</Link>
                       </Button>

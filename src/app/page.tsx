@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,125 +17,52 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
+import { CarCard } from '@/components/cars/car-card'
 import { 
   MapPin, 
   CalendarDays, 
   Search, 
   Car, 
-  Fuel, 
+  Shield,
   Users,
   Star,
   ChevronRight,
   Zap,
-  Filter,
-  SlidersHorizontal,
-  Sparkles
+  Sparkles,
+  Clock,
+  MapPinned,
+  CreditCard,
+  ArrowRight,
+  CheckCircle2,
+  TrendingUp
 } from 'lucide-react'
 import { format, addDays } from 'date-fns'
 import { GEORGIAN_CITIES } from '@/types'
+import { DUMMY_CARS, DUMMY_USERS, searchCars } from '@/lib/dummy-data'
 
-// Featured cars data
-const featuredCars = [
-  {
-    id: '1',
-    make: 'Toyota',
-    model: 'Camry',
-    year: 2023,
-    pricePerDay: 120,
-    city: 'Tbilisi',
-    transmission: 'AUTOMATIC',
-    fuelType: 'HYBRID',
-    seats: 5,
-    rating: 4.9,
-    reviewCount: 47,
-    image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?q=80&w=800&auto=format&fit=crop',
-    isInstantBook: true,
-  },
-  {
-    id: '2',
-    make: 'Mercedes-Benz',
-    model: 'E-Class',
-    year: 2022,
-    pricePerDay: 200,
-    city: 'Tbilisi',
-    transmission: 'AUTOMATIC',
-    fuelType: 'PETROL',
-    seats: 5,
-    rating: 4.8,
-    reviewCount: 32,
-    image: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?q=80&w=800&auto=format&fit=crop',
-    isInstantBook: true,
-  },
-  {
-    id: '3',
-    make: 'BMW',
-    model: 'X5',
-    year: 2023,
-    pricePerDay: 250,
-    city: 'Batumi',
-    transmission: 'AUTOMATIC',
-    fuelType: 'DIESEL',
-    seats: 7,
-    rating: 4.9,
-    reviewCount: 28,
-    image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=800&auto=format&fit=crop',
-    isInstantBook: false,
-  },
-  {
-    id: '4',
-    make: 'Hyundai',
-    model: 'Tucson',
-    year: 2022,
-    pricePerDay: 100,
-    city: 'Kutaisi',
-    transmission: 'AUTOMATIC',
-    fuelType: 'PETROL',
-    seats: 5,
-    rating: 4.7,
-    reviewCount: 19,
-    image: 'https://images.unsplash.com/photo-1633695610681-8477dcfd5c33?q=80&w=800&auto=format&fit=crop',
-    isInstantBook: true,
-  },
-  {
-    id: '5',
-    make: 'Tesla',
-    model: 'Model 3',
-    year: 2023,
-    pricePerDay: 180,
-    city: 'Tbilisi',
-    transmission: 'AUTOMATIC',
-    fuelType: 'ELECTRIC',
-    seats: 5,
-    rating: 5.0,
-    reviewCount: 12,
-    image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=800&auto=format&fit=crop',
-    isInstantBook: true,
-  },
-  {
-    id: '6',
-    make: 'Volkswagen',
-    model: 'Golf',
-    year: 2021,
-    pricePerDay: 80,
-    city: 'Tbilisi',
-    transmission: 'MANUAL',
-    fuelType: 'PETROL',
-    seats: 5,
-    rating: 4.6,
-    reviewCount: 54,
-    image: 'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?q=80&w=800&auto=format&fit=crop',
-    isInstantBook: true,
-  },
-]
+// Dynamically import map to avoid SSR issues
+const CarMap = dynamic(
+  () => import('@/components/map/car-map').then((mod) => mod.CarMap),
+  { 
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-muted animate-pulse rounded-2xl" />
+  }
+)
 
 const carTypes = [
-  { id: 'all', name: 'All', icon: '🚗' },
-  { id: 'economy', name: 'Economy', icon: '💰' },
-  { id: 'suv', name: 'SUV', icon: '🚙' },
-  { id: 'luxury', name: 'Luxury', icon: '✨' },
-  { id: 'electric', name: 'Electric', icon: '⚡' },
-  { id: 'sports', name: 'Sports', icon: '🏎️' },
+  { id: 'all', name: 'All Cars', icon: '🚗', count: DUMMY_CARS.length },
+  { id: 'SEDAN', name: 'Sedan', icon: '🚙', count: DUMMY_CARS.filter(c => c.category === 'SEDAN').length },
+  { id: 'SUV', name: 'SUV', icon: '🚐', count: DUMMY_CARS.filter(c => c.category === 'SUV').length },
+  { id: 'LUXURY', name: 'Luxury', icon: '✨', count: DUMMY_CARS.filter(c => c.category === 'LUXURY').length },
+  { id: 'SPORTS', name: 'Sports', icon: '🏎️', count: DUMMY_CARS.filter(c => c.category === 'SPORTS').length },
+  { id: 'COMPACT', name: 'Compact', icon: '🚕', count: DUMMY_CARS.filter(c => c.category === 'COMPACT').length },
+]
+
+const cities = [
+  { name: 'Tbilisi', count: DUMMY_CARS.filter(c => c.city === 'Tbilisi').length, image: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=400' },
+  { name: 'Batumi', count: DUMMY_CARS.filter(c => c.city === 'Batumi').length, image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400' },
+  { name: 'Kutaisi', count: DUMMY_CARS.filter(c => c.city === 'Kutaisi').length, image: 'https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=400' },
+  { name: 'Gudauri', count: DUMMY_CARS.filter(c => c.city === 'Gudauri').length, image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=400' },
 ]
 
 export default function HomePage() {
@@ -142,52 +70,80 @@ export default function HomePage() {
   const [city, setCity] = useState('')
   const [startDate, setStartDate] = useState<Date>(addDays(new Date(), 1))
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 4))
-  const [priceRange, setPriceRange] = useState([0, 300])
   const [selectedType, setSelectedType] = useState('all')
-  const [showFilters, setShowFilters] = useState(false)
+  const [selectedCarId, setSelectedCarId] = useState<string | null>(null)
+  const [showMap, setShowMap] = useState(false)
+
+  // Get cars based on filters
+  const filteredCars = searchCars({
+    city: city || undefined,
+    category: selectedType !== 'all' ? selectedType : undefined,
+  })
+
+  // Prepare cars for map display
+  const mapCars = filteredCars.map(car => ({
+    id: car.id,
+    make: car.make,
+    model: car.model,
+    year: car.year,
+    pricePerDay: car.pricePerDay,
+    latitude: car.latitude,
+    longitude: car.longitude,
+    rating: car.rating,
+    isInstantBook: car.isInstantBook,
+    image: car.images[0]?.url || '',
+  }))
 
   const handleSearch = () => {
     const params = new URLSearchParams()
     if (city) params.set('city', city)
     if (startDate) params.set('startDate', startDate.toISOString())
     if (endDate) params.set('endDate', endDate.toISOString())
-    if (priceRange[0] > 0) params.set('minPrice', priceRange[0].toString())
-    if (priceRange[1] < 300) params.set('maxPrice', priceRange[1].toString())
-    if (selectedType !== 'all') params.set('category', selectedType.toUpperCase())
+    if (selectedType !== 'all') params.set('category', selectedType)
     router.push(`/cars?${params.toString()}`)
   }
 
-  const filteredCars = featuredCars.filter(car => {
-    if (city && car.city !== city) return false
-    if (car.pricePerDay < priceRange[0] || car.pricePerDay > priceRange[1]) return false
-    return true
-  })
-
   return (
     <div className="min-h-[100dvh] bg-background">
-      {/* Search Header */}
-      <div className="bg-secondary text-white">
-        <div className="container mx-auto px-4 pt-20 pb-6 md:pt-24 md:pb-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-3">
-              Find your perfect ride
-            </h1>
-            <p className="text-white/70 text-sm md:text-base mb-6">
-              500+ cars available across Georgia
-            </p>
+      {/* Hero Section */}
+      <section className="relative bg-secondary text-white overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }} />
+        </div>
 
-            {/* Main Search Card */}
-            <div className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 text-foreground">
-              {/* Location & Dates - Always visible */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <div className="container mx-auto px-4 pt-24 pb-12 md:pt-32 md:pb-16 relative">
+          <div className="max-w-5xl mx-auto">
+            {/* Hero Text */}
+            <div className="text-center mb-8 md:mb-12">
+              <Badge className="bg-primary/20 text-primary border-0 mb-4 px-4 py-1.5">
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Georgia&apos;s #1 Car Sharing Platform
+              </Badge>
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-tight">
+                Drive the car you want,
+                <br />
+                <span className="text-gradient-animated">when you want it</span>
+              </h1>
+              <p className="text-white/70 text-base md:text-lg max-w-2xl mx-auto">
+                Skip the rental counter. Book instantly from {DUMMY_CARS.length}+ cars 
+                shared by local hosts in Tbilisi, Batumi, and beyond.
+              </p>
+            </div>
+
+            {/* Search Card */}
+            <div className="bg-white rounded-3xl shadow-2xl p-4 md:p-6 text-foreground max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
                 {/* City Selection */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs md:text-sm font-medium text-muted-foreground">Pick-up location</Label>
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Location</Label>
                   <Select value={city} onValueChange={setCity}>
-                    <SelectTrigger className="h-12 md:h-14 text-base">
+                    <SelectTrigger className="h-14 text-base border-2 border-border rounded-xl focus:border-primary">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-primary" />
-                        <SelectValue placeholder="Select city" />
+                        <MapPin className="w-5 h-5 text-primary" />
+                        <SelectValue placeholder="Where to?" />
                       </div>
                     </SelectTrigger>
                     <SelectContent>
@@ -200,11 +156,11 @@ export default function HomePage() {
 
                 {/* Start Date */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs md:text-sm font-medium text-muted-foreground">Pick-up date</Label>
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pick-up</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-12 md:h-14 w-full justify-start text-base font-normal">
-                        <CalendarDays className="w-4 h-4 mr-2 text-primary" />
+                      <Button variant="outline" className="h-14 w-full justify-start text-base font-normal border-2 rounded-xl">
+                        <CalendarDays className="w-5 h-5 mr-2 text-primary" />
                         {format(startDate, 'EEE, MMM d')}
                       </Button>
                     </PopoverTrigger>
@@ -222,11 +178,11 @@ export default function HomePage() {
 
                 {/* End Date */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs md:text-sm font-medium text-muted-foreground">Return date</Label>
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Return</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-12 md:h-14 w-full justify-start text-base font-normal">
-                        <CalendarDays className="w-4 h-4 mr-2 text-primary" />
+                      <Button variant="outline" className="h-14 w-full justify-start text-base font-normal border-2 rounded-xl">
+                        <CalendarDays className="w-5 h-5 mr-2 text-primary" />
                         {format(endDate, 'EEE, MMM d')}
                       </Button>
                     </PopoverTrigger>
@@ -241,223 +197,320 @@ export default function HomePage() {
                     </PopoverContent>
                   </Popover>
                 </div>
-              </div>
 
-              {/* Toggle Filters Button */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 text-sm text-muted-foreground mt-4 hover:text-foreground transition-colors"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                {showFilters ? 'Hide filters' : 'More filters'}
-              </button>
-
-              {/* Expandable Filters */}
-              {showFilters && (
-                <div className="mt-4 pt-4 border-t space-y-4">
-                  {/* Price Range */}
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <Label className="text-sm font-medium">Price per day</Label>
-                      <span className="text-sm text-muted-foreground">
-                        ₾{priceRange[0]} - ₾{priceRange[1]}+
-                      </span>
-                    </div>
-                    <Slider
-                      value={priceRange}
-                      onValueChange={setPriceRange}
-                      min={0}
-                      max={300}
-                      step={10}
-                      className="w-full"
-                    />
-                  </div>
+                {/* Search Button */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-transparent">Search</Label>
+                  <Button 
+                    onClick={handleSearch}
+                    size="lg" 
+                    className="w-full h-14 text-base font-semibold rounded-xl glow-primary"
+                  >
+                    <Search className="w-5 h-5 mr-2" />
+                    Search
+                  </Button>
                 </div>
-              )}
+              </div>
+            </div>
 
-              {/* Search Button */}
-              <Button 
-                onClick={handleSearch}
-                size="lg" 
-                className="w-full h-12 md:h-14 mt-4 text-base md:text-lg font-semibold rounded-xl"
-              >
-                <Search className="w-5 h-5 mr-2" />
-                Search {filteredCars.length} available cars
-              </Button>
+            {/* Quick Stats */}
+            <div className="flex items-center justify-center gap-6 md:gap-12 mt-8 text-center">
+              <div>
+                <p className="text-2xl md:text-3xl font-bold">{DUMMY_CARS.length}+</p>
+                <p className="text-xs md:text-sm text-white/60">Cars</p>
+              </div>
+              <div className="w-px h-8 bg-white/20" />
+              <div>
+                <p className="text-2xl md:text-3xl font-bold">{DUMMY_USERS.filter(u => u.role === 'OWNER').length}</p>
+                <p className="text-xs md:text-sm text-white/60">Hosts</p>
+              </div>
+              <div className="w-px h-8 bg-white/20" />
+              <div>
+                <p className="text-2xl md:text-3xl font-bold">4.9</p>
+                <p className="text-xs md:text-sm text-white/60">Rating</p>
+              </div>
+              <div className="w-px h-8 bg-white/20" />
+              <div>
+                <p className="text-2xl md:text-3xl font-bold">24/7</p>
+                <p className="text-xs md:text-sm text-white/60">Support</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Car Type Quick Filters */}
-      <div className="sticky top-14 md:top-16 z-30 bg-background border-b">
+      <section className="sticky top-16 z-30 bg-background border-b">
         <div className="container mx-auto px-4">
-          <div className="flex gap-2 py-3 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 py-4 overflow-x-auto no-scrollbar">
             {carTypes.map((type) => (
               <button
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all btn-press ${
                   selectedType === type.id
-                    ? 'bg-primary text-white'
+                    ? 'bg-secondary text-white shadow-lg'
                     : 'bg-muted hover:bg-muted/80 text-foreground'
                 }`}
               >
                 <span>{type.icon}</span>
                 <span>{type.name}</span>
+                <span className={`text-xs ${selectedType === type.id ? 'text-white/70' : 'text-muted-foreground'}`}>
+                  ({type.count})
+                </span>
               </button>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Available Cars Section */}
-      <div className="container mx-auto px-4 py-6 md:py-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6">
+      {/* Map + Cars Section */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg md:text-xl font-bold">
-              {city ? `Cars in ${city}` : 'Available now'}
+            <h2 className="text-2xl md:text-3xl font-bold">
+              {city ? `Cars in ${city}` : 'Cars near you'}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {filteredCars.length} cars ready for your trip
+            <p className="text-muted-foreground mt-1">
+              {filteredCars.length} cars available for your dates
             </p>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/cars">
-              View all
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Link>
-          </Button>
-        </div>
-
-        {/* Cars Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {filteredCars.map((car) => (
-            <Link 
-              key={car.id} 
-              href={`/cars/${car.id}`}
-              className="group bg-card rounded-xl md:rounded-2xl overflow-hidden border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+          <div className="flex items-center gap-2">
+            <Button
+              variant={showMap ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowMap(!showMap)}
+              className="hidden md:flex"
             >
-              {/* Car Image */}
-              <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                <img
-                  src={car.image}
-                  alt={`${car.make} ${car.model}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                
-                {/* Badges */}
-                <div className="absolute top-3 left-3 flex gap-2">
-                  {car.isInstantBook && (
-                    <Badge className="bg-primary text-xs">
-                      <Zap className="w-3 h-3 mr-1" />
-                      Instant
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Rating */}
-                <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white rounded-full px-2 py-1">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs font-medium">{car.rating}</span>
-                </div>
-
-                {/* Price Badge */}
-                <div className="absolute bottom-3 right-3 bg-white rounded-lg px-3 py-1.5 shadow-lg">
-                  <span className="text-lg font-bold text-primary">₾{car.pricePerDay}</span>
-                  <span className="text-xs text-muted-foreground">/day</span>
-                </div>
-              </div>
-
-              {/* Car Info */}
-              <div className="p-3 md:p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div>
-                    <h3 className="font-semibold text-base md:text-lg">
-                      {car.make} {car.model}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{car.year}</p>
-                  </div>
-                </div>
-
-                {/* Quick Info */}
-                <div className="flex items-center gap-3 text-xs md:text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5" />
-                    <span>{car.seats}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Car className="w-3.5 h-3.5" />
-                    <span>{car.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Fuel className="w-3.5 h-3.5" />
-                    <span>{car.fuelType}</span>
-                  </div>
-                  <div className="flex items-center gap-1 ml-auto">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{car.city}</span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Load More */}
-        <div className="mt-8 text-center">
-          <Button variant="outline" size="lg" asChild>
-            <Link href="/cars">
-              Browse all cars
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Quick Stats Bar */}
-      <div className="bg-muted/50 border-t">
-        <div className="container mx-auto px-4 py-6 md:py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center">
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">500+</p>
-              <p className="text-sm text-muted-foreground">Cars available</p>
-            </div>
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">20+</p>
-              <p className="text-sm text-muted-foreground">Cities</p>
-            </div>
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">4.8</p>
-              <p className="text-sm text-muted-foreground">Avg rating</p>
-            </div>
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">24/7</p>
-              <p className="text-sm text-muted-foreground">Support</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Become a Host CTA */}
-      <div className="bg-primary text-white">
-        <div className="container mx-auto px-4 py-8 md:py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl md:text-2xl font-bold mb-1">Have a car? Start earning</h3>
-              <p className="text-white/80 text-sm md:text-base">
-                List your car and earn up to ₾800/month
-              </p>
-            </div>
-            <Button variant="secondary" size="lg" asChild className="w-full md:w-auto">
-              <Link href="/list-your-car">
-                <Sparkles className="w-4 h-4 mr-2" />
-                List your car
+              <MapPinned className="w-4 h-4 mr-2" />
+              {showMap ? 'Hide Map' : 'Show Map'}
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/cars">
+                View all
+                <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
           </div>
         </div>
-      </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Cars Grid */}
+          <div className={showMap ? '' : 'lg:col-span-2'}>
+            <div className={`grid gap-4 ${showMap ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+              {filteredCars.slice(0, showMap ? 4 : 8).map((car) => (
+                <CarCard 
+                  key={car.id} 
+                  car={{
+                    ...car,
+                    images: car.images,
+                    owner: car.owner ? {
+                      firstName: car.owner.firstName,
+                      lastName: car.owner.lastName,
+                      avatarUrl: car.owner.avatarUrl,
+                      rating: car.owner.rating
+                    } : undefined
+                  }}
+                  variant={showMap ? 'horizontal' : 'default'}
+                  showOwner
+                />
+              ))}
+            </div>
+            
+            <div className="mt-6 text-center">
+              <Button variant="outline" size="lg" asChild className="rounded-full">
+                <Link href="/cars">
+                  Browse all {filteredCars.length} cars
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Map */}
+          {showMap && (
+            <div className="hidden lg:block h-[600px] sticky top-32">
+              <CarMap
+                cars={mapCars}
+                selectedCarId={selectedCarId}
+                onCarSelect={(id) => {
+                  setSelectedCarId(id)
+                  router.push(`/cars/${id}`)
+                }}
+                className="w-full h-full"
+              />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Popular Cities */}
+      <section className="bg-muted/50 py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">Explore by City</h2>
+            <p className="text-muted-foreground">Find the perfect car wherever you&apos;re headed</p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {cities.map((c) => (
+              <Link
+                key={c.name}
+                href={`/cars?city=${c.name}`}
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden"
+              >
+                <img
+                  src={c.image}
+                  alt={c.name}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-4 text-white">
+                  <h3 className="font-bold text-lg">{c.name}</h3>
+                  <p className="text-sm text-white/80">{c.count} cars</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">How Moova Works</h2>
+            <p className="text-muted-foreground">Get on the road in three simple steps</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">1. Find your car</h3>
+              <p className="text-muted-foreground text-sm">
+                Search by location and dates. Filter by type, price, and features to find your perfect match.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Zap className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">2. Book instantly</h3>
+              <p className="text-muted-foreground text-sm">
+                Book cars marked with ⚡ instantly, or send a request. Secure payment through the app.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Car className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">3. Hit the road</h3>
+              <p className="text-muted-foreground text-sm">
+                Meet your host, pick up the keys, and enjoy your trip. Return the car when you&apos;re done.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust & Safety */}
+      <section className="bg-secondary text-white py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-8 items-center max-w-5xl mx-auto">
+            <div>
+              <Badge className="bg-primary/20 text-primary border-0 mb-4">
+                <Shield className="w-3.5 h-3.5 mr-1.5" />
+                Your safety matters
+              </Badge>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                Drive with confidence
+              </h2>
+              <p className="text-white/70 mb-6">
+                Every trip on Moova is protected. We verify all hosts and renters, 
+                and provide comprehensive insurance coverage for peace of mind.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
+                  <span>All hosts verified with ID and documents</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
+                  <span>Insurance included in every booking</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
+                  <span>24/7 roadside assistance</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
+                  <span>Secure payments through the platform</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/10 rounded-2xl p-6">
+                <Users className="w-8 h-8 text-primary mb-3" />
+                <p className="text-2xl font-bold">{DUMMY_USERS.length}+</p>
+                <p className="text-sm text-white/60">Verified Users</p>
+              </div>
+              <div className="bg-white/10 rounded-2xl p-6">
+                <Star className="w-8 h-8 text-primary mb-3" />
+                <p className="text-2xl font-bold">4.9</p>
+                <p className="text-sm text-white/60">Average Rating</p>
+              </div>
+              <div className="bg-white/10 rounded-2xl p-6">
+                <Shield className="w-8 h-8 text-primary mb-3" />
+                <p className="text-2xl font-bold">100%</p>
+                <p className="text-sm text-white/60">Trips Insured</p>
+              </div>
+              <div className="bg-white/10 rounded-2xl p-6">
+                <Clock className="w-8 h-8 text-primary mb-3" />
+                <p className="text-2xl font-bold">&lt;1hr</p>
+                <p className="text-sm text-white/60">Avg Response</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Become a Host CTA */}
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 rounded-3xl p-8 md:p-12 text-center">
+            <Badge className="bg-primary/20 text-primary border-0 mb-4">
+              <TrendingUp className="w-3.5 h-3.5 mr-1.5" />
+              Earn with your car
+            </Badge>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">
+              Turn your car into a money machine
+            </h2>
+            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+              Join {DUMMY_USERS.filter(u => u.role === 'OWNER').length} hosts earning up to ₾1,500/month 
+              by sharing their cars on Moova. Free to list, easy to manage.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button size="lg" asChild className="rounded-full px-8">
+                <Link href="/list-your-car">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  List your car
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild className="rounded-full px-8">
+                <Link href="/dashboard">
+                  Learn more
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
