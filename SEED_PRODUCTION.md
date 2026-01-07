@@ -2,20 +2,43 @@
 
 The production database needs to be seeded with dummy data for the application to work properly.
 
-## To Seed Production Database:
+## Quick Start - Seed Production Database:
 
-1. Make sure you have the production environment variables set in your `.env.local` file (or use Vercel's environment variables)
+### Option 1: Using Production Seed Script (Recommended)
 
-2. Run the seed script:
+1. Pull production environment variables:
+```bash
+npx vercel env pull .env.production
+```
+
+2. Copy `DATABASE_URL` and `DIRECT_URL` from `.env.production` to `.env.local` (temporarily)
+
+3. Run the production seed script:
+```bash
+npx tsx scripts/seed-production.ts
+```
+
+4. Restore your local `.env.local` file
+
+### Option 2: Using Standard Seed Script
+
+1. Set production `DATABASE_URL` and `DIRECT_URL` in `.env.local` (temporarily)
+
+2. Run:
 ```bash
 npm run seed
 ```
 
-This will create:
-- 10 dummy users (owners and renters)
-- 15 cars (all approved and active)
-- 5 sample bookings
-- Sample reviews
+3. Restore your local environment variables
+
+## What Gets Created:
+
+- **10 dummy users** (owners and renters)
+- **15 cars** (all approved and active, ready to browse)
+- **5 sample bookings**
+- **Sample reviews**
+
+All seed data is marked with `isSeedData: true` for easy identification and cleanup.
 
 ## To Check if Seed Data Exists:
 
@@ -29,4 +52,4 @@ npx tsx scripts/check-and-seed.ts
 npm run seed:cleanup
 ```
 
-**Note:** The seed data is marked with `isSeedData: true` so it can be easily identified and deleted before going live.
+**⚠️ Important:** The production database must be seeded for the application to work. Without seed data, you'll see "Car not found" errors and empty browse pages.
