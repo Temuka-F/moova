@@ -5,6 +5,9 @@ import { usePathname } from 'next/navigation'
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { showComingSoon } from '@/lib/toast-helpers'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 const footerLinks = {
   explore: [
@@ -41,10 +44,26 @@ const socialLinks = [
 
 export function Footer() {
   const pathname = usePathname()
+  const [email, setEmail] = useState('')
   
   // Don't show footer on auth pages or admin pages
   if (pathname === '/login' || pathname === '/register' || pathname.startsWith('/admin')) {
     return null
+  }
+
+  const handleSubscribe = () => {
+    if (!email) {
+      toast.error('Please enter your email')
+      return
+    }
+    if (!email.includes('@')) {
+      toast.error('Please enter a valid email')
+      return
+    }
+    toast.success('Thanks for subscribing!', {
+      description: 'You\'ll receive updates about Moova.'
+    })
+    setEmail('')
   }
 
   return (
@@ -67,10 +86,17 @@ export function Footer() {
               <div className="flex gap-2">
                 <Input 
                   type="email" 
-                  placeholder="Enter your email" 
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-full"
                 />
-                <Button size="sm" className="rounded-full px-4">
+                <Button 
+                  size="sm" 
+                  className="rounded-full px-4 min-h-[40px]"
+                  onClick={handleSubscribe}
+                >
                   Subscribe
                 </Button>
               </div>

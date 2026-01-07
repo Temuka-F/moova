@@ -14,13 +14,15 @@ import {
   Share2,
   MapPin,
   Users,
-  CheckCircle2
+  CheckCircle2,
+  Car
 } from 'lucide-react'
 import { MapCar } from '@/lib/map-cars'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 
 interface CarPopupProps {
   car: MapCar | null
@@ -28,8 +30,10 @@ interface CarPopupProps {
 }
 
 export function CarPopup({ car, onClose }: CarPopupProps) {
+  const { requireAuth } = useAuth()
   const [isFavorited, setIsFavorited] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [imageError, setImageError] = useState(false)
 
   if (!car) return null
 
@@ -47,8 +51,18 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
   }
 
   const handleFavorite = () => {
+    if (!requireAuth('save cars')) {
+      return
+    }
     setIsFavorited(!isFavorited)
     toast.success(isFavorited ? 'Removed from favorites' : 'Added to favorites')
+  }
+
+  const handleBookClick = (e: React.MouseEvent) => {
+    if (!requireAuth('book this car')) {
+      e.preventDefault()
+      return
+    }
   }
 
   return (
@@ -76,19 +90,19 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           className="relative w-full max-w-lg bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl overflow-hidden z-10 max-h-[90vh] overflow-y-auto"
         >
-          {/* Close button */}
+          {/* Close button - 44px minimum touch target */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+            className="absolute top-4 right-4 z-20 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>
 
-          {/* Share & Favorite buttons */}
+          {/* Share & Favorite buttons - 44px minimum touch targets */}
           <div className="absolute top-4 left-4 z-20 flex gap-2">
             <button 
               onClick={handleFavorite}
-              className={`w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-lg ${
+              className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full backdrop-blur-sm flex items-center justify-center transition-all shadow-lg active:scale-95 ${
                 isFavorited 
                   ? 'bg-red-500 text-white' 
                   : 'bg-white/90 text-gray-700 hover:bg-white'
@@ -98,22 +112,29 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
             </button>
             <button 
               onClick={handleShare}
-              className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 flex items-center justify-center hover:bg-white transition-colors shadow-lg"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white/90 backdrop-blur-sm text-gray-700 flex items-center justify-center hover:bg-white transition-all shadow-lg active:scale-95"
             >
               <Share2 className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Car image */}
+          {/* Car image with fallback */}
           <div className="relative h-56 lg:h-64 bg-gradient-to-br from-gray-100 to-gray-200">
-            <Image
-              src={car.images[currentImageIndex] || car.images[0]}
-              alt={`${car.make} ${car.model}`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 512px"
-              priority
-            />
+            {imageError ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Car className="w-16 h-16 text-gray-300" />
+              </div>
+            ) : (
+              <Image
+                src={car.images[currentImageIndex] || car.images[0]}
+                alt={`${car.make} ${car.model}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 512px"
+                priority
+                onError={() => setImageError(true)}
+              />
+            )}
             
             {/* Image dots if multiple images */}
             {car.images.length > 1 && (
@@ -262,17 +283,18 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions - minimum 44px touch targets */}
             <div className="flex gap-3">
               <Link
                 href={`/cars/${car.id}`}
-                className="flex-1 flex items-center justify-center gap-2 py-4 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-4 min-h-[48px] bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-colors active:scale-[0.98]"
               >
                 View Details
               </Link>
               <Link
                 href={`/cars/${car.id}?book=true`}
-                className="flex-1 flex items-center justify-center gap-2 py-4 bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-colors"
+                onClick={handleBookClick}
+                className="flex-1 flex items-center justify-center gap-2 py-4 min-h-[48px] bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-colors active:scale-[0.98]"
               >
                 <Calendar className="w-5 h-5" />
                 Book Now

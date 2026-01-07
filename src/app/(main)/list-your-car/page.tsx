@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import {
   Car,
@@ -27,9 +28,12 @@ import {
   ChevronRight,
   ChevronLeft,
   Info,
+  LogIn,
 } from 'lucide-react'
 import { GEORGIAN_CITIES, CAR_MAKES, CAR_FEATURES } from '@/types'
 import type { CarCategory, Transmission, FuelType } from '@/types'
+import { useAuth } from '@/hooks/useAuth'
+import Link from 'next/link'
 
 const carSchema = z.object({
   make: z.string().min(1, 'Make is required'),
@@ -64,9 +68,9 @@ const steps = [
 
 export default function ListYourCarPage() {
   const router = useRouter()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [user, setUser] = useState<{ role: string } | null>(null)
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
 
   const {
@@ -91,30 +95,77 @@ export default function ListYourCarPage() {
     },
   })
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/me')
-        if (!response.ok) {
-          // Allow demo mode - don't redirect
-          setUser({ role: 'OWNER' })
-          return
-        }
-        const data = await response.json()
-        setUser(data)
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen pt-16 md:pt-20 pb-8 md:pb-12 bg-muted/30">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center mb-6 md:mb-8">
+            <Skeleton className="h-8 w-48 mx-auto mb-2" />
+            <Skeleton className="h-5 w-64 mx-auto" />
+          </div>
+          <div className="flex items-center justify-center gap-4 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="w-10 h-10 rounded-full" />
+            ))}
+          </div>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40 mb-2" />
+              <Skeleton className="h-4 w-56" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-10" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
-        // If user is a RENTER, prompt to upgrade
-        if (data.role === 'RENTER') {
-          // Auto-upgrade to OWNER when listing a car
-        }
-      } catch (error) {
-        // Allow demo mode on error
-        setUser({ role: 'OWNER' })
-      }
-    }
-
-    fetchUser()
-  }, [router])
+  // Auth gate - show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen pt-16 md:pt-20 pb-8 md:pb-12 bg-muted/30">
+        <div className="container mx-auto px-4 max-w-lg">
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <Car className="w-10 h-10 text-primary" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2">List Your Car</h1>
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                Sign in to start earning money by sharing your car with verified renters in Georgia.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button asChild className="rounded-full min-h-[44px]">
+                  <Link href="/login?redirect=/list-your-car">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In to Continue
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="rounded-full min-h-[44px]">
+                  <Link href="/register?redirect=/list-your-car">
+                    Create Account
+                  </Link>
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-6">
+                New to Moova?{' '}
+                <Link href="/register" className="text-primary hover:underline">
+                  Sign up for free
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   const nextStep = async () => {
     // Validate current step fields

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { 
   ChevronLeft, 
@@ -33,10 +34,13 @@ import {
   Snowflake,
   Clock,
   Phone,
-  Navigation
+  Navigation,
+  Loader2
 } from 'lucide-react'
 import { format, differenceInDays, addDays } from 'date-fns'
 import { getCarById, getSimilarCars, MapCar } from '@/lib/map-cars'
+import { useAuth } from '@/hooks/useAuth'
+import { showLoginRequired, showComingSoon } from '@/lib/toast-helpers'
 
 interface CarDetailPageProps {
   carId: string
@@ -82,11 +86,13 @@ function SimilarCarCard({ car }: { car: MapCar }) {
 
 export function CarDetailPage({ carId }: CarDetailPageProps) {
   const router = useRouter()
+  const { isAuthenticated, loading: authLoading, requireAuth } = useAuth()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
   const [isFavorited, setIsFavorited] = useState(false)
   const [isBooking, setIsBooking] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   // Get car data from map-cars
   const car = getCarById(carId)
@@ -122,6 +128,11 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
   }
 
   const handleBook = async () => {
+    // Auth guard - require login to book
+    if (!requireAuth('book this car')) {
+      return
+    }
+
     if (!startDate || !endDate) {
       toast.error('Please select your dates')
       return
@@ -138,6 +149,29 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
       toast.success('Booking request sent! The host will respond within 24 hours.')
       router.push('/dashboard/bookings')
     }
+    setIsBooking(false)
+  }
+
+  const handleFavorite = () => {
+    if (!requireAuth('save cars')) {
+      return
+    }
+    setIsFavorited(!isFavorited)
+    toast.success(isFavorited ? 'Removed from favorites' : 'Added to favorites')
+  }
+
+  const handleMessage = () => {
+    if (!requireAuth('message the host')) {
+      return
+    }
+    showComingSoon('Direct messaging')
+  }
+
+  const handleContactHost = () => {
+    if (!requireAuth('contact the host')) {
+      return
+    }
+    showComingSoon('Host contact')
   }
 
   const handleShare = async () => {
@@ -230,22 +264,22 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
           </div>
         )}
 
-        {/* Top Actions */}
+        {/* Top Actions - minimum 44px touch targets */}
         <div className="absolute top-4 right-4 flex gap-2 lg:top-6 lg:right-6">
           <Button
             variant="ghost"
             size="icon"
-            className={`w-10 h-10 rounded-full shadow-lg ${
+            className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full shadow-lg ${
               isFavorited ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-white/90 hover:bg-white'
             }`}
-            onClick={() => setIsFavorited(!isFavorited)}
+            onClick={handleFavorite}
           >
             <Heart className={`w-5 h-5 ${isFavorited ? 'fill-white' : ''}`} />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white/90 hover:bg-white shadow-lg"
             onClick={handleShare}
           >
             <Share2 className="w-5 h-5" />
@@ -339,7 +373,11 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                   </div>
                 </div>
               </div>
-              <Button variant="outline" className="hidden sm:flex rounded-full">
+              <Button 
+                variant="outline" 
+                className="hidden sm:flex rounded-full min-h-[44px]"
+                onClick={handleMessage}
+              >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Message
               </Button>
@@ -524,12 +562,15 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                 {/* Book Button */}
                 <Button 
                   size="lg" 
-                  className="w-full h-14 text-lg rounded-xl bg-black hover:bg-gray-900"
+                  className="w-full h-14 min-h-[56px] text-lg rounded-xl bg-black hover:bg-gray-900"
                   disabled={!startDate || !endDate || isBooking}
                   onClick={handleBook}
                 >
                   {isBooking ? (
-                    'Processing...'
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Processing...
+                    </>
                   ) : car.isInstantBook ? (
                     <>
                       <Zap className="w-5 h-5 mr-2" />
@@ -556,7 +597,11 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                 </div>
 
                 {/* Contact host */}
-                <Button variant="outline" className="w-full rounded-xl">
+                <Button 
+                  variant="outline" 
+                  className="w-full rounded-xl min-h-[44px]"
+                  onClick={handleContactHost}
+                >
                   <Phone className="w-4 h-4 mr-2" />
                   Contact Host
                 </Button>
@@ -582,14 +627,18 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
           </div>
           <Button 
             size="lg"
-            className="h-12 px-8 rounded-xl bg-black hover:bg-gray-900"
+            className="h-12 min-h-[48px] px-8 rounded-xl bg-black hover:bg-gray-900"
+            disabled={isBooking}
             onClick={() => {
+              if (!requireAuth('book this car')) return
               if (!startDate) setStartDate(addDays(new Date(), 1))
               if (!endDate) setEndDate(addDays(new Date(), 4))
               handleBook()
             }}
           >
-            {car.isInstantBook ? (
+            {isBooking ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : car.isInstantBook ? (
               <>
                 <Zap className="w-4 h-4 mr-2" />
                 Book Now

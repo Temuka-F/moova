@@ -22,6 +22,7 @@ import {
 import { MapCar, getTopRatedCars } from '@/lib/map-cars'
 import Image from 'next/image'
 import Link from 'next/link'
+import { CarouselSkeleton } from '@/components/ui/CarListSkeleton'
 
 interface CarDrawerProps {
   cars: MapCar[]
@@ -50,6 +51,8 @@ function SelectedCarCard({
   car: MapCar
   onClose: () => void
 }) {
+  const [imageError, setImageError] = useState(false)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -57,24 +60,31 @@ function SelectedCarCard({
       exit={{ opacity: 0, y: 20 }}
       className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden relative"
     >
-      {/* Close button */}
+      {/* Close button - 44px minimum touch target */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+        className="absolute top-4 right-4 z-10 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center hover:bg-black/70 transition-colors active:scale-95"
       >
-        <X className="w-4 h-4" />
+        <X className="w-5 h-5" />
       </button>
 
-      {/* Car image */}
+      {/* Car image with fallback */}
       <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
-        <Image
-          src={car.images[0]}
-          alt={`${car.make} ${car.model}`}
-          fill
-          className="object-cover"
-          sizes="100vw"
-          priority
-        />
+        {imageError ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Car className="w-16 h-16 text-gray-300" />
+          </div>
+        ) : (
+          <Image
+            src={car.images[0]}
+            alt={`${car.make} ${car.model}`}
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
+            onError={() => setImageError(true)}
+          />
+        )}
         
         {/* Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
@@ -181,10 +191,10 @@ function SelectedCarCard({
           )}
         </div>
 
-        {/* Book Now button */}
+        {/* Book Now button - 44px minimum touch target */}
         <Link 
           href={`/cars/${car.id}`}
-          className="w-full flex items-center justify-center gap-2 py-3.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3.5 min-h-[48px] bg-black text-white font-semibold rounded-xl hover:bg-gray-900 transition-colors active:scale-[0.98]"
         >
           <span>View Details & Book</span>
           <ArrowRight className="w-5 h-5" />
@@ -202,21 +212,30 @@ function CarCard({
   car: MapCar
   onClick: () => void 
 }) {
+  const [imageError, setImageError] = useState(false)
+
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className="flex-shrink-0 w-64 bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 cursor-pointer hover:shadow-lg transition-shadow"
     >
-      {/* Car image */}
+      {/* Car image with fallback */}
       <div className="relative h-36 bg-gradient-to-br from-gray-100 to-gray-200">
-        <Image
-          src={car.images[0]}
-          alt={`${car.make} ${car.model}`}
-          fill
-          className="object-cover"
-          sizes="256px"
-        />
+        {imageError ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Car className="w-12 h-12 text-gray-300" />
+          </div>
+        ) : (
+          <Image
+            src={car.images[0]}
+            alt={`${car.make} ${car.model}`}
+            fill
+            className="object-cover"
+            sizes="256px"
+            onError={() => setImageError(true)}
+          />
+        )}
         
         <div className="absolute top-2 left-2 flex gap-1">
           {car.isWinterReady && (
@@ -273,6 +292,8 @@ function CarListItem({
   car: MapCar
   onClick: () => void 
 }) {
+  const [imageError, setImageError] = useState(false)
+
   return (
     <Link href={`/cars/${car.id}`}>
       <motion.div
@@ -282,17 +303,24 @@ function CarListItem({
           e.preventDefault()
           onClick()
         }}
-        className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all cursor-pointer"
+        className="flex items-center gap-3 p-3 min-h-[72px] bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all cursor-pointer active:scale-[0.99]"
       >
-        {/* Car image */}
+        {/* Car image with fallback */}
         <div className="relative w-24 h-18 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-          <Image
-            src={car.images[0]}
-            alt={`${car.make} ${car.model}`}
-            fill
-            className="object-cover"
-            sizes="96px"
-          />
+          {imageError ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Car className="w-8 h-8 text-gray-300" />
+            </div>
+          ) : (
+            <Image
+              src={car.images[0]}
+              alt={`${car.make} ${car.model}`}
+              fill
+              className="object-cover"
+              sizes="96px"
+              onError={() => setImageError(true)}
+            />
+          )}
           {car.isWinterReady && (
             <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
               <Snowflake className="w-2.5 h-2.5 text-white" />
@@ -380,22 +408,22 @@ export function CarDrawer({
           {/* Filter chips - always visible (Snap 1 content) */}
           <div className="px-4 pb-3 flex-shrink-0">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
-              {FILTER_CHIPS.map((chip) => {
-                const Icon = chip.icon
-                const isActive = activeFilter === chip.id
-                return (
-                  <button
-                    key={chip.id}
-                    onClick={() => onFilterChange(isActive ? null : chip.id)}
-                    className={`
-                      flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium
-                      whitespace-nowrap transition-all duration-200 border
-                      ${isActive
-                        ? `${chip.color} text-white border-transparent shadow-lg`
-                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                      }
-                    `}
-                  >
+                  {FILTER_CHIPS.map((chip) => {
+                    const Icon = chip.icon
+                    const isActive = activeFilter === chip.id
+                    return (
+                      <button
+                        key={chip.id}
+                        onClick={() => onFilterChange(isActive ? null : chip.id)}
+                        className={`
+                          flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-full text-sm font-medium
+                          whitespace-nowrap transition-all duration-200 border active:scale-95
+                          ${isActive
+                            ? `${chip.color} text-white border-transparent shadow-lg`
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                          }
+                        `}
+                      >
                     <Icon className="w-4 h-4" />
                     <span>{chip.label}</span>
                   </button>

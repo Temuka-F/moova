@@ -88,15 +88,15 @@ export function TopNav({
             {/* Main button */}
             <div className="bg-white rounded-[20px] shadow-xl border border-gray-100/50 overflow-hidden transition-all duration-300">
               <div className="flex items-stretch">
-                {/* City selector */}
+                {/* City selector - minimum 44px touch target */}
                 <button
                   onClick={() => {
                     setIsCityPickerOpen(!isCityPickerOpen)
                     setIsDatePickerOpen(false)
                   }}
                   className={`
-                    flex-1 flex items-center gap-3 p-3 
-                    transition-all duration-300 hover:bg-gray-50
+                    flex-1 flex items-center gap-3 p-3 min-h-[56px]
+                    transition-all duration-300 hover:bg-gray-50 active:bg-gray-100
                     border-r border-gray-100
                     ${isCityPickerOpen ? 'bg-gray-50' : ''}
                   `}
@@ -122,7 +122,7 @@ export function TopNav({
                   </div>
                 </button>
 
-                {/* Date selector */}
+                {/* Date selector - minimum 44px touch target */}
                 <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                   <PopoverTrigger asChild>
                     <button
@@ -131,8 +131,8 @@ export function TopNav({
                         setIsCityPickerOpen(false)
                       }}
                       className={`
-                        flex items-center gap-2 px-4 py-3
-                        transition-all duration-300 hover:bg-gray-50
+                        flex items-center gap-2 px-4 py-3 min-h-[56px] min-w-[44px]
+                        transition-all duration-300 hover:bg-gray-50 active:bg-gray-100
                         ${isDatePickerOpen ? 'bg-gray-50' : ''}
                       `}
                     >
@@ -178,13 +178,13 @@ export function TopNav({
                     <div className="p-4 border-t border-gray-100 flex justify-between items-center">
                       <button
                         onClick={() => onDateChange?.(undefined, undefined)}
-                        className="text-sm text-gray-500 hover:text-gray-700"
+                        className="text-sm text-gray-500 hover:text-gray-700 min-h-[44px] px-2"
                       >
                         Clear dates
                       </button>
                       <button
                         onClick={() => setIsDatePickerOpen(false)}
-                        className="px-4 py-2 bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-900"
+                        className="px-4 py-2 min-h-[44px] bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-900 active:scale-95 transition-transform"
                       >
                         Apply
                       </button>
@@ -240,8 +240,8 @@ export function TopNav({
                               setIsCityPickerOpen(false)
                             }}
                             className={`
-                              w-full flex items-center gap-3 px-3 py-3 rounded-xl
-                              transition-all duration-200
+                              w-full flex items-center gap-3 px-3 py-3 min-h-[52px] rounded-xl
+                              transition-all duration-200 active:scale-[0.98]
                               ${currentCity === city 
                                 ? 'bg-black text-white' 
                                 : 'hover:bg-gray-50 text-gray-700'
@@ -272,7 +272,7 @@ export function TopNav({
           </div>
         </motion.div>
 
-        {/* User Profile Button */}
+        {/* User Profile Button - 44px minimum touch target */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -280,7 +280,7 @@ export function TopNav({
         >
           <Sheet>
             <SheetTrigger asChild>
-              <button className="w-12 h-12 rounded-full bg-white shadow-xl border border-gray-100/50 flex items-center justify-center hover:shadow-2xl hover:scale-105 transition-all duration-300">
+              <button className="w-12 h-12 min-w-[44px] min-h-[44px] rounded-full bg-white shadow-xl border border-gray-100/50 flex items-center justify-center hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300">
                 <Menu className="w-5 h-5 text-gray-700" />
               </button>
             </SheetTrigger>
@@ -300,10 +300,10 @@ export function TopNav({
                   </div>
                 </div>
 
-                {/* Menu items */}
+                {/* Menu items - minimum 44px touch targets */}
                 <Link 
                   href="/login"
-                  className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center">
                     <LogIn className="w-5 h-5 text-white" />
@@ -316,7 +316,7 @@ export function TopNav({
 
                 <Link 
                   href="/list-your-car"
-                  className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
                     <Car className="w-5 h-5 text-white" />
@@ -329,7 +329,7 @@ export function TopNav({
 
                 <Link 
                   href="/dashboard/bookings"
-                  className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
                     <Calendar className="w-5 h-5 text-white" />

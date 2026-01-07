@@ -1,5 +1,6 @@
 // Comprehensive car data for Moova car rental PWA
 // Cars distributed across Georgia
+// Supports hybrid mode: Real DB data with mock fallback
 
 export interface CarOwner {
   id: string
