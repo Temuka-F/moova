@@ -1,0 +1,571 @@
+// Moova - Car Rental Platform for Georgia
+// Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  phone             String?   @unique
+  firstName         String
+  lastName          String
+  avatarUrl         String?
+  dateOfBirth       DateTime?
+  
+  // Role & Permissions
+  role              UserRole  @default(RENTER)
+  
+  // Verification Documents
+  drivingLicenseNo  String?
+  drivingLicenseExp DateTime?
+  drivingLicenseUrl String?   // Uploaded license image
+  idNumber          String?   // Georgian ID number
+  idDocumentUrl     String?   // Uploaded ID image
+  
+  // Verification Status
+  isEmailVerified   Boolean   @default(false)
+  isPhoneVerified   Boolean   @default(false)
+  isIdVerified      Boolean   @default(false)
+  isLicenseVerified Boolean   @default(false)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt        DateTime?
+  verifiedBy        String?   // Admin user ID who verified
+  
+  // Host-specific fields
+  bankName          String?
+  bankAccountNumber String?
+  bankAccountName   String?
+  
+  // Profile
+  bio               String?
+  responseRate      Float?    @default(0)
+  responseTime      String?   // e.g., "< 1 hour"
+  
+  // Status
+  isActive          Boolean   @default(true)
+  isBanned          Boolean   @default(false)
+  banReason         String?
+  bannedAt          DateTime?
+  bannedBy          String?   // Admin user ID who banned
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  cars              Car[]
+  bookingsAsRenter  Booking[]       @relation("RenterBookings")
+  reviewsGiven      Review[]        @relation("ReviewerReviews")
+  reviewsReceived   Review[]        @relation("RevieweeReviews")
+  sentMessages      Message[]       @relation("SentMessages")
+  receivedMessages  Message[]       @relation("ReceivedMessages")
+  favorites         Favorite[]
+  notifications     Notification[]
+  paymentMethods    PaymentMethod[]
+  payouts           Payout[]
+  adminLogs         AdminLog[]      @relation("AdminLogs")
+  
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([verificationStatus])
+}
+
+// ============================================
+// CAR & VEHICLE DETAILS
+// ============================================
+
+model Car {
+  id              String      @id @default(uuid())
+  ownerId         String
+  owner           User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Basic Info
+  make            String      // e.g., BMW, Mercedes, Toyota
+  model           String      // e.g., X5, E-Class, Camry
+  year            Int
+  licensePlate    String      @unique
+  vin             String?     @unique
+  color           String
+  
+  // Specs
+  transmission    Transmission @default(AUTOMATIC)
+  fuelType        FuelType     @default(PETROL)
+  seats           Int          @default(5)
+  doors           Int          @default(4)
+  category        CarCategory  @default(SEDAN)
+  
+  // Features
+  features        String[]     // Array of feature strings
+  hasAC           Boolean      @default(true)
+  hasGPS          Boolean      @default(false)
+  hasUSB          Boolean      @default(true)
+  hasBluetooth    Boolean      @default(true)
+  hasChildSeat    Boolean      @default(false)
+  
+  // Location
+  city            String       @default("Tbilisi")
+  address         String
+  latitude        Float
+  longitude       Float
+  
+  // Pricing
+  pricePerDay     Float
+  pricePerHour    Float?
+  securityDeposit Float        @default(200)
+  minRentalDays   Int          @default(1)
+  maxRentalDays   Int          @default(30)
+  
+  // Mileage
+  mileageLimit    Int?         // km per day, null = unlimited
+  extraMileageFee Float?       // per km over limit
+  currentMileage  Int          @default(0)
+  
+  // Status & Verification
+  status          CarStatus    @default(PENDING)
+  isActive        Boolean      @default(true)
+  isInstantBook   Boolean      @default(false)
+  
+  // Images
+  images          CarImage[]
+  
+  // Availability
+  availabilities  Availability[]
+  
+  // Timestamps
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Relations
+  bookings        Booking[]
+  reviews         Review[]
+  favorites       Favorite[]
+
+  @@index([ownerId])
+  @@index([city])
+  @@index([status])
+  @@index([category])
+  @@index([pricePerDay])
+  @@index([make, model])
+}
+
+model CarImage {
+  id        String   @id @default(uuid())
+  carId     String
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  url       String
+  isPrimary Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([carId])
+}
+
+model Availability {
+  id          String   @id @default(uuid())
+  carId       String
+  car         Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  startDate   DateTime
+  endDate     DateTime
+  isBlocked   Boolean  @default(false) // true = unavailable
+  pricePerDay Float?   // Override price for this period
+  
+  @@index([carId])
+  @@index([startDate, endDate])
+}
+
+// ============================================
+// BOOKINGS & RENTALS
+// ============================================
+
+model Booking {
+  id              String        @id @default(uuid())
+  carId           String
+  car             Car           @relation(fields: [carId], references: [id])
+  renterId        String
+  renter          User          @relation("RenterBookings", fields: [renterId], references: [id])
+  
+  // Dates
+  startDate       DateTime
+  endDate         DateTime
+  actualStartDate DateTime?
+  actualEndDate   DateTime?
+  
+  // Pickup/Return Location
+  pickupLocation  String
+  pickupLat       Float?
+  pickupLng       Float?
+  returnLocation  String?
+  returnLat       Float?
+  returnLng       Float?
+  
+  // Mileage
+  startMileage    Int?
+  endMileage      Int?
+  
+  // Pricing
+  dailyRate       Float
+  totalDays       Int
+  subtotal        Float
+  serviceFee      Float         // Platform fee
+  insuranceFee    Float?
+  extraMileageFee Float?
+  lateFee         Float?
+  totalAmount     Float
+  securityDeposit Float
+  
+  // Status
+  status          BookingStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  
+  // Payment
+  flittPaymentId  String?
+  paidAt          DateTime?
+  
+  // Cancellation
+  cancelledAt     DateTime?
+  cancelledBy     String?       // 'renter' or 'host'
+  cancellationReason String?
+  refundAmount    Float?
+  
+  // Notes
+  renterNote      String?
+  hostNote        String?
+  
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relations
+  review          Review?
+  messages        Message[]
+  payments        Payment[]
+
+  @@index([carId])
+  @@index([renterId])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+// ============================================
+// PAYMENTS
+// ============================================
+
+model Payment {
+  id              String        @id @default(uuid())
+  bookingId       String
+  booking         Booking       @relation(fields: [bookingId], references: [id])
+  
+  amount          Float
+  currency        String        @default("GEL")
+  type            PaymentType
+  status          PaymentStatus @default(PENDING)
+  
+  flittPaymentId  String?
+  flittRefundId   String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([bookingId])
+}
+
+model PaymentMethod {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type            String   // 'card', 'bank_account'
+  flittCardToken  String?
+  last4           String
+  brand           String?
+  expiryMonth     Int?
+  expiryYear      Int?
+  isDefault       Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Payout {
+  id              String       @id @default(uuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  
+  amount          Float
+  currency        String       @default("GEL")
+  status          PayoutStatus @default(PENDING)
+  
+  bankName        String?
+  accountNumber   String?
+  
+  flittTransferId  String?
+  processedAt     DateTime?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+// ============================================
+// REVIEWS & RATINGS
+// ============================================
+
+model Review {
+  id            String   @id @default(uuid())
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+  
+  carId         String
+  car           Car      @relation(fields: [carId], references: [id])
+  
+  reviewerId    String
+  reviewer      User     @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  
+  revieweeId    String   // Host or Renter being reviewed
+  reviewee      User     @relation("RevieweeReviews", fields: [revieweeId], references: [id])
+  
+  type          ReviewType // CAR_REVIEW or RENTER_REVIEW
+  
+  rating        Int      // 1-5
+  cleanliness   Int?     // 1-5 (for car reviews)
+  communication Int?     // 1-5
+  accuracy      Int?     // 1-5 (car as described)
+  value         Int?     // 1-5
+  
+  comment       String?
+  
+  hostResponse  String?
+  respondedAt   DateTime?
+  
+  isPublic      Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([carId])
+  @@index([reviewerId])
+  @@index([revieweeId])
+}
+
+// ============================================
+// MESSAGING
+// ============================================
+
+model Message {
+  id          String   @id @default(uuid())
+  bookingId   String?
+  booking     Booking? @relation(fields: [bookingId], references: [id])
+  
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  
+  content     String
+  imageUrl    String?
+  
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}
+
+// ============================================
+// FAVORITES & NOTIFICATIONS
+// ============================================
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  carId     String
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, carId])
+  @@index([userId])
+  @@index([carId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?            // Additional data like bookingId, carId
+  
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================
+// ADMIN LOG - Track all admin actions
+// ============================================
+
+model AdminLog {
+  id          String      @id @default(uuid())
+  adminId     String
+  admin       User        @relation("AdminLogs", fields: [adminId], references: [id])
+  
+  action      AdminAction
+  entityType  String      // 'user', 'car', 'booking', etc.
+  entityId    String
+  
+  oldData     Json?       // Previous state
+  newData     Json?       // New state
+  reason      String?     // Reason for action
+  
+  ipAddress   String?
+  userAgent   String?
+  
+  createdAt   DateTime    @default(now())
+
+  @@index([adminId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  RENTER      // Can only rent cars
+  OWNER       // Can rent and list cars
+  ADMIN       // Full platform access
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING     // Documents submitted, awaiting review
+  VERIFIED    // Approved by admin
+  REJECTED    // Rejected by admin
+}
+
+enum AdminAction {
+  USER_VERIFIED
+  USER_REJECTED
+  USER_BANNED
+  USER_UNBANNED
+  USER_ROLE_CHANGED
+  CAR_APPROVED
+  CAR_REJECTED
+  CAR_SUSPENDED
+  BOOKING_CANCELLED
+  BOOKING_REFUNDED
+  PAYOUT_PROCESSED
+  SETTINGS_UPDATED
+}
+
+enum Transmission {
+  AUTOMATIC
+  MANUAL
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  HYBRID
+  ELECTRIC
+  LPG
+}
+
+enum CarCategory {
+  ECONOMY
+  COMPACT
+  SEDAN
+  SUV
+  LUXURY
+  SPORTS
+  VAN
+  MINIVAN
+  PICKUP
+  CONVERTIBLE
+}
+
+enum CarStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  ACTIVE        // Car picked up
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentType {
+  BOOKING
+  DEPOSIT
+  EXTRA_FEES
+  REFUND
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ReviewType {
+  CAR_REVIEW
+  RENTER_REVIEW
+}
+
+enum NotificationType {
+  BOOKING_REQUEST
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  BOOKING_COMPLETED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  REVIEW_RECEIVED
+  MESSAGE_RECEIVED
+  CAR_APPROVED
+  CAR_REJECTED
+  PAYOUT_SENT
+  SYSTEM
+}
