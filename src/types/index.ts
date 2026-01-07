@@ -272,6 +272,34 @@ export const CAR_FEATURES = [
 
 export type CarFeature = typeof CAR_FEATURES[number]
 
+// Transmission types
+export const TRANSMISSIONS = [
+  'AUTOMATIC',
+  'MANUAL',
+] as const
+
+// Fuel types
+export const FUEL_TYPES = [
+  'PETROL',
+  'DIESEL',
+  'ELECTRIC',
+  'HYBRID',
+  'LPG',
+] as const
+
+// Car categories
+export const CAR_CATEGORIES = [
+  'ECONOMY',
+  'COMPACT',
+  'MIDSIZE',
+  'FULLSIZE',
+  'SUV',
+  'LUXURY',
+  'SPORTS',
+  'VAN',
+  'PICKUP',
+] as const
+
 // Dashboard navigation based on role
 export const getDashboardNavigation = (role: UserRole) => {
   const common = [
