@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { 
   Star, 
@@ -17,7 +17,7 @@ import {
   Sparkles,
   Leaf
 } from 'lucide-react'
-import { MapCar } from '@/lib/map-cars'
+import { MapCar, ALL_CARS } from '@/lib/map-cars'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -74,8 +74,8 @@ function CarListCard({
       onMouseLeave={() => onHover(false)}
       onClick={onClick}
       className={`
-        relative bg-white rounded-xl overflow-hidden cursor-pointer
-        transition-all duration-200 border-2
+        relative bg-white rounded-2xl overflow-hidden cursor-pointer
+        transition-all duration-300 border-2
         ${isSelected 
           ? 'border-black shadow-xl ring-2 ring-black/10' 
           : 'border-transparent shadow-md hover:shadow-lg hover:border-gray-200'
@@ -88,7 +88,7 @@ function CarListCard({
           src={car.images[0]}
           alt={`${car.make} ${car.model}`}
           fill
-          className="object-cover"
+          className="object-cover transition-transform duration-300 hover:scale-105"
           sizes="300px"
         />
         
@@ -150,7 +150,7 @@ function CarListCard({
       {/* View button on hover */}
       <Link 
         href={`/cars/${car.id}`}
-        className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-2 opacity-0 hover:opacity-100 transition-opacity"
+        className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-2 opacity-0 hover:opacity-100 transition-opacity duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <span className="text-white text-sm font-medium">View Details →</span>
@@ -174,15 +174,19 @@ export function DesktopSidebar({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showSortDropdown, setShowSortDropdown] = useState(false)
 
-  // Get min/max prices from all cars
-  const allPrices = cars.map(c => c.price)
-  const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0
-  const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 500
+  // Calculate price range from all cars for the slider
+  const globalPriceRange = useMemo(() => {
+    const prices = ALL_CARS.map(c => c.price)
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    }
+  }, [])
 
   return (
     <div className="hidden lg:flex flex-col w-[380px] h-full bg-gray-50 border-r border-gray-200 z-40">
       {/* Header */}
-      <div className="p-4 bg-white border-b border-gray-100">
+      <div className="p-4 bg-white border-b border-gray-100 rounded-br-3xl">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="font-bold text-lg text-gray-900">Available Cars</h2>
@@ -191,9 +195,9 @@ export function DesktopSidebar({
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className={`
-              p-2.5 rounded-xl transition-colors
+              p-2.5 rounded-xl transition-all duration-300
               ${showAdvancedFilters 
-                ? 'bg-black text-white' 
+                ? 'bg-black text-white shadow-lg' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }
             `}
@@ -212,11 +216,11 @@ export function DesktopSidebar({
                 key={chip.id}
                 onClick={() => onFilterChange(isActive ? null : chip.id)}
                 className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
-                  whitespace-nowrap transition-all duration-200 border
+                  flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium
+                  whitespace-nowrap transition-all duration-300 border
                   ${isActive
-                    ? `${chip.color} text-white border-transparent`
-                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                    ? `${chip.color} text-white border-transparent shadow-lg scale-105`
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                   }
                 `}
               >
@@ -229,12 +233,14 @@ export function DesktopSidebar({
 
         {/* Clear filter button */}
         {activeFilter && (
-          <button
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
             onClick={() => onFilterChange(null)}
             className="mt-2 text-xs text-gray-500 hover:text-gray-700 underline"
           >
             Clear filter
-          </button>
+          </motion.button>
         )}
 
         {/* Advanced filters panel */}
@@ -244,29 +250,60 @@ export function DesktopSidebar({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
               className="overflow-hidden"
             >
               <div className="pt-4 space-y-4">
                 {/* Price range */}
-                <div>
-                  <label className="text-xs font-medium text-gray-700 mb-2 block">
-                    Price Range: {priceRange[0]}₾ - {priceRange[1]}₾
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <label className="text-sm font-medium text-gray-700 mb-3 block">
+                    Price Range
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="bg-white rounded-xl px-3 py-2 border border-gray-200">
+                      <span className="text-xs text-gray-500">Min</span>
+                      <p className="font-semibold text-gray-900">{priceRange[0]}₾</p>
+                    </div>
+                    <div className="flex-1 mx-3 h-[2px] bg-gray-200" />
+                    <div className="bg-white rounded-xl px-3 py-2 border border-gray-200">
+                      <span className="text-xs text-gray-500">Max</span>
+                      <p className="font-semibold text-gray-900">{priceRange[1]}₾</p>
+                    </div>
+                  </div>
+                  <div className="relative h-2 bg-gray-200 rounded-full">
+                    <div 
+                      className="absolute h-full bg-black rounded-full"
+                      style={{
+                        left: `${((priceRange[0] - globalPriceRange.min) / (globalPriceRange.max - globalPriceRange.min)) * 100}%`,
+                        right: `${100 - ((priceRange[1] - globalPriceRange.min) / (globalPriceRange.max - globalPriceRange.min)) * 100}%`
+                      }}
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-2">
                     <input
                       type="range"
-                      min={0}
-                      max={500}
+                      min={globalPriceRange.min}
+                      max={globalPriceRange.max}
                       value={priceRange[0]}
-                      onChange={(e) => onPriceRangeChange([parseInt(e.target.value), priceRange[1]])}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value)
+                        if (val < priceRange[1]) {
+                          onPriceRangeChange([val, priceRange[1]])
+                        }
+                      }}
                       className="flex-1 accent-black"
                     />
                     <input
                       type="range"
-                      min={0}
-                      max={500}
+                      min={globalPriceRange.min}
+                      max={globalPriceRange.max}
                       value={priceRange[1]}
-                      onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value)])}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value)
+                        if (val > priceRange[0]) {
+                          onPriceRangeChange([priceRange[0], val])
+                        }
+                      }}
                       className="flex-1 accent-black"
                     />
                   </div>
@@ -274,7 +311,7 @@ export function DesktopSidebar({
 
                 {/* More filter chips */}
                 <div>
-                  <label className="text-xs font-medium text-gray-700 mb-2 block">More Filters</label>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">More Filters</label>
                   <div className="flex flex-wrap gap-2">
                     {FILTER_CHIPS.slice(5).map((chip) => {
                       const Icon = chip.icon
@@ -284,10 +321,10 @@ export function DesktopSidebar({
                           key={chip.id}
                           onClick={() => onFilterChange(isActive ? null : chip.id)}
                           className={`
-                            flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
-                            transition-all duration-200 border
+                            flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium
+                            transition-all duration-300 border
                             ${isActive
-                              ? `${chip.color} text-white border-transparent`
+                              ? `${chip.color} text-white border-transparent shadow-lg`
                               : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                             }
                           `}
@@ -306,24 +343,25 @@ export function DesktopSidebar({
       </div>
 
       {/* Sort dropdown */}
-      <div className="px-4 py-2 bg-white border-b border-gray-100 flex items-center justify-between">
+      <div className="px-4 py-3 bg-white border-b border-gray-100 flex items-center justify-between">
         <span className="text-xs text-gray-500">Sort by</span>
         <div className="relative">
           <button
             onClick={() => setShowSortDropdown(!showSortDropdown)}
-            className="flex items-center gap-1 text-sm font-medium text-gray-900"
+            className="flex items-center gap-1 text-sm font-medium text-gray-900 hover:text-gray-600 transition-colors"
           >
             {SORT_OPTIONS.find(o => o.id === sortBy)?.label || 'Relevance'}
-            <ChevronDown className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showSortDropdown ? 'rotate-180' : ''}`} />
           </button>
           
           <AnimatePresence>
             {showSortDropdown && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[180px]"
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 min-w-[180px]"
               >
                 {SORT_OPTIONS.map((option) => (
                   <button
@@ -333,7 +371,7 @@ export function DesktopSidebar({
                       setShowSortDropdown(false)
                     }}
                     className={`
-                      w-full px-4 py-2.5 text-left text-sm transition-colors
+                      w-full px-4 py-3 text-left text-sm transition-colors
                       ${sortBy === option.id 
                         ? 'bg-gray-100 font-medium text-gray-900' 
                         : 'text-gray-700 hover:bg-gray-50'
@@ -350,17 +388,24 @@ export function DesktopSidebar({
       </div>
 
       {/* Car list */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        <AnimatePresence>
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
+        <AnimatePresence mode="popLayout">
           {cars.length > 0 ? (
-            cars.map((car) => (
-              <CarListCard
+            cars.map((car, index) => (
+              <motion.div
                 key={car.id}
-                car={car}
-                isSelected={selectedCar?.id === car.id}
-                onClick={() => onCarSelect(car)}
-                onHover={(hovering) => onCarHover(hovering ? car : null)}
-              />
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: index * 0.03, duration: 0.3 }}
+              >
+                <CarListCard
+                  car={car}
+                  isSelected={selectedCar?.id === car.id}
+                  onClick={() => onCarSelect(car)}
+                  onHover={(hovering) => onCarHover(hovering ? car : null)}
+                />
+              </motion.div>
             ))
           ) : (
             <motion.div
@@ -373,7 +418,7 @@ export function DesktopSidebar({
               <p className="text-sm text-gray-500">Try adjusting your filters</p>
               <button
                 onClick={() => onFilterChange(null)}
-                className="mt-3 text-sm font-medium text-black underline"
+                className="mt-3 px-4 py-2 bg-black text-white text-sm font-medium rounded-xl hover:bg-gray-900 transition-colors"
               >
                 Clear all filters
               </button>

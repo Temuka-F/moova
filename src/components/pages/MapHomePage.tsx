@@ -15,7 +15,8 @@ import {
   getCarsByCity,
   getWinterReadyCars, 
   getCarsByCategory, 
-  getHybridElectricCars 
+  getHybridElectricCars,
+  getCarsByPriceRange
 } from '@/lib/map-cars'
 
 export function MapHomePage() {
@@ -27,8 +28,12 @@ export function MapHomePage() {
   const [isClient, setIsClient] = useState(false)
   const [showCarPopup, setShowCarPopup] = useState(false)
   
-  // Advanced filter state
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500])
+  // Date state for booking
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+  
+  // Price range filter - initialize with reasonable defaults
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 300])
   const [sortBy, setSortBy] = useState<string>('rating')
   
   // Map ref for imperative control
@@ -44,12 +49,29 @@ export function MapHomePage() {
     return getCarsByCity(currentCity)
   }, [currentCity])
 
+  // Calculate dynamic price range based on city cars
+  const cityPriceRange = useMemo(() => {
+    if (cityCars.length === 0) return { min: 0, max: 300 }
+    const prices = cityCars.map(c => c.price)
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    }
+  }, [cityCars])
+
+  // Reset price range when city changes
+  useEffect(() => {
+    setPriceRange([cityPriceRange.min, cityPriceRange.max])
+  }, [cityPriceRange])
+
   // Apply filters to city cars
   const filteredCars = useMemo(() => {
     let cars = cityCars
 
-    // Apply price filter
-    cars = cars.filter(car => car.price >= priceRange[0] && car.price <= priceRange[1])
+    // Apply price filter - only if range has been adjusted from max
+    if (priceRange[0] > cityPriceRange.min || priceRange[1] < cityPriceRange.max) {
+      cars = getCarsByPriceRange(cars, priceRange[0], priceRange[1])
+    }
 
     // Apply active filter
     switch (activeFilter) {
@@ -103,7 +125,7 @@ export function MapHomePage() {
     }
 
     return cars
-  }, [cityCars, activeFilter, priceRange, sortBy])
+  }, [cityCars, activeFilter, priceRange, sortBy, cityPriceRange])
 
   // Winter ready count
   const winterReadyCount = useMemo(() => {
@@ -118,6 +140,12 @@ export function MapHomePage() {
     setSelectedCar(null)
     setActiveFilter(null)
     setShowCarPopup(false)
+  }, [])
+
+  // Handle date change
+  const handleDateChange = useCallback((start: Date | undefined, end: Date | undefined) => {
+    setStartDate(start)
+    setEndDate(end)
   }, [])
 
   // Handle marker click - show popup
@@ -215,6 +243,9 @@ export function MapHomePage() {
           currentCity={currentCity}
           onCityChange={handleCityChange}
           carCount={filteredCars.length}
+          startDate={startDate}
+          endDate={endDate}
+          onDateChange={handleDateChange}
         />
 
         {/* Map controls */}

@@ -1,5 +1,5 @@
 // Comprehensive car data for Moova car rental PWA
-// Cars distributed across Georgia: Tbilisi, Batumi, Kutaisi, Gudauri
+// Cars distributed across Georgia
 
 export interface CarOwner {
   id: string
@@ -32,7 +32,7 @@ export interface MapCar {
   features: string[]
   isInstantBook: boolean
   transmission: 'AUTOMATIC' | 'MANUAL'
-  city: 'Tbilisi' | 'Batumi' | 'Kutaisi' | 'Gudauri'
+  city: CityName
   address: string
   seats: number
   doors: number
@@ -48,7 +48,7 @@ const OWNERS: Record<string, CarOwner> = {
     id: 'owner-1',
     firstName: 'Giorgi',
     lastName: 'Beridze',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
     rating: 4.9,
     responseTime: '< 1 hour',
     tripsCount: 47,
@@ -59,7 +59,7 @@ const OWNERS: Record<string, CarOwner> = {
     id: 'owner-2',
     firstName: 'Nino',
     lastName: 'Kvlividze',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
     rating: 4.8,
     responseTime: '< 30 min',
     tripsCount: 31,
@@ -70,7 +70,7 @@ const OWNERS: Record<string, CarOwner> = {
     id: 'owner-3',
     firstName: 'Levan',
     lastName: 'Tskhadadze',
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
     rating: 5.0,
     responseTime: '< 15 min',
     tripsCount: 89,
@@ -81,7 +81,7 @@ const OWNERS: Record<string, CarOwner> = {
     id: 'owner-4',
     firstName: 'Tamar',
     lastName: 'Janelidze',
-    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
     rating: 4.8,
     responseTime: '< 1 hour',
     tripsCount: 56,
@@ -92,7 +92,7 @@ const OWNERS: Record<string, CarOwner> = {
     id: 'owner-5',
     firstName: 'Ketevan',
     lastName: 'Lomidze',
-    avatarUrl: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150',
+    avatarUrl: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face',
     rating: 4.9,
     responseTime: '< 30 min',
     tripsCount: 112,
@@ -101,17 +101,101 @@ const OWNERS: Record<string, CarOwner> = {
   },
 }
 
-// City coordinates
+// City coordinates - All major Georgian cities
 export const CITIES = {
-  Tbilisi: { lat: 41.7151, lng: 44.8271, zoom: 12, label: '🏙️ Tbilisi' },
-  Batumi: { lat: 41.6168, lng: 41.6367, zoom: 13, label: '🏖️ Batumi' },
-  Kutaisi: { lat: 42.2662, lng: 42.7180, zoom: 13, label: '🏛️ Kutaisi' },
-  Gudauri: { lat: 42.4784, lng: 44.4842, zoom: 14, label: '🏔️ Gudauri' },
+  Tbilisi: { lat: 41.7151, lng: 44.8271, zoom: 12, label: '🏙️ Tbilisi', description: 'Capital City' },
+  Batumi: { lat: 41.6168, lng: 41.6367, zoom: 13, label: '🏖️ Batumi', description: 'Black Sea Resort' },
+  Kutaisi: { lat: 42.2662, lng: 42.7180, zoom: 13, label: '🏛️ Kutaisi', description: 'Second Largest City' },
+  Gudauri: { lat: 42.4784, lng: 44.4842, zoom: 14, label: '🏔️ Gudauri', description: 'Ski Resort' },
+  Rustavi: { lat: 41.5493, lng: 44.9939, zoom: 13, label: '🏭 Rustavi', description: 'Industrial Hub' },
+  Zugdidi: { lat: 42.5088, lng: 41.8709, zoom: 13, label: '🌳 Zugdidi', description: 'Western Georgia' },
+  Telavi: { lat: 41.9198, lng: 45.4731, zoom: 13, label: '🍇 Telavi', description: 'Wine Region' },
+  Borjomi: { lat: 41.8428, lng: 43.3894, zoom: 14, label: '💧 Borjomi', description: 'Spa Resort' },
+  Mestia: { lat: 43.0453, lng: 42.7280, zoom: 14, label: '⛰️ Mestia', description: 'Svaneti Mountains' },
+  Bakuriani: { lat: 41.7510, lng: 43.5290, zoom: 14, label: '🎿 Bakuriani', description: 'Ski Resort' },
 } as const
 
 export type CityName = keyof typeof CITIES
 
-// All cars across Georgia - 20 cars with full details
+// Working car images from Unsplash (verified URLs)
+const CAR_IMAGES = {
+  // SUVs
+  landCruiser: [
+    'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&h=600&fit=crop',
+  ],
+  tucson: [
+    'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=800&h=600&fit=crop',
+  ],
+  teslaY: [
+    'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1571127236794-81c0bbfe1ce3?w=800&h=600&fit=crop',
+  ],
+  bmwX5: [
+    'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&h=600&fit=crop',
+  ],
+  forester: [
+    'https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800&h=600&fit=crop',
+  ],
+  rav4: [
+    'https://images.unsplash.com/photo-1581540222194-0def2dda95b8?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=800&h=600&fit=crop',
+  ],
+  defender: [
+    'https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&h=600&fit=crop',
+  ],
+  sportage: [
+    'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1581540222194-0def2dda95b8?w=800&h=600&fit=crop',
+  ],
+  // Sedans
+  camry: [
+    'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&h=600&fit=crop',
+  ],
+  corolla: [
+    'https://images.unsplash.com/photo-1623869675781-80aa31012a5a?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1590362891991-f776e747a588?w=800&h=600&fit=crop',
+  ],
+  // Compact
+  golf: [
+    'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop',
+  ],
+  clio: [
+    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800&h=600&fit=crop',
+  ],
+  focus: [
+    'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop',
+  ],
+  // Luxury
+  eClass: [
+    'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&h=600&fit=crop',
+  ],
+  gle: [
+    'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800&h=600&fit=crop',
+  ],
+  cayenne: [
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=600&fit=crop',
+  ],
+  // Sports
+  porsche911: [
+    'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800&h=600&fit=crop',
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=600&fit=crop',
+  ],
+}
+
+// All cars across Georgia - 25 cars
 export const ALL_CARS: MapCar[] = [
   // ===== TBILISI (10 cars) =====
   {
@@ -125,11 +209,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'Pearl White',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800',
-      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800',
-      'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800',
-    ],
+    images: CAR_IMAGES.landCruiser,
     category: 'SUV',
     fuelType: 'DIESEL',
     rating: 4.9,
@@ -157,10 +237,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2022,
     color: 'Deep Blue',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1633695610681-8477dcfd5c33?w=800',
-      'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800',
-    ],
+    images: CAR_IMAGES.tucson,
     category: 'SUV',
     fuelType: 'PETROL',
     rating: 4.7,
@@ -188,11 +265,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2024,
     color: 'Midnight Silver',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800',
-      'https://images.unsplash.com/photo-1561580125-028ee3bd62eb?w=800',
-      'https://images.unsplash.com/photo-1571127236794-81c0bbfe1ce3?w=800',
-    ],
+    images: CAR_IMAGES.teslaY,
     category: 'SUV',
     fuelType: 'ELECTRIC',
     rating: 5.0,
@@ -220,10 +293,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2021,
     color: 'Classic White',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800',
-      'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800',
-    ],
+    images: CAR_IMAGES.camry,
     category: 'SEDAN',
     fuelType: 'HYBRID',
     rating: 4.8,
@@ -251,11 +321,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'Carbon Black',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800',
-      'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800',
-      'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800',
-    ],
+    images: CAR_IMAGES.bmwX5,
     category: 'LUXURY',
     fuelType: 'DIESEL',
     rating: 4.9,
@@ -283,10 +349,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2022,
     color: 'Tornado Red',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800',
-      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800',
-    ],
+    images: CAR_IMAGES.golf,
     category: 'COMPACT',
     fuelType: 'PETROL',
     rating: 4.6,
@@ -314,10 +377,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'GT Silver',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800',
-      'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800',
-    ],
+    images: CAR_IMAGES.cayenne,
     category: 'LUXURY',
     fuelType: 'PETROL',
     rating: 5.0,
@@ -345,10 +405,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2022,
     color: 'Forest Green',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1619976215249-0bfc6be0d8fe?w=800',
-      'https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=800',
-    ],
+    images: CAR_IMAGES.forester,
     category: 'SUV',
     fuelType: 'PETROL',
     rating: 4.8,
@@ -376,10 +433,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'Obsidian Black',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800',
-      'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800',
-    ],
+    images: CAR_IMAGES.gle,
     category: 'LUXURY',
     fuelType: 'DIESEL',
     rating: 4.9,
@@ -407,10 +461,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'Celestite Gray',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800',
-      'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800',
-    ],
+    images: CAR_IMAGES.corolla,
     category: 'SEDAN',
     fuelType: 'HYBRID',
     rating: 4.7,
@@ -440,10 +491,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'Super White',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800',
-      'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=800',
-    ],
+    images: CAR_IMAGES.corolla,
     category: 'SEDAN',
     fuelType: 'HYBRID',
     rating: 4.8,
@@ -471,10 +519,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2022,
     color: 'Flame Red',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800',
-      'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800',
-    ],
+    images: CAR_IMAGES.clio,
     category: 'COMPACT',
     fuelType: 'PETROL',
     rating: 4.5,
@@ -502,10 +547,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'Polar White',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800',
-      'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800',
-    ],
+    images: CAR_IMAGES.eClass,
     category: 'LUXURY',
     fuelType: 'DIESEL',
     rating: 4.9,
@@ -533,10 +575,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2022,
     color: 'Snow White Pearl',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1619976215249-0bfc6be0d8fe?w=800',
-      'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800',
-    ],
+    images: CAR_IMAGES.sportage,
     category: 'SUV',
     fuelType: 'PETROL',
     rating: 4.6,
@@ -564,10 +603,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2022,
     color: 'Racing Yellow',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800',
-      'https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800',
-    ],
+    images: CAR_IMAGES.porsche911,
     category: 'SPORTS',
     fuelType: 'PETROL',
     rating: 5.0,
@@ -597,10 +633,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2021,
     color: 'Magnetic Gray',
     isWinterReady: false,
-    images: [
-      'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800',
-      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800',
-    ],
+    images: CAR_IMAGES.focus,
     category: 'COMPACT',
     fuelType: 'PETROL',
     rating: 4.4,
@@ -628,10 +661,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2022,
     color: 'Blueprint Blue',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800',
-      'https://images.unsplash.com/photo-1619976215249-0bfc6be0d8fe?w=800',
-    ],
+    images: CAR_IMAGES.rav4,
     category: 'SUV',
     fuelType: 'HYBRID',
     rating: 4.7,
@@ -659,10 +689,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'Pearl White',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800',
-      'https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=800',
-    ],
+    images: CAR_IMAGES.forester,
     category: 'SUV',
     fuelType: 'HYBRID',
     rating: 4.6,
@@ -692,11 +719,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2022,
     color: 'Pearl White',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800',
-      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800',
-      'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800',
-    ],
+    images: CAR_IMAGES.landCruiser,
     category: 'SUV',
     fuelType: 'DIESEL',
     rating: 4.9,
@@ -724,10 +747,7 @@ export const ALL_CARS: MapCar[] = [
     year: 2023,
     color: 'Pangea Green',
     isWinterReady: true,
-    images: [
-      'https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=800',
-      'https://images.unsplash.com/photo-1619976215249-0bfc6be0d8fe?w=800',
-    ],
+    images: CAR_IMAGES.defender,
     category: 'SUV',
     fuelType: 'DIESEL',
     rating: 5.0,
@@ -743,6 +763,154 @@ export const ALL_CARS: MapCar[] = [
     mileageLimit: 150,
     owner: OWNERS['owner-5'],
     description: 'The iconic Defender, ready for any terrain. Unstoppable in snow.',
+  },
+
+  // ===== TELAVI - Wine Region (2 cars) =====
+  {
+    id: 'telavi-1',
+    lat: 41.9198,
+    lng: 45.4731,
+    price: 65,
+    pricePerHour: 10,
+    model: 'Camry',
+    make: 'Toyota',
+    year: 2022,
+    color: 'Silver Metallic',
+    isWinterReady: false,
+    images: CAR_IMAGES.camry,
+    category: 'SEDAN',
+    fuelType: 'HYBRID',
+    rating: 4.7,
+    reviewCount: 23,
+    features: ['Fuel Efficient', 'Bluetooth', 'Cruise Control', 'Comfortable Ride'],
+    isInstantBook: true,
+    transmission: 'AUTOMATIC',
+    city: 'Telavi',
+    address: 'Central Telavi, Near Batonis Tsikhe',
+    seats: 5,
+    doors: 4,
+    securityDeposit: 200,
+    mileageLimit: null,
+    owner: OWNERS['owner-2'],
+    description: 'Comfortable sedan for wine tour adventures in Kakheti region.',
+  },
+  {
+    id: 'telavi-2',
+    lat: 41.9156,
+    lng: 45.4812,
+    price: 80,
+    pricePerHour: 12,
+    model: 'RAV4',
+    make: 'Toyota',
+    year: 2023,
+    color: 'Lunar Rock',
+    isWinterReady: true,
+    images: CAR_IMAGES.rav4,
+    category: 'SUV',
+    fuelType: 'HYBRID',
+    rating: 4.8,
+    reviewCount: 31,
+    features: ['4WD/AWD', 'Roof Rack', 'Backup Camera', 'Lane Assist'],
+    isInstantBook: true,
+    transmission: 'AUTOMATIC',
+    city: 'Telavi',
+    address: 'Telavi Wine District',
+    seats: 5,
+    doors: 5,
+    securityDeposit: 280,
+    mileageLimit: null,
+    owner: OWNERS['owner-4'],
+    description: 'Perfect SUV for exploring the scenic Kakheti vineyards and monasteries.',
+  },
+
+  // ===== BORJOMI (1 car) =====
+  {
+    id: 'borjomi-1',
+    lat: 41.8428,
+    lng: 43.3894,
+    price: 70,
+    pricePerHour: 11,
+    model: 'Forester',
+    make: 'Subaru',
+    year: 2021,
+    color: 'Crystal Black',
+    isWinterReady: true,
+    images: CAR_IMAGES.forester,
+    category: 'SUV',
+    fuelType: 'PETROL',
+    rating: 4.6,
+    reviewCount: 19,
+    features: ['4WD/AWD', 'Roof Rack', 'Heated Seats', 'EyeSight Safety'],
+    isInstantBook: true,
+    transmission: 'AUTOMATIC',
+    city: 'Borjomi',
+    address: 'Borjomi Central Park Area',
+    seats: 5,
+    doors: 5,
+    securityDeposit: 250,
+    mileageLimit: null,
+    owner: OWNERS['owner-3'],
+    description: 'Explore Borjomi-Kharagauli National Park with this reliable AWD Subaru.',
+  },
+
+  // ===== MESTIA (1 car) =====
+  {
+    id: 'mestia-1',
+    lat: 43.0453,
+    lng: 42.7280,
+    price: 130,
+    pricePerHour: 20,
+    model: 'Land Cruiser Prado',
+    make: 'Toyota',
+    year: 2021,
+    color: 'Attitude Black',
+    isWinterReady: true,
+    images: CAR_IMAGES.landCruiser,
+    category: 'SUV',
+    fuelType: 'DIESEL',
+    rating: 4.9,
+    reviewCount: 42,
+    features: ['4WD/AWD', 'Snow Chains', 'Heated Everything', 'Ski Rack', 'Mountain Ready'],
+    isInstantBook: true,
+    transmission: 'AUTOMATIC',
+    city: 'Mestia',
+    address: 'Mestia Town Center',
+    seats: 7,
+    doors: 5,
+    securityDeposit: 450,
+    mileageLimit: 200,
+    owner: OWNERS['owner-1'],
+    description: 'Essential for exploring Svaneti. Handles mountain roads with ease.',
+  },
+
+  // ===== BAKURIANI (1 car) =====
+  {
+    id: 'bakuriani-1',
+    lat: 41.7510,
+    lng: 43.5290,
+    price: 110,
+    pricePerHour: 17,
+    model: 'X5',
+    make: 'BMW',
+    year: 2022,
+    color: 'Alpine White',
+    isWinterReady: true,
+    images: CAR_IMAGES.bmwX5,
+    category: 'LUXURY',
+    fuelType: 'DIESEL',
+    rating: 4.8,
+    reviewCount: 27,
+    features: ['4WD/AWD', 'Snow Tires', 'Ski Rack', 'Heated Steering', 'Panoramic Roof'],
+    isInstantBook: true,
+    transmission: 'AUTOMATIC',
+    city: 'Bakuriani',
+    address: 'Bakuriani Ski Resort, Main Area',
+    seats: 5,
+    doors: 5,
+    securityDeposit: 450,
+    mileageLimit: 200,
+    owner: OWNERS['owner-5'],
+    description: 'Luxury winter SUV perfect for the family ski trip to Bakuriani.',
   },
 ]
 
@@ -780,6 +948,10 @@ export function getSimilarCars(car: MapCar, limit = 4): MapCar[] {
   return ALL_CARS
     .filter(c => c.id !== car.id && (c.category === car.category || c.city === car.city))
     .slice(0, limit)
+}
+
+export function getCarsByPriceRange(cars: MapCar[], min: number, max: number): MapCar[] {
+  return cars.filter(car => car.price >= min && car.price <= max)
 }
 
 // Legacy exports for backward compatibility

@@ -112,9 +112,10 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 
     'pk.eyJ1IjoibW9vdmExIiwiYSI6ImNtazQwOHM3NTAyajMzZnNjODVoMjA5MXUifQ.-uV331lmyvZseA3DQjsVaQ'
 
-  // Map styles - winter style for Gudauri
-  const mapStyle = currentCity === 'Gudauri' 
-    ? 'mapbox://styles/mapbox/light-v11'
+  // Map styles - winter/mountain style for ski resorts
+  const mountainCities: CityName[] = ['Gudauri', 'Bakuriani', 'Mestia']
+  const mapStyle = mountainCities.includes(currentCity)
+    ? 'mapbox://styles/mapbox/outdoors-v12'
     : 'mapbox://styles/mapbox/streets-v12'
 
   // Fly to city
@@ -258,8 +259,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         )}
       </Map>
 
-      {/* Winter mode overlay gradient for Gudauri */}
-      {currentCity === 'Gudauri' && (
+      {/* Mountain mode overlay gradient for ski resorts */}
+      {mountainCities.includes(currentCity) && (
         <div 
           className="absolute inset-0 pointer-events-none bg-gradient-to-b from-blue-100/20 via-transparent to-blue-200/10"
           aria-hidden="true"
