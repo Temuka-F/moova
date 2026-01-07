@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { useRef, useCallback, useEffect, useState, forwardRef, useImperativeHandle } from 'react'
 import Map, { 
   Marker, 
   GeolocateControl, 
@@ -8,28 +8,20 @@ import Map, {
   MapRef 
 } from 'react-map-gl'
 import { motion, AnimatePresence } from 'motion/react'
-import { MapCar } from '@/lib/map-cars'
+import { MapCar, CITIES, CityName } from '@/lib/map-cars'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-// Tbilisi coordinates
-const TBILISI_CENTER = {
-  latitude: 41.7151,
-  longitude: 44.8271,
-  zoom: 12,
-}
-
-// Gudauri coordinates (for winter mode)
-const GUDAURI_CENTER = {
-  latitude: 42.4801,
-  longitude: 44.4789,
-  zoom: 13,
+export interface MapCanvasHandle {
+  flyToCity: (city: CityName) => void
+  flyToCar: (car: MapCar) => void
 }
 
 interface MapCanvasProps {
   cars: MapCar[]
   selectedCar: MapCar | null
-  setSelectedCar: (car: MapCar | null) => void
-  isWinterMode: boolean
+  onMarkerClick: (car: MapCar) => void
+  onMapClick: () => void
+  currentCity: CityName
 }
 
 // Custom price pill marker component
@@ -40,7 +32,7 @@ function CarMarker({
 }: { 
   car: MapCar
   isSelected: boolean
-  onClick: () => void 
+  onClick: (e: React.MouseEvent) => void 
 }) {
   return (
     <motion.div
@@ -53,12 +45,13 @@ function CarMarker({
       whileTap={{ scale: 0.95 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
       onClick={onClick}
-      className="cursor-pointer"
+      className="cursor-pointer select-none"
+      style={{ touchAction: 'none' }}
     >
       <div 
         className={`
           relative flex items-center gap-1 px-3 py-1.5 rounded-full
-          font-semibold text-sm whitespace-nowrap
+          font-semibold text-sm whitespace-nowrap select-none
           transition-all duration-200 ease-out
           ${isSelected 
             ? 'bg-black text-white shadow-2xl scale-110 ring-2 ring-white' 
@@ -88,25 +81,45 @@ function CarMarker({
   )
 }
 
-export function MapCanvas({ 
-  cars, 
-  selectedCar, 
-  setSelectedCar,
-  isWinterMode 
-}: MapCanvasProps) {
+interface ViewState {
+  latitude: number
+  longitude: number
+  zoom: number
+}
+
+export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function MapCanvas(
+  { cars, selectedCar, onMarkerClick, onMapClick, currentCity },
+  ref
+) {
   const mapRef = useRef<MapRef>(null)
-  const [viewState, setViewState] = useState(isWinterMode ? GUDAURI_CENTER : TBILISI_CENTER)
+  const cityData = CITIES[currentCity]
+  const [viewState, setViewState] = useState<ViewState>({
+    latitude: cityData.lat,
+    longitude: cityData.lng,
+    zoom: cityData.zoom,
+  })
 
   // Mapbox access token
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 
     'pk.eyJ1IjoibW9vdmExIiwiYSI6ImNtazQwOHM3NTAyajMzZnNjODVoMjA5MXUifQ.-uV331lmyvZseA3DQjsVaQ'
 
-  // Map styles
-  const mapStyle = isWinterMode 
+  // Map styles - winter style for Gudauri
+  const mapStyle = currentCity === 'Gudauri' 
     ? 'mapbox://styles/mapbox/light-v11'
     : 'mapbox://styles/mapbox/streets-v12'
 
-  // Fly to car when selected
+  // Fly to city
+  const flyToCity = useCallback((city: CityName) => {
+    const target = CITIES[city]
+    mapRef.current?.flyTo({
+      center: [target.lng, target.lat],
+      zoom: target.zoom,
+      duration: 2000,
+      essential: true,
+    })
+  }, [])
+
+  // Fly to car
   const flyToCar = useCallback((car: MapCar) => {
     mapRef.current?.flyTo({
       center: [car.lng, car.lat],
@@ -116,32 +129,36 @@ export function MapCanvas({
     })
   }, [])
 
-  // Fly to location when winter mode changes
-  useEffect(() => {
-    const center = isWinterMode ? GUDAURI_CENTER : TBILISI_CENTER
-    mapRef.current?.flyTo({
-      center: [center.longitude, center.latitude],
-      zoom: center.zoom,
-      duration: 2000,
-      essential: true,
-    })
-  }, [isWinterMode])
+  // Expose methods to parent
+  useImperativeHandle(ref, () => ({
+    flyToCity,
+    flyToCar,
+  }), [flyToCity, flyToCar])
 
-  // Handle marker click
-  const handleMarkerClick = useCallback((car: MapCar) => {
-    setSelectedCar(car)
+  // Fly to new city when currentCity changes
+  useEffect(() => {
+    flyToCity(currentCity)
+  }, [currentCity, flyToCity])
+
+  // Handle marker click with proper event handling
+  const handleMarkerClick = useCallback((car: MapCar, e: React.MouseEvent) => {
+    // CRITICAL: Stop propagation to prevent map click
+    e.stopPropagation()
+    e.preventDefault()
+    onMarkerClick(car)
     flyToCar(car)
-  }, [setSelectedCar, flyToCar])
+  }, [onMarkerClick, flyToCar])
 
   // Handle map click (deselect car)
   const handleMapClick = useCallback(() => {
-    if (selectedCar) {
-      setSelectedCar(null)
-    }
-  }, [selectedCar, setSelectedCar])
+    onMapClick()
+  }, [onMapClick])
 
   return (
-    <div className="absolute inset-0">
+    <div 
+      className="absolute inset-0 z-0" 
+      style={{ touchAction: 'none' }}
+    >
       <Map
         ref={mapRef}
         {...viewState}
@@ -152,6 +169,8 @@ export function MapCanvas({
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
         reuseMaps
+        dragRotate={false}
+        pitchWithRotate={false}
       >
         {/* User location control */}
         <GeolocateControl
@@ -160,7 +179,7 @@ export function MapCanvas({
           trackUserLocation
           showUserHeading
           style={{
-            marginBottom: '140px',
+            marginBottom: '160px',
             marginRight: '12px',
           }}
         />
@@ -170,7 +189,7 @@ export function MapCanvas({
           position="bottom-right" 
           showCompass={false}
           style={{
-            marginBottom: '200px',
+            marginBottom: '220px',
             marginRight: '12px',
           }}
         />
@@ -183,19 +202,24 @@ export function MapCanvas({
               latitude={car.lat}
               longitude={car.lng}
               anchor="bottom"
+              onClick={(e) => {
+                // Also stop here for mapbox events
+                e.originalEvent.stopPropagation()
+                e.originalEvent.preventDefault()
+              }}
             >
               <CarMarker
                 car={car}
                 isSelected={selectedCar?.id === car.id}
-                onClick={() => handleMarkerClick(car)}
+                onClick={(e) => handleMarkerClick(car, e)}
               />
             </Marker>
           ))}
         </AnimatePresence>
       </Map>
 
-      {/* Winter mode overlay gradient */}
-      {isWinterMode && (
+      {/* Winter mode overlay gradient for Gudauri */}
+      {currentCity === 'Gudauri' && (
         <div 
           className="absolute inset-0 pointer-events-none bg-gradient-to-b from-blue-100/20 via-transparent to-blue-200/10"
           aria-hidden="true"
@@ -203,4 +227,4 @@ export function MapCanvas({
       )}
     </div>
   )
-}
+})

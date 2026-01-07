@@ -1,5 +1,5 @@
 // Map-ready car data for Moova car rental PWA
-// Cars distributed around Tbilisi with winter-ready options
+// Cars distributed across Georgia: Tbilisi, Batumi, Kutaisi, Gudauri
 
 export interface MapCar {
   id: string
@@ -18,11 +18,24 @@ export interface MapCar {
   features: string[]
   isInstantBook: boolean
   transmission: 'AUTOMATIC' | 'MANUAL'
+  city: 'Tbilisi' | 'Batumi' | 'Kutaisi' | 'Gudauri'
 }
 
-export const MAP_CARS: MapCar[] = [
+// City coordinates
+export const CITIES = {
+  Tbilisi: { lat: 41.7151, lng: 44.8271, zoom: 12, label: '🏙️ Tbilisi' },
+  Batumi: { lat: 41.6168, lng: 41.6367, zoom: 13, label: '🏖️ Batumi' },
+  Kutaisi: { lat: 42.2662, lng: 42.7180, zoom: 13, label: '🏛️ Kutaisi' },
+  Gudauri: { lat: 42.4784, lng: 44.4842, zoom: 14, label: '🏔️ Gudauri' },
+} as const
+
+export type CityName = keyof typeof CITIES
+
+// All cars across Georgia - 15 cars
+export const ALL_CARS: MapCar[] = [
+  // ===== TBILISI (7 cars) =====
   {
-    id: 'map-car-1',
+    id: 'tbilisi-1',
     lat: 41.7151,
     lng: 44.8271,
     price: 120,
@@ -38,9 +51,10 @@ export const MAP_CARS: MapCar[] = [
     features: ['4WD/AWD', 'Snow Tires', 'Heated Seats', 'GPS Navigation', 'Ski Rack'],
     isInstantBook: true,
     transmission: 'AUTOMATIC',
+    city: 'Tbilisi',
   },
   {
-    id: 'map-car-2',
+    id: 'tbilisi-2',
     lat: 41.7089,
     lng: 44.7478,
     price: 85,
@@ -56,9 +70,10 @@ export const MAP_CARS: MapCar[] = [
     features: ['4WD/AWD', 'Snow Tires', 'Backup Camera', 'Bluetooth'],
     isInstantBook: true,
     transmission: 'AUTOMATIC',
+    city: 'Tbilisi',
   },
   {
-    id: 'map-car-3',
+    id: 'tbilisi-3',
     lat: 41.7215,
     lng: 44.7665,
     price: 200,
@@ -74,9 +89,10 @@ export const MAP_CARS: MapCar[] = [
     features: ['Autopilot', 'Premium Audio', 'Glass Roof', 'Supercharger Access'],
     isInstantBook: false,
     transmission: 'AUTOMATIC',
+    city: 'Tbilisi',
   },
   {
-    id: 'map-car-4',
+    id: 'tbilisi-4',
     lat: 41.7320,
     lng: 44.7890,
     price: 60,
@@ -92,9 +108,10 @@ export const MAP_CARS: MapCar[] = [
     features: ['Fuel Efficient', 'Bluetooth', 'Cruise Control', 'USB Port'],
     isInstantBook: true,
     transmission: 'AUTOMATIC',
+    city: 'Tbilisi',
   },
   {
-    id: 'map-car-5',
+    id: 'tbilisi-5',
     lat: 41.6934,
     lng: 44.8015,
     price: 150,
@@ -110,9 +127,10 @@ export const MAP_CARS: MapCar[] = [
     features: ['4WD/AWD', 'Snow Tires', 'Leather Seats', 'Panoramic Roof', 'Heated Steering'],
     isInstantBook: true,
     transmission: 'AUTOMATIC',
+    city: 'Tbilisi',
   },
   {
-    id: 'map-car-6',
+    id: 'tbilisi-6',
     lat: 41.7452,
     lng: 44.7891,
     price: 45,
@@ -128,9 +146,10 @@ export const MAP_CARS: MapCar[] = [
     features: ['Fuel Efficient', 'Bluetooth', 'USB Port', 'Air Conditioning'],
     isInstantBook: true,
     transmission: 'MANUAL',
+    city: 'Tbilisi',
   },
   {
-    id: 'map-car-7',
+    id: 'tbilisi-7',
     lat: 41.7089,
     lng: 44.7856,
     price: 280,
@@ -146,48 +165,15 @@ export const MAP_CARS: MapCar[] = [
     features: ['4WD/AWD', 'Snow Tires', 'Premium Audio', 'Sport Mode', 'Leather Interior'],
     isInstantBook: false,
     transmission: 'AUTOMATIC',
+    city: 'Tbilisi',
   },
+
+  // ===== BATUMI (4 cars) =====
   {
-    id: 'map-car-8',
-    lat: 41.7225,
-    lng: 44.8135,
-    price: 95,
-    model: 'Forester',
-    make: 'Subaru',
-    year: 2022,
-    isWinterReady: true,
-    imageUrl: 'https://images.unsplash.com/photo-1619976215249-0bfc6be0d8fe?w=800',
-    category: 'SUV',
-    fuelType: 'PETROL',
-    rating: 4.8,
-    reviewCount: 29,
-    features: ['4WD/AWD', 'Snow Tires', 'Roof Rack', 'Ski Rack', 'Heated Seats'],
-    isInstantBook: true,
-    transmission: 'AUTOMATIC',
-  },
-  {
-    id: 'map-car-9',
-    lat: 41.6978,
-    lng: 44.7723,
-    price: 180,
-    model: 'GLE',
-    make: 'Mercedes-Benz',
-    year: 2023,
-    isWinterReady: true,
-    imageUrl: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800',
-    category: 'LUXURY',
-    fuelType: 'DIESEL',
-    rating: 4.9,
-    reviewCount: 21,
-    features: ['4WD/AWD', 'Snow Tires', 'MBUX System', 'Ambient Lighting', 'Air Suspension'],
-    isInstantBook: true,
-    transmission: 'AUTOMATIC',
-  },
-  {
-    id: 'map-car-10',
-    lat: 41.7381,
-    lng: 44.8234,
-    price: 55,
+    id: 'batumi-1',
+    lat: 41.6168,
+    lng: 41.6367,
+    price: 70,
     model: 'Corolla',
     make: 'Toyota',
     year: 2023,
@@ -195,20 +181,116 @@ export const MAP_CARS: MapCar[] = [
     imageUrl: 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800',
     category: 'SEDAN',
     fuelType: 'HYBRID',
-    rating: 4.7,
-    reviewCount: 43,
+    rating: 4.8,
+    reviewCount: 34,
     features: ['Fuel Efficient', 'Apple CarPlay', 'Android Auto', 'Safety Sense'],
     isInstantBook: true,
     transmission: 'AUTOMATIC',
+    city: 'Batumi',
   },
-]
-
-// Gudauri-specific cars (for winter mode)
-export const GUDAURI_CARS: MapCar[] = [
   {
-    id: 'gudauri-car-1',
-    lat: 42.4801,
-    lng: 44.4789,
+    id: 'batumi-2',
+    lat: 41.6234,
+    lng: 41.6290,
+    price: 55,
+    model: 'Clio',
+    make: 'Renault',
+    year: 2022,
+    isWinterReady: false,
+    imageUrl: 'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800',
+    category: 'COMPACT',
+    fuelType: 'PETROL',
+    rating: 4.5,
+    reviewCount: 28,
+    features: ['Fuel Efficient', 'Bluetooth', 'USB Port', 'Air Conditioning'],
+    isInstantBook: true,
+    transmission: 'MANUAL',
+    city: 'Batumi',
+  },
+  {
+    id: 'batumi-3',
+    lat: 41.6089,
+    lng: 41.6412,
+    price: 180,
+    model: 'E-Class',
+    make: 'Mercedes-Benz',
+    year: 2023,
+    isWinterReady: false,
+    imageUrl: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800',
+    category: 'LUXURY',
+    fuelType: 'DIESEL',
+    rating: 4.9,
+    reviewCount: 19,
+    features: ['MBUX System', 'Ambient Lighting', 'Leather Seats', 'Premium Audio'],
+    isInstantBook: true,
+    transmission: 'AUTOMATIC',
+    city: 'Batumi',
+  },
+  {
+    id: 'batumi-4',
+    lat: 41.6201,
+    lng: 41.6523,
+    price: 65,
+    model: 'Sportage',
+    make: 'Kia',
+    year: 2022,
+    isWinterReady: false,
+    imageUrl: 'https://images.unsplash.com/photo-1619976215249-0bfc6be0d8fe?w=800',
+    category: 'SUV',
+    fuelType: 'PETROL',
+    rating: 4.6,
+    reviewCount: 41,
+    features: ['Backup Camera', 'Bluetooth', 'Cruise Control', 'Roof Rails'],
+    isInstantBook: true,
+    transmission: 'AUTOMATIC',
+    city: 'Batumi',
+  },
+
+  // ===== KUTAISI (2 cars) =====
+  {
+    id: 'kutaisi-1',
+    lat: 42.2662,
+    lng: 42.7180,
+    price: 50,
+    model: 'Focus',
+    make: 'Ford',
+    year: 2021,
+    isWinterReady: false,
+    imageUrl: 'https://images.unsplash.com/photo-1471444928139-48c5bf5173f8?w=800',
+    category: 'COMPACT',
+    fuelType: 'PETROL',
+    rating: 4.4,
+    reviewCount: 22,
+    features: ['Fuel Efficient', 'Bluetooth', 'Air Conditioning'],
+    isInstantBook: true,
+    transmission: 'MANUAL',
+    city: 'Kutaisi',
+  },
+  {
+    id: 'kutaisi-2',
+    lat: 42.2712,
+    lng: 42.7089,
+    price: 75,
+    model: 'RAV4',
+    make: 'Toyota',
+    year: 2022,
+    isWinterReady: true,
+    imageUrl: 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800',
+    category: 'SUV',
+    fuelType: 'HYBRID',
+    rating: 4.7,
+    reviewCount: 35,
+    features: ['4WD/AWD', 'Fuel Efficient', 'Backup Camera', 'Lane Assist'],
+    isInstantBook: true,
+    transmission: 'AUTOMATIC',
+    city: 'Kutaisi',
+  },
+
+  // ===== GUDAURI (2 cars) =====
+  {
+    id: 'gudauri-1',
+    lat: 42.4784,
+    lng: 44.4842,
     price: 140,
     model: 'Land Cruiser 200',
     make: 'Toyota',
@@ -222,27 +304,10 @@ export const GUDAURI_CARS: MapCar[] = [
     features: ['4WD/AWD', 'Snow Chains', 'Heated Everything', 'Ski Rack', 'Mountain Ready'],
     isInstantBook: true,
     transmission: 'AUTOMATIC',
+    city: 'Gudauri',
   },
   {
-    id: 'gudauri-car-2',
-    lat: 42.4756,
-    lng: 44.4834,
-    price: 110,
-    model: 'Pajero Sport',
-    make: 'Mitsubishi',
-    year: 2023,
-    isWinterReady: true,
-    imageUrl: 'https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=800',
-    category: 'SUV',
-    fuelType: 'DIESEL',
-    rating: 4.8,
-    reviewCount: 34,
-    features: ['4WD/AWD', 'Snow Tires', 'Super Select 4WD', 'Heated Seats'],
-    isInstantBook: true,
-    transmission: 'AUTOMATIC',
-  },
-  {
-    id: 'gudauri-car-3',
+    id: 'gudauri-2',
     lat: 42.4823,
     lng: 44.4712,
     price: 160,
@@ -258,10 +323,15 @@ export const GUDAURI_CARS: MapCar[] = [
     features: ['4WD/AWD', 'Terrain Response', 'Wade Sensing', 'Heated Windscreen'],
     isInstantBook: false,
     transmission: 'AUTOMATIC',
+    city: 'Gudauri',
   },
 ]
 
 // Filter helpers
+export function getCarsByCity(city: CityName): MapCar[] {
+  return ALL_CARS.filter(car => car.city === city)
+}
+
 export function getWinterReadyCars(cars: MapCar[]): MapCar[] {
   return cars.filter(car => car.isWinterReady)
 }
@@ -277,3 +347,11 @@ export function getCarsByFuelType(cars: MapCar[], fuelType: MapCar['fuelType']):
 export function getHybridElectricCars(cars: MapCar[]): MapCar[] {
   return cars.filter(car => car.fuelType === 'HYBRID' || car.fuelType === 'ELECTRIC')
 }
+
+export function getTopRatedCars(cars: MapCar[], limit = 5): MapCar[] {
+  return [...cars].sort((a, b) => b.rating - a.rating).slice(0, limit)
+}
+
+// Legacy exports for backward compatibility
+export const MAP_CARS = ALL_CARS.filter(car => car.city === 'Tbilisi')
+export const GUDAURI_CARS = ALL_CARS.filter(car => car.city === 'Gudauri')
