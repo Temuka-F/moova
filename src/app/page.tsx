@@ -1,12 +1,14 @@
 /**
- * Home Page Route
+ * Home Page Route - Map-First Interface
  * 
- * This is the main landing page for Moova car sharing platform.
- * Features: Hero section, search, car listings, city explorer, how it works.
+ * Landing page for Moova car sharing platform.
+ * Features: Full-screen map with car markers, bottom drawer, winter mode toggle.
  * 
- * Component: src/components/pages/HomePage.tsx
+ * Component: src/components/pages/MapHomePage.tsx
  */
 
-import { HomePage } from '@/components/pages/HomePage'
+import { MapHomePage } from '@/components/pages/MapHomePage'
 
-export default HomePage
+export default function Home() {
+  return <MapHomePage />
+}

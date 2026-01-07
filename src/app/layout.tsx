@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Outfit } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
-import { Header } from '@/components/layout/header'
-import { Footer } from '@/components/layout/footer'
 import './globals.css'
 
 const outfit = Outfit({
@@ -16,6 +14,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
@@ -27,12 +26,18 @@ export const metadata: Metadata = {
     default: 'Moova - Premium Car Sharing in Georgia',
     template: '%s | Moova',
   },
-  description: 'The smartest way to rent a car in Georgia. Discover nearby cars, book instantly, and drive within minutes. Premium car sharing made simple.',
-  keywords: ['car rental', 'Georgia', 'Tbilisi', 'car sharing', 'rent a car', 'peer to peer', 'instant booking'],
+  description: 'The smartest way to rent a car in Georgia. Discover nearby cars on the map, book instantly, and drive within minutes.',
+  keywords: ['car rental', 'Georgia', 'Tbilisi', 'Gudauri', 'car sharing', 'rent a car', 'peer to peer', 'instant booking', 'winter cars'],
   authors: [{ name: 'Moova' }],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Moova',
+  },
   openGraph: {
     title: 'Moova - Premium Car Sharing in Georgia',
-    description: 'Discover nearby cars, book instantly, and drive within minutes',
+    description: 'Discover nearby cars on the map, book instantly, and drive within minutes',
     url: 'https://moova.ge',
     siteName: 'Moova',
     locale: 'en_US',
@@ -41,7 +46,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Moova - Premium Car Sharing',
-    description: 'Discover nearby cars, book instantly, and drive within minutes',
+    description: 'Discover nearby cars on the map, book instantly, and drive within minutes',
   },
   robots: {
     index: true,
@@ -56,12 +61,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.variable} font-sans min-h-screen flex flex-col`}>
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+      <body className={`${outfit.variable} font-sans antialiased`}>
+        {children}
         <Toaster position="top-center" richColors closeButton />
       </body>
     </html>

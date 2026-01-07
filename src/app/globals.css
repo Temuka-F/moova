@@ -522,3 +522,65 @@ input:-webkit-autofill:focus {
 .star-empty {
   @apply text-muted-foreground;
 }
+
+/* Scrollbar hide utility for horizontal scrolls */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mapbox overrides */
+.mapboxgl-map {
+  font-family: inherit !important;
+}
+
+.mapboxgl-ctrl-group {
+  @apply rounded-xl shadow-lg border-0 overflow-hidden;
+}
+
+.mapboxgl-ctrl-group button {
+  @apply w-10 h-10 border-0;
+}
+
+.mapboxgl-ctrl-geolocate {
+  @apply rounded-xl shadow-lg;
+}
+
+.mapboxgl-user-location-dot {
+  @apply bg-blue-500;
+}
+
+.mapboxgl-user-location-accuracy-circle {
+  @apply bg-blue-500/20;
+}
+
+/* Vaul drawer styles */
+[data-vaul-drawer] {
+  touch-action: pan-y;
+}
+
+[data-vaul-drawer-overlay] {
+  @apply bg-black/40;
+}
+
+/* PWA standalone mode */
+@media (display-mode: standalone) {
+  .safe-pt {
+    padding-top: env(safe-area-inset-top, 44px);
+  }
+}
+
+/* Touch feedback on mobile */
+@media (hover: none) {
+  .touch-feedback {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .touch-feedback:active {
+    @apply bg-muted/50;
+  }
+}
