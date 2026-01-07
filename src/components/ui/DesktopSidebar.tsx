@@ -12,7 +12,10 @@ import {
   SlidersHorizontal,
   X,
   Car,
-  MapPin
+  MapPin,
+  Users,
+  Sparkles,
+  Leaf
 } from 'lucide-react'
 import { MapCar } from '@/lib/map-cars'
 import Image from 'next/image'
@@ -31,22 +34,22 @@ interface DesktopSidebarProps {
   onSortChange: (sort: string) => void
 }
 
-// Filter chips
+// Filter chips with icons
 const FILTER_CHIPS = [
-  { id: 'winter', label: 'Winter Ready', emoji: '❄️' },
-  { id: 'suv', label: 'SUV', emoji: '🚙' },
-  { id: 'sedan', label: 'Sedan', emoji: '🚗' },
-  { id: 'luxury', label: 'Luxury', emoji: '✨' },
-  { id: 'hybrid', label: 'Hybrid/EV', emoji: '⚡' },
-  { id: 'instant', label: 'Instant Book', emoji: '🚀' },
-  { id: 'automatic', label: 'Automatic', emoji: '🅰️' },
+  { id: 'winter', label: 'Winter Ready', icon: Snowflake, color: 'bg-blue-500' },
+  { id: 'suv', label: 'SUV', icon: Car, color: 'bg-orange-500' },
+  { id: 'sedan', label: 'Sedan', icon: Car, color: 'bg-indigo-500' },
+  { id: 'luxury', label: 'Luxury', icon: Sparkles, color: 'bg-purple-500' },
+  { id: 'hybrid', label: 'Hybrid/EV', icon: Leaf, color: 'bg-green-500' },
+  { id: 'instant', label: 'Instant Book', icon: Zap, color: 'bg-emerald-500' },
+  { id: 'compact', label: 'Compact', icon: Car, color: 'bg-gray-500' },
 ]
 
 // Sort options
 const SORT_OPTIONS = [
+  { id: 'rating', label: 'Top Rated' },
   { id: 'price-asc', label: 'Price: Low to High' },
   { id: 'price-desc', label: 'Price: High to Low' },
-  { id: 'rating', label: 'Top Rated' },
   { id: 'reviews', label: 'Most Reviews' },
 ]
 
@@ -66,7 +69,7 @@ function CarListCard({
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.01 }}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       onClick={onClick}
@@ -82,7 +85,7 @@ function CarListCard({
       {/* Image */}
       <div className="relative h-36 bg-gradient-to-br from-gray-100 to-gray-200">
         <Image
-          src={car.imageUrl}
+          src={car.images[0]}
           alt={`${car.make} ${car.model}`}
           fill
           className="object-cover"
@@ -116,27 +119,42 @@ function CarListCard({
             <h3 className="font-semibold text-gray-900 truncate">
               {car.make} {car.model}
             </h3>
-            <p className="text-xs text-gray-500">{car.year} · {car.category}</p>
+            <p className="text-xs text-gray-500">{car.year} · {car.color}</p>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-3 text-xs text-gray-600">
+        <div className="flex items-center gap-3 text-xs text-gray-600 mb-2">
           <div className="flex items-center gap-1">
             <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
             <span className="font-medium">{car.rating}</span>
             <span className="text-gray-400">({car.reviewCount})</span>
           </div>
           <div className="flex items-center gap-1">
-            <Fuel className="w-3.5 h-3.5" />
-            <span>{car.fuelType}</span>
+            <Users className="w-3.5 h-3.5" />
+            <span>{car.seats}</span>
           </div>
           <div className="flex items-center gap-1">
             <Gauge className="w-3.5 h-3.5" />
-            <span>{car.transmission}</span>
+            <span>{car.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</span>
           </div>
         </div>
+
+        {/* Location */}
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          <MapPin className="w-3 h-3" />
+          <span className="truncate">{car.city}</span>
+        </div>
       </div>
+
+      {/* View button on hover */}
+      <Link 
+        href={`/cars/${car.id}`}
+        className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-2 opacity-0 hover:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span className="text-white text-sm font-medium">View Details →</span>
+      </Link>
     </motion.div>
   )
 }
@@ -156,9 +174,10 @@ export function DesktopSidebar({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [showSortDropdown, setShowSortDropdown] = useState(false)
 
-  // Get min/max prices from cars
-  const minPrice = Math.min(...cars.map(c => c.price), 0)
-  const maxPrice = Math.max(...cars.map(c => c.price), 500)
+  // Get min/max prices from all cars
+  const allPrices = cars.map(c => c.price)
+  const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0
+  const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 500
 
   return (
     <div className="hidden lg:flex flex-col w-[380px] h-full bg-gray-50 border-r border-gray-200 z-40">
@@ -185,24 +204,38 @@ export function DesktopSidebar({
 
         {/* Quick filters */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
-          {FILTER_CHIPS.slice(0, 5).map((chip) => (
-            <button
-              key={chip.id}
-              onClick={() => onFilterChange(activeFilter === chip.id ? null : chip.id)}
-              className={`
-                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
-                whitespace-nowrap transition-all duration-200
-                ${activeFilter === chip.id
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }
-              `}
-            >
-              <span>{chip.emoji}</span>
-              <span>{chip.label}</span>
-            </button>
-          ))}
+          {FILTER_CHIPS.slice(0, 5).map((chip) => {
+            const Icon = chip.icon
+            const isActive = activeFilter === chip.id
+            return (
+              <button
+                key={chip.id}
+                onClick={() => onFilterChange(isActive ? null : chip.id)}
+                className={`
+                  flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
+                  whitespace-nowrap transition-all duration-200 border
+                  ${isActive
+                    ? `${chip.color} text-white border-transparent`
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                  }
+                `}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{chip.label}</span>
+              </button>
+            )
+          })}
         </div>
+
+        {/* Clear filter button */}
+        {activeFilter && (
+          <button
+            onClick={() => onFilterChange(null)}
+            className="mt-2 text-xs text-gray-500 hover:text-gray-700 underline"
+          >
+            Clear filter
+          </button>
+        )}
 
         {/* Advanced filters panel */}
         <AnimatePresence>
@@ -222,16 +255,16 @@ export function DesktopSidebar({
                   <div className="flex gap-2">
                     <input
                       type="range"
-                      min={minPrice}
-                      max={maxPrice}
+                      min={0}
+                      max={500}
                       value={priceRange[0]}
                       onChange={(e) => onPriceRangeChange([parseInt(e.target.value), priceRange[1]])}
                       className="flex-1 accent-black"
                     />
                     <input
                       type="range"
-                      min={minPrice}
-                      max={maxPrice}
+                      min={0}
+                      max={500}
                       value={priceRange[1]}
                       onChange={(e) => onPriceRangeChange([priceRange[0], parseInt(e.target.value)])}
                       className="flex-1 accent-black"
@@ -243,23 +276,27 @@ export function DesktopSidebar({
                 <div>
                   <label className="text-xs font-medium text-gray-700 mb-2 block">More Filters</label>
                   <div className="flex flex-wrap gap-2">
-                    {FILTER_CHIPS.slice(5).map((chip) => (
-                      <button
-                        key={chip.id}
-                        onClick={() => onFilterChange(activeFilter === chip.id ? null : chip.id)}
-                        className={`
-                          flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
-                          transition-all duration-200
-                          ${activeFilter === chip.id
-                            ? 'bg-black text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }
-                        `}
-                      >
-                        <span>{chip.emoji}</span>
-                        <span>{chip.label}</span>
-                      </button>
-                    ))}
+                    {FILTER_CHIPS.slice(5).map((chip) => {
+                      const Icon = chip.icon
+                      const isActive = activeFilter === chip.id
+                      return (
+                        <button
+                          key={chip.id}
+                          onClick={() => onFilterChange(isActive ? null : chip.id)}
+                          className={`
+                            flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
+                            transition-all duration-200 border
+                            ${isActive
+                              ? `${chip.color} text-white border-transparent`
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                            }
+                          `}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{chip.label}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               </div>

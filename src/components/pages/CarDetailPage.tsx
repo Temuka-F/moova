@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -29,19 +29,55 @@ import {
   Car,
   Info,
   CheckCircle2,
-  ArrowLeft
+  ArrowLeft,
+  Snowflake,
+  Clock,
+  Phone,
+  Navigation
 } from 'lucide-react'
 import { format, differenceInDays, addDays } from 'date-fns'
-import { getCarById } from '@/lib/dummy-data'
-
-// Dynamic map import
-const MiniCarMap = dynamic(
-  () => import('@/components/map/CarMapView').then((mod) => mod.MiniCarMap),
-  { ssr: false, loading: () => <div className="w-full h-full bg-muted animate-pulse rounded-xl" /> }
-)
+import { getCarById, getSimilarCars, MapCar } from '@/lib/map-cars'
 
 interface CarDetailPageProps {
   carId: string
+}
+
+// Similar car card component
+function SimilarCarCard({ car }: { car: MapCar }) {
+  return (
+    <Link 
+      href={`/cars/${car.id}`}
+      className="flex-shrink-0 w-64 bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-shadow"
+    >
+      <div className="relative h-36 bg-gray-100">
+        <Image
+          src={car.images[0]}
+          alt={`${car.make} ${car.model}`}
+          fill
+          className="object-cover"
+          sizes="256px"
+        />
+        {car.isWinterReady && (
+          <div className="absolute top-2 left-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full flex items-center gap-1">
+            <Snowflake className="w-3 h-3" />
+          </div>
+        )}
+      </div>
+      <div className="p-3">
+        <h3 className="font-semibold text-gray-900 truncate">{car.make} {car.model}</h3>
+        <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          <span>{car.rating}</span>
+          <span>·</span>
+          <span>{car.city}</span>
+        </div>
+        <div className="mt-2 flex items-baseline gap-1">
+          <span className="font-bold text-gray-900">{car.price}₾</span>
+          <span className="text-sm text-gray-500">/day</span>
+        </div>
+      </div>
+    </Link>
+  )
 }
 
 export function CarDetailPage({ carId }: CarDetailPageProps) {
@@ -52,7 +88,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
   const [isFavorited, setIsFavorited] = useState(false)
   const [isBooking, setIsBooking] = useState(false)
 
-  // Get car data
+  // Get car data from map-cars
   const car = getCarById(carId)
 
   // If car not found, show error
@@ -63,14 +99,17 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         <h1 className="text-2xl font-bold mb-2">Car not found</h1>
         <p className="text-muted-foreground mb-6">This car may no longer be available.</p>
         <Button asChild>
-          <Link href="/cars">Browse available cars</Link>
+          <Link href="/">Browse available cars</Link>
         </Button>
       </div>
     )
   }
 
+  // Get similar cars
+  const similarCars = getSimilarCars(car, 4)
+
   const totalDays = startDate && endDate ? differenceInDays(endDate, startDate) : 0
-  const subtotal = totalDays * car.pricePerDay
+  const subtotal = totalDays * car.price
   const serviceFee = Math.round(subtotal * 0.15)
   const totalPrice = subtotal + serviceFee
 
@@ -94,10 +133,10 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
     
     if (car.isInstantBook) {
       toast.success('Booking confirmed! Check your email for details.')
-      router.push('/dashboard')
+      router.push('/dashboard/bookings')
     } else {
       toast.success('Booking request sent! The host will respond within 24 hours.')
-      router.push('/dashboard')
+      router.push('/dashboard/bookings')
     }
   }
 
@@ -105,7 +144,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
     if (navigator.share) {
       await navigator.share({
         title: `${car.make} ${car.model} on Moova`,
-        text: `Check out this ${car.make} ${car.model} for ₾${car.pricePerDay}/day`,
+        text: `Check out this ${car.make} ${car.model} for ₾${car.price}/day`,
         url: window.location.href,
       })
     } else {
@@ -114,13 +153,10 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
     }
   }
 
-  // Get all reviews for this car
-  const carReviews = car.reviews || []
-
   return (
-    <div className="min-h-screen pt-16 pb-24 lg:pb-8 bg-background">
+    <div className="min-h-screen pb-24 lg:pb-8 bg-background">
       {/* Back Button - Mobile */}
-      <div className="lg:hidden fixed top-20 left-4 z-20">
+      <div className="lg:hidden fixed top-4 left-4 z-20">
         <Button
           variant="secondary"
           size="icon"
@@ -131,15 +167,31 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         </Button>
       </div>
 
+      {/* Desktop Back link */}
+      <div className="hidden lg:block container mx-auto px-8 pt-6">
+        <Button
+          variant="ghost"
+          className="gap-2"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to search
+        </Button>
+      </div>
+
       {/* Image Gallery */}
-      <div className="relative h-[45vh] md:h-[55vh] bg-secondary">
-        <div 
-          className="absolute inset-0 bg-cover bg-center transition-all duration-500"
-          style={{ backgroundImage: `url('${car.images[currentImageIndex]?.url}')` }}
+      <div className="relative h-[45vh] md:h-[55vh] lg:h-[50vh] lg:mx-8 lg:mt-4 lg:rounded-3xl overflow-hidden bg-secondary">
+        <Image
+          src={car.images[currentImageIndex]}
+          alt={`${car.make} ${car.model}`}
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
         />
         
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         
         {/* Navigation Arrows */}
         {car.images.length > 1 && (
@@ -179,7 +231,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         )}
 
         {/* Top Actions */}
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-4 right-4 flex gap-2 lg:top-6 lg:right-6">
           <Button
             variant="ghost"
             size="icon"
@@ -201,11 +253,17 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         </div>
 
         {/* Badges */}
-        <div className="absolute top-4 left-4 flex gap-2">
+        <div className="absolute top-4 left-4 lg:top-6 lg:left-6 flex flex-wrap gap-2">
           {car.isInstantBook && (
-            <Badge className="bg-primary text-sm shadow-lg">
+            <Badge className="bg-emerald-500 text-sm shadow-lg">
               <Zap className="w-3.5 h-3.5 mr-1" />
               Instant Book
+            </Badge>
+          )}
+          {car.isWinterReady && (
+            <Badge className="bg-blue-500 text-sm shadow-lg">
+              <Snowflake className="w-3.5 h-3.5 mr-1" />
+              Winter Ready
             </Badge>
           )}
         </div>
@@ -221,6 +279,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="secondary">{car.category}</Badge>
                 <Badge variant="outline">{car.year}</Badge>
+                <Badge variant="outline">{car.color}</Badge>
               </div>
               
               <h1 className="text-3xl md:text-4xl font-bold mb-3">
@@ -229,46 +288,57 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               
               <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 fill-primary text-primary" />
+                  <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
                   <span className="font-semibold text-foreground">{car.rating}</span>
                   <span>({car.reviewCount} reviews)</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{car.city}</span>
+                  <span>{car.address}</span>
                 </div>
               </div>
             </div>
 
             <Separator />
 
+            {/* Description */}
+            <div>
+              <h2 className="text-xl font-semibold mb-3">About this car</h2>
+              <p className="text-muted-foreground leading-relaxed">{car.description}</p>
+            </div>
+
+            <Separator />
+
             {/* Host Info */}
             <div className="flex items-center justify-between">
-              <Link href={`/hosts/${car.owner?.id}`} className="flex items-center gap-4 group">
+              <div className="flex items-center gap-4">
                 <Avatar className="w-14 h-14 border-2 border-primary/20">
-                  <AvatarImage src={car.owner?.avatarUrl || undefined} />
+                  <AvatarImage src={car.owner.avatarUrl || undefined} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                    {car.owner?.firstName?.[0]}
+                    {car.owner.firstName[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-lg group-hover:text-primary transition-colors">
-                      Hosted by {car.owner?.firstName}
+                    <span className="font-semibold text-lg">
+                      Hosted by {car.owner.firstName}
                     </span>
-                    {car.owner?.verificationStatus === 'VERIFIED' && (
+                    {car.owner.isVerified && (
                       <CheckCircle2 className="w-5 h-5 text-primary" />
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span>{car.owner?.tripsCount} trips</span>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span>{car.owner.rating}</span>
+                    </div>
                     <span>•</span>
-                    <span>{car.owner?.responseRate}% response rate</span>
+                    <span>{car.owner.tripsCount} trips</span>
                     <span>•</span>
-                    <span>{car.owner?.responseTime}</span>
+                    <span>Responds {car.owner.responseTime}</span>
                   </div>
                 </div>
-              </Link>
+              </div>
               <Button variant="outline" className="hidden sm:flex rounded-full">
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Message
@@ -331,13 +401,16 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
 
             {/* Location */}
             <div>
-              <h2 className="text-xl font-semibold mb-4">Location</h2>
-              <p className="text-muted-foreground mb-4">
-                <MapPin className="w-4 h-4 inline mr-1" />
-                {car.address}, {car.city}
-              </p>
-              <div className="h-48 rounded-xl overflow-hidden">
-                <MiniCarMap latitude={car.latitude} longitude={car.longitude} className="w-full h-full" />
+              <h2 className="text-xl font-semibold mb-4">Pickup Location</h2>
+              <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                <MapPin className="w-5 h-5 text-primary" />
+                <span>{car.address}</span>
+              </div>
+              <div className="h-48 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <Navigation className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">Map view available after booking</p>
+                </div>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 Exact address provided after booking is confirmed
@@ -346,75 +419,34 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
 
             <Separator />
 
-            {/* Reviews */}
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">
-                  Reviews ({car.reviewCount})
-                </h2>
-                <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 fill-primary text-primary" />
-                  <span className="font-semibold">{car.rating}</span>
-                </div>
-              </div>
-              
-              {carReviews.length > 0 ? (
-                <div className="space-y-6">
-                  {carReviews.map((review: any) => (
-                    <div key={review.id} className="flex gap-4">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={review.reviewer?.avatarUrl} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                          {review.reviewer?.firstName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium">
-                            {review.reviewer?.firstName} {review.reviewer?.lastName?.charAt(0)}.
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(review.createdAt), 'MMM d, yyyy')}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-0.5 mb-2">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < review.rating
-                                  ? 'fill-primary text-primary'
-                                  : 'text-muted-foreground'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-muted-foreground">{review.comment}</p>
-                      </div>
-                    </div>
+            {/* Similar Cars */}
+            {similarCars.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Similar Cars</h2>
+                <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+                  {similarCars.map((similarCar) => (
+                    <SimilarCarCard key={similarCar.id} car={similarCar} />
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Star className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No reviews yet. Be the first to rent this car!</p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Booking Sidebar - Desktop */}
           <div className="hidden lg:block">
             <Card className="sticky top-24 border-0 shadow-2xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-secondary text-white p-6">
+              <CardHeader className="bg-gray-900 text-white p-6">
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold">
-                    ₾{car.pricePerDay}
+                    {car.price}₾
                   </span>
                   <span className="text-white/70">/day</span>
                 </div>
+                <div className="text-white/70 text-sm mt-1">
+                  {car.pricePerHour}₾/hour available
+                </div>
                 <div className="flex items-center gap-2 mt-2 text-white/80 text-sm">
-                  <Star className="w-4 h-4 fill-white" />
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                   <span>{car.rating}</span>
                   <span>•</span>
                   <span>{car.reviewCount} reviews</span>
@@ -429,7 +461,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                         <div className="text-left">
                           <div className="text-xs text-muted-foreground uppercase">Pick-up</div>
                           <div className="font-medium">
-                            {startDate ? format(startDate, 'MMM d') : 'Select'}
+                            {startDate ? format(startDate, 'MMM d') : 'Select date'}
                           </div>
                         </div>
                       </Button>
@@ -451,7 +483,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                         <div className="text-left">
                           <div className="text-xs text-muted-foreground uppercase">Return</div>
                           <div className="font-medium">
-                            {endDate ? format(endDate, 'MMM d') : 'Select'}
+                            {endDate ? format(endDate, 'MMM d') : 'Select date'}
                           </div>
                         </div>
                       </Button>
@@ -473,18 +505,18 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                   <div className="space-y-3 pt-4 border-t">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        ₾{car.pricePerDay} × {totalDays} days
+                        {car.price}₾ × {totalDays} days
                       </span>
-                      <span>₾{subtotal}</span>
+                      <span>{subtotal}₾</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Service fee</span>
-                      <span>₾{serviceFee}</span>
+                      <span>{serviceFee}₾</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-semibold text-lg">
                       <span>Total</span>
-                      <span>₾{totalPrice}</span>
+                      <span>{totalPrice}₾</span>
                     </div>
                   </div>
                 )}
@@ -492,7 +524,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                 {/* Book Button */}
                 <Button 
                   size="lg" 
-                  className="w-full h-14 text-lg rounded-xl glow-primary"
+                  className="w-full h-14 text-lg rounded-xl bg-black hover:bg-gray-900"
                   disabled={!startDate || !endDate || isBooking}
                   onClick={handleBook}
                 >
@@ -512,7 +544,8 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                 <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-xl text-sm">
                   <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
                   <span className="text-muted-foreground">
-                    Security deposit of ₾{car.securityDeposit} required. Refunded after trip.
+                    Security deposit of {car.securityDeposit}₾ required. Refunded after trip.
+                    {car.mileageLimit && ` ${car.mileageLimit}km/day limit.`}
                   </span>
                 </div>
 
@@ -521,6 +554,12 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                   <Shield className="w-4 h-4 text-primary" />
                   <span>Insurance included</span>
                 </div>
+
+                {/* Contact host */}
+                <Button variant="outline" className="w-full rounded-xl">
+                  <Phone className="w-4 h-4 mr-2" />
+                  Contact Host
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -528,22 +567,22 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
       </div>
 
       {/* Mobile Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl p-4 lg:hidden z-40">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl p-4 lg:hidden z-40 safe-pb">
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold">₾{car.pricePerDay}</span>
+              <span className="text-2xl font-bold">{car.price}₾</span>
               <span className="text-sm text-muted-foreground">/day</span>
             </div>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Star className="w-3.5 h-3.5 fill-primary text-primary" />
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>{car.rating}</span>
               <span>({car.reviewCount})</span>
             </div>
           </div>
           <Button 
             size="lg"
-            className="h-12 px-8 rounded-xl"
+            className="h-12 px-8 rounded-xl bg-black hover:bg-gray-900"
             onClick={() => {
               if (!startDate) setStartDate(addDays(new Date(), 1))
               if (!endDate) setEndDate(addDays(new Date(), 4))

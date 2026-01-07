@@ -62,8 +62,14 @@ export function MapHomePage() {
       case 'sedan':
         cars = getCarsByCategory(cars, 'SEDAN')
         break
+      case 'compact':
+        cars = getCarsByCategory(cars, 'COMPACT')
+        break
       case 'luxury':
         cars = getCarsByCategory(cars, 'LUXURY')
+        break
+      case 'sports':
+        cars = getCarsByCategory(cars, 'SPORTS')
         break
       case 'hybrid':
         cars = getHybridElectricCars(cars)

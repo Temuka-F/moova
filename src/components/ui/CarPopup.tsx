@@ -12,11 +12,15 @@ import {
   ArrowRight,
   Heart,
   Share2,
-  MapPin
+  MapPin,
+  Users,
+  CheckCircle2
 } from 'lucide-react'
 import { MapCar } from '@/lib/map-cars'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface CarPopupProps {
   car: MapCar | null
@@ -24,7 +28,28 @@ interface CarPopupProps {
 }
 
 export function CarPopup({ car, onClose }: CarPopupProps) {
+  const [isFavorited, setIsFavorited] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
   if (!car) return null
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${car.make} ${car.model} on Moova`,
+        text: `Check out this ${car.make} ${car.model} for ₾${car.price}/day`,
+        url: `${window.location.origin}/cars/${car.id}`,
+      })
+    } else {
+      navigator.clipboard.writeText(`${window.location.origin}/cars/${car.id}`)
+      toast.success('Link copied to clipboard!')
+    }
+  }
+
+  const handleFavorite = () => {
+    setIsFavorited(!isFavorited)
+    toast.success(isFavorited ? 'Removed from favorites' : 'Added to favorites')
+  }
 
   return (
     <AnimatePresence>
@@ -61,10 +86,20 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
 
           {/* Share & Favorite buttons */}
           <div className="absolute top-4 left-4 z-20 flex gap-2">
-            <button className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 flex items-center justify-center hover:bg-white transition-colors shadow-lg">
-              <Heart className="w-5 h-5" />
+            <button 
+              onClick={handleFavorite}
+              className={`w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-lg ${
+                isFavorited 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-white/90 text-gray-700 hover:bg-white'
+              }`}
+            >
+              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-white' : ''}`} />
             </button>
-            <button className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 flex items-center justify-center hover:bg-white transition-colors shadow-lg">
+            <button 
+              onClick={handleShare}
+              className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-gray-700 flex items-center justify-center hover:bg-white transition-colors shadow-lg"
+            >
               <Share2 className="w-5 h-5" />
             </button>
           </div>
@@ -72,7 +107,7 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
           {/* Car image */}
           <div className="relative h-56 lg:h-64 bg-gradient-to-br from-gray-100 to-gray-200">
             <Image
-              src={car.imageUrl}
+              src={car.images[currentImageIndex] || car.images[0]}
               alt={`${car.make} ${car.model}`}
               fill
               className="object-cover"
@@ -80,8 +115,23 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
               priority
             />
             
+            {/* Image dots if multiple images */}
+            {car.images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {car.images.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
             {/* Badges */}
-            <div className="absolute bottom-4 left-4 flex gap-2">
+            <div className="absolute bottom-4 right-4 flex gap-2">
               {car.isWinterReady && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-sm font-medium rounded-full shadow-lg">
                   <Snowflake className="w-4 h-4" />
@@ -91,7 +141,7 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
               {car.isInstantBook && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white text-sm font-medium rounded-full shadow-lg">
                   <Zap className="w-4 h-4" />
-                  <span>Instant Book</span>
+                  <span>Instant</span>
                 </div>
               )}
             </div>
@@ -100,12 +150,12 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
           {/* Content */}
           <div className="p-5 lg:p-6">
             {/* Header */}
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-3">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   {car.make} {car.model}
                 </h2>
-                <p className="text-gray-500">{car.year} · {car.category} · {car.transmission}</p>
+                <p className="text-gray-500">{car.year} · {car.color}</p>
               </div>
               <div className="text-right">
                 <p className="text-3xl font-bold text-gray-900">{car.price}₾</p>
@@ -113,27 +163,73 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="flex items-center gap-6 py-4 border-y border-gray-100 mb-4">
-              <div className="flex items-center gap-2">
+            {/* Location */}
+            <div className="flex items-center gap-2 text-gray-600 mb-4">
+              <MapPin className="w-4 h-4 text-gray-400" />
+              <span className="text-sm">{car.address}</span>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="flex items-center gap-4 py-3 border-y border-gray-100 mb-4">
+              <div className="flex items-center gap-1.5">
                 <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-                <div>
-                  <span className="font-semibold text-gray-900">{car.rating}</span>
-                  <span className="text-gray-500 text-sm ml-1">({car.reviewCount} reviews)</span>
-                </div>
+                <span className="font-semibold text-gray-900">{car.rating}</span>
+                <span className="text-gray-500 text-sm">({car.reviewCount})</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <Users className="w-5 h-5" />
+                <span>{car.seats} seats</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-600">
                 <Fuel className="w-5 h-5" />
                 <span>{car.fuelType}</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-1.5 text-gray-600">
                 <Gauge className="w-5 h-5" />
-                <span>{car.transmission}</span>
+                <span>{car.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</span>
+              </div>
+            </div>
+
+            {/* Host info */}
+            <div className="flex items-center gap-3 py-3 px-4 bg-gray-50 rounded-xl mb-4">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                {car.owner.avatarUrl ? (
+                  <Image
+                    src={car.owner.avatarUrl}
+                    alt={car.owner.firstName}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-black text-white font-medium text-lg">
+                    {car.owner.firstName[0]}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-gray-900">
+                    {car.owner.firstName} {car.owner.lastName[0]}.
+                  </p>
+                  {car.owner.isVerified && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-0.5">
+                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    <span>{car.owner.rating}</span>
+                  </div>
+                  <span>·</span>
+                  <span>{car.owner.tripsCount} trips</span>
+                  <span>·</span>
+                  <span>{car.owner.responseTime}</span>
+                </div>
               </div>
             </div>
 
             {/* Features */}
-            <div className="mb-6">
+            <div className="mb-5">
               <h3 className="text-sm font-semibold text-gray-900 mb-2">Features</h3>
               <div className="flex flex-wrap gap-2">
                 {car.features.slice(0, 6).map((feature) => (
@@ -152,10 +248,18 @@ export function CarPopup({ car, onClose }: CarPopupProps) {
               </div>
             </div>
 
-            {/* Location */}
-            <div className="flex items-center gap-2 text-gray-600 mb-6">
-              <MapPin className="w-5 h-5" />
-              <span>{car.city}</span>
+            {/* Price info */}
+            <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl mb-5">
+              <div>
+                <p className="text-sm text-gray-500">Security deposit</p>
+                <p className="font-semibold text-gray-900">{car.securityDeposit}₾</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Mileage limit</p>
+                <p className="font-semibold text-gray-900">
+                  {car.mileageLimit ? `${car.mileageLimit}km/day` : 'Unlimited'}
+                </p>
+              </div>
             </div>
 
             {/* Actions */}
