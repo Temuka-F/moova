@@ -444,7 +444,7 @@ export default function AdminDashboardPage() {
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <Avatar className="w-6 h-6">
-                          <AvatarImage src={booking.renter.avatarUrl} />
+                          <AvatarImage src={booking.renter.avatarUrl || undefined} />
                           <AvatarFallback className="text-xs">
                             {booking.renter.firstName[0]}
                           </AvatarFallback>

@@ -218,7 +218,7 @@ function AdminCarsContent() {
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
                           <Avatar className="w-8 h-8">
-                            <AvatarImage src={car.owner.avatarUrl} />
+                            <AvatarImage src={car.owner.avatarUrl || undefined} />
                             <AvatarFallback className="text-xs">
                               {car.owner.firstName[0]}
                             </AvatarFallback>

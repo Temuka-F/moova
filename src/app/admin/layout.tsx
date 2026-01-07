@@ -186,7 +186,7 @@ export default function AdminLayout({
         <div className="p-4 border-t">
           <div className={cn('flex items-center gap-3', sidebarCollapsed && 'justify-center')}>
             <Avatar className="w-8 h-8">
-              <AvatarImage src={user.avatarUrl} />
+              <AvatarImage src={user.avatarUrl || undefined} />
               <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                 {user.firstName[0]}
               </AvatarFallback>
