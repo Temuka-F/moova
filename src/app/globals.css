@@ -2,9 +2,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Import distinctive fonts */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-
 :root {
   /* Moova - Premium Dark Theme inspired by Uber */
   --background: 0 0% 100%;
