@@ -138,25 +138,32 @@ async function main() {
       })
 
       if (!existingBooking) {
-        await prisma.booking.create({
-          data: {
-            id: dummyBooking.id,
-            carId: car.id,
-            renterId: renter.id,
-            startDate: new Date(dummyBooking.startDate),
-            endDate: new Date(dummyBooking.endDate),
-            pickupLocation: dummyBooking.pickupLocation,
-            dailyRate: car.pricePerDay,
-            totalDays: dummyBooking.totalDays,
-            subtotal: dummyBooking.subtotal,
-            serviceFee: dummyBooking.serviceFee || Math.round(dummyBooking.subtotal * 0.15),
-            totalAmount: dummyBooking.totalAmount,
-            securityDeposit: car.securityDeposit,
-            status: dummyBooking.status as 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED',
-            paymentStatus: dummyBooking.paymentStatus || 'COMPLETED' as 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED',
-            createdAt: new Date(dummyBooking.createdAt || Date.now()),
-          },
-        })
+      const totalDays = dummyBooking.totalDays || Math.ceil(
+        (new Date(dummyBooking.endDate).getTime() - new Date(dummyBooking.startDate).getTime()) / (1000 * 60 * 60 * 24)
+      )
+      const subtotal = dummyBooking.subtotal || (car.pricePerDay * totalDays)
+      const serviceFee = dummyBooking.serviceFee || Math.round(subtotal * 0.15)
+      const totalAmount = dummyBooking.totalAmount || (subtotal + serviceFee)
+
+      await prisma.booking.create({
+        data: {
+          id: dummyBooking.id,
+          carId: car.id,
+          renterId: renter.id,
+          startDate: new Date(dummyBooking.startDate),
+          endDate: new Date(dummyBooking.endDate),
+          pickupLocation: dummyBooking.pickupLocation,
+          dailyRate: dummyBooking.dailyRate || car.pricePerDay,
+          totalDays,
+          subtotal,
+          serviceFee,
+          totalAmount,
+          securityDeposit: car.securityDeposit,
+          status: dummyBooking.status as 'PENDING' | 'CONFIRMED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED',
+          paymentStatus: (dummyBooking.paymentStatus || 'COMPLETED') as 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED',
+          createdAt: new Date((dummyBooking as any).createdAt || Date.now()),
+        },
+      })
         bookingCount++
       }
     }
