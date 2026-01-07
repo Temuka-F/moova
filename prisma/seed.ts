@@ -223,6 +223,13 @@ async function main() {
   console.log('⭐ Creating sample reviews...')
   const completedBookings = await prisma.booking.findMany({
     where: { status: 'COMPLETED' },
+    include: {
+      car: {
+        select: {
+          ownerId: true,
+        },
+      },
+    },
     take: 5,
   })
 
