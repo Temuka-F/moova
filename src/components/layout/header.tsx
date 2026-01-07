@@ -49,7 +49,14 @@ export function Header() {
   }, [])
 
   useEffect(() => {
-    const supabase = createClient()
+    let supabase
+    try {
+      supabase = createClient()
+    } catch (error) {
+      console.error('Failed to initialize Supabase client in Header:', error)
+      setLoading(false)
+      return
+    }
     
     const getUser = async () => {
       try {
@@ -64,17 +71,32 @@ export function Header() {
 
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null)
+      })
 
-    return () => subscription.unsubscribe()
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe()
+        }
+      }
+    } catch (error) {
+      console.error('Error setting up auth state listener in Header:', error)
+      return () => {}
+    }
   }, [])
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    window.location.href = '/'
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Error during logout:', error)
+      // Still redirect even if logout fails
+      window.location.href = '/'
+    }
   }
 
   const isHomePage = pathname === '/'

@@ -19,7 +19,15 @@ export function useAuth(options: UseAuthOptions = {}) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    const supabase = createClient()
+    let supabase
+    try {
+      supabase = createClient()
+    } catch (error) {
+      console.error('Failed to initialize Supabase client:', error)
+      setLoading(false)
+      setIsAuthenticated(false)
+      return
+    }
     
     const getUser = async () => {
       try {
@@ -41,13 +49,22 @@ export function useAuth(options: UseAuthOptions = {}) {
 
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      setIsAuthenticated(!!currentUser)
-    })
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+        setIsAuthenticated(!!currentUser)
+      })
 
-    return () => subscription.unsubscribe()
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe()
+        }
+      }
+    } catch (error) {
+      console.error('Error setting up auth state listener:', error)
+      return () => {}
+    }
   }, [required, redirectTo, router])
 
   const requireAuth = useCallback((action: string = 'continue') => {
@@ -64,12 +81,20 @@ export function useAuth(options: UseAuthOptions = {}) {
   }, [isAuthenticated, router])
 
   const logout = useCallback(async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    setUser(null)
-    setIsAuthenticated(false)
-    toast.success('Logged out successfully')
-    router.push('/')
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      setUser(null)
+      setIsAuthenticated(false)
+      toast.success('Logged out successfully')
+      router.push('/')
+    } catch (error) {
+      console.error('Error during logout:', error)
+      // Still clear local state even if logout fails
+      setUser(null)
+      setIsAuthenticated(false)
+      router.push('/')
+    }
   }, [router])
 
   return {
