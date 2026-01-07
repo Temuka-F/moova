@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -32,103 +32,207 @@ import {
   CheckCircle2,
   ArrowLeft,
   Snowflake,
-  Clock,
   Phone,
   Navigation,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react'
 import { format, differenceInDays, addDays } from 'date-fns'
-import { getCarById, getSimilarCars, MapCar } from '@/lib/map-cars'
 import { useAuth } from '@/hooks/useAuth'
-import { showLoginRequired, showComingSoon } from '@/lib/toast-helpers'
 
 interface CarDetailPageProps {
   carId: string
 }
 
-// Similar car card component
-function SimilarCarCard({ car }: { car: MapCar }) {
+interface CarImage {
+  id: string
+  url: string
+  isPrimary: boolean
+}
+
+interface CarOwner {
+  id: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+  verificationStatus: string
+  createdAt: string
+  responseRate: number | null
+  responseTime: string | null
+  bio: string | null
+  _count?: {
+    cars: number
+    reviewsReceived: number
+  }
+}
+
+interface CarReview {
+  id: string
+  rating: number
+  comment: string | null
+  createdAt: string
+  reviewer: {
+    id: string
+    firstName: string
+    lastName: string
+    avatarUrl: string | null
+  }
+}
+
+interface ApiCar {
+  id: string
+  make: string
+  model: string
+  year: number
+  color: string
+  transmission: string
+  fuelType: string
+  seats: number
+  doors: number
+  category: string
+  pricePerDay: number
+  pricePerHour: number | null
+  securityDeposit: number
+  city: string
+  address: string
+  latitude: number
+  longitude: number
+  isInstantBook: boolean
+  isActive: boolean
+  status: string
+  features: string[]
+  mileageLimit: number | null
+  images: CarImage[]
+  owner: CarOwner
+  reviews: CarReview[]
+  _count: {
+    bookings: number
+    reviews: number
+  }
+}
+
+function CarDetailSkeleton() {
   return (
-    <Link 
-      href={`/cars/${car.id}`}
-      className="flex-shrink-0 w-64 bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-shadow"
-    >
-      <div className="relative h-36 bg-gray-100">
-        <Image
-          src={car.images[0]}
-          alt={`${car.make} ${car.model}`}
-          fill
-          className="object-cover"
-          sizes="256px"
-        />
-        {car.isWinterReady && (
-          <div className="absolute top-2 left-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full flex items-center gap-1">
-            <Snowflake className="w-3 h-3" />
+    <div className="min-h-screen pb-24 lg:pb-8 bg-background">
+      <div className="hidden lg:block container mx-auto px-8 pt-6">
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <Skeleton className="h-[45vh] md:h-[55vh] lg:h-[50vh] lg:mx-8 lg:mt-4 lg:rounded-3xl" />
+      <div className="container mx-auto px-4 lg:px-8 py-6 md:py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div>
+              <div className="flex gap-2 mb-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-6 w-12" />
+              </div>
+              <Skeleton className="h-10 w-3/4 mb-3" />
+              <Skeleton className="h-5 w-1/2" />
+            </div>
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-32 w-full" />
           </div>
-        )}
-      </div>
-      <div className="p-3">
-        <h3 className="font-semibold text-gray-900 truncate">{car.make} {car.model}</h3>
-        <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-          <span>{car.rating}</span>
-          <span>·</span>
-          <span>{car.city}</span>
-        </div>
-        <div className="mt-2 flex items-baseline gap-1">
-          <span className="font-bold text-gray-900">{car.price}₾</span>
-          <span className="text-sm text-gray-500">/day</span>
+          <div className="hidden lg:block">
+            <Skeleton className="h-96 w-full rounded-3xl" />
+          </div>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 
 export function CarDetailPage({ carId }: CarDetailPageProps) {
   const router = useRouter()
-  const { isAuthenticated, loading: authLoading, requireAuth } = useAuth()
+  const { isAuthenticated, requireAuth } = useAuth()
+  const [car, setCar] = useState<ApiCar | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
   const [isFavorited, setIsFavorited] = useState(false)
   const [isBooking, setIsBooking] = useState(false)
-  const [imageError, setImageError] = useState(false)
+  const [isFavoriting, setIsFavoriting] = useState(false)
 
-  // Get car data from map-cars
-  const car = getCarById(carId)
+  useEffect(() => {
+    async function fetchCar() {
+      setLoading(true)
+      setError(null)
+      
+      try {
+        const res = await fetch(`/api/cars/${carId}`)
+        
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError('Car not found')
+          } else {
+            throw new Error('Failed to fetch car')
+          }
+          return
+        }
+        
+        const data = await res.json()
+        setCar(data)
+        
+        // Check if favorited
+        if (isAuthenticated) {
+          try {
+            const favRes = await fetch(`/api/favorites?carId=${carId}`)
+            if (favRes.ok) {
+              const favData = await favRes.json()
+              setIsFavorited(favData.isFavorited)
+            }
+          } catch {
+            // Ignore favorite check errors
+          }
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to load car')
+        console.error('Error fetching car:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  // If car not found, show error
-  if (!car) {
+    fetchCar()
+  }, [carId, isAuthenticated])
+
+  if (loading) {
+    return <CarDetailSkeleton />
+  }
+
+  if (error || !car) {
     return (
       <div className="min-h-screen pt-20 flex flex-col items-center justify-center">
-        <Car className="w-16 h-16 text-muted-foreground mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Car not found</h1>
+        <AlertCircle className="w-16 h-16 text-muted-foreground mb-4" />
+        <h1 className="text-2xl font-bold mb-2">{error || 'Car not found'}</h1>
         <p className="text-muted-foreground mb-6">This car may no longer be available.</p>
         <Button asChild>
-          <Link href="/">Browse available cars</Link>
+          <Link href="/cars">Browse available cars</Link>
         </Button>
       </div>
     )
   }
 
-  // Get similar cars
-  const similarCars = getSimilarCars(car, 4)
-
+  const images = car.images.length > 0 ? car.images.map(img => img.url) : ['/car-placeholder.svg']
+  const avgRating = car.reviews.length > 0 
+    ? car.reviews.reduce((sum, r) => sum + r.rating, 0) / car.reviews.length 
+    : 0
+  
   const totalDays = startDate && endDate ? differenceInDays(endDate, startDate) : 0
-  const subtotal = totalDays * car.price
+  const subtotal = totalDays * car.pricePerDay
   const serviceFee = Math.round(subtotal * 0.15)
   const totalPrice = subtotal + serviceFee
 
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? car.images.length - 1 : prev - 1))
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
   }
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => (prev === car.images.length - 1 ? 0 : prev + 1))
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
   }
 
   const handleBook = async () => {
-    // Auth guard - require login to book
     if (!requireAuth('book this car')) {
       return
     }
@@ -137,48 +241,98 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
       toast.error('Please select your dates')
       return
     }
+
+    if (totalDays < 1) {
+      toast.error('Please select at least 1 day')
+      return
+    }
     
     setIsBooking(true)
-    // Simulate booking
-    await new Promise(resolve => setTimeout(resolve, 1500))
     
-    if (car.isInstantBook) {
-      toast.success('Booking confirmed! Check your email for details.')
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          carId: car.id,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          pickupLocation: car.address,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to create booking')
+      }
+
+      const booking = await res.json()
+      
+      if (car.isInstantBook) {
+        toast.success('Booking confirmed! Check your email for details.')
+      } else {
+        toast.success('Booking request sent! The host will respond within 24 hours.')
+      }
+      
       router.push('/dashboard/bookings')
-    } else {
-      toast.success('Booking request sent! The host will respond within 24 hours.')
-      router.push('/dashboard/bookings')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create booking')
+    } finally {
+      setIsBooking(false)
     }
-    setIsBooking(false)
   }
 
-  const handleFavorite = () => {
+  const handleFavorite = async () => {
     if (!requireAuth('save cars')) {
       return
     }
-    setIsFavorited(!isFavorited)
-    toast.success(isFavorited ? 'Removed from favorites' : 'Added to favorites')
+    
+    setIsFavoriting(true)
+    
+    try {
+      if (isFavorited) {
+        const res = await fetch(`/api/favorites?carId=${car.id}`, {
+          method: 'DELETE',
+        })
+        if (!res.ok) throw new Error('Failed to remove favorite')
+        setIsFavorited(false)
+        toast.success('Removed from favorites')
+      } else {
+        const res = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ carId: car.id }),
+        })
+        if (!res.ok) throw new Error('Failed to add favorite')
+        setIsFavorited(true)
+        toast.success('Added to favorites')
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update favorites')
+    } finally {
+      setIsFavoriting(false)
+    }
   }
 
   const handleMessage = () => {
     if (!requireAuth('message the host')) {
       return
     }
-    showComingSoon('Direct messaging')
+    router.push(`/dashboard/messages?userId=${car.owner.id}`)
   }
 
   const handleContactHost = () => {
     if (!requireAuth('contact the host')) {
       return
     }
-    showComingSoon('Host contact')
+    router.push(`/dashboard/messages?userId=${car.owner.id}`)
   }
 
   const handleShare = async () => {
     if (navigator.share) {
       await navigator.share({
         title: `${car.make} ${car.model} on Moova`,
-        text: `Check out this ${car.make} ${car.model} for ₾${car.price}/day`,
+        text: `Check out this ${car.make} ${car.model} for ₾${car.pricePerDay}/day`,
         url: window.location.href,
       })
     } else {
@@ -216,7 +370,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
       {/* Image Gallery */}
       <div className="relative h-[45vh] md:h-[55vh] lg:h-[50vh] lg:mx-8 lg:mt-4 lg:rounded-3xl overflow-hidden bg-secondary">
         <Image
-          src={car.images[currentImageIndex]}
+          src={images[currentImageIndex]}
           alt={`${car.make} ${car.model}`}
           fill
           className="object-cover"
@@ -228,7 +382,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         
         {/* Navigation Arrows */}
-        {car.images.length > 1 && (
+        {images.length > 1 && (
           <>
             <Button
               variant="ghost"
@@ -250,9 +404,9 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         )}
 
         {/* Image Dots */}
-        {car.images.length > 1 && (
+        {images.length > 1 && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-            {car.images.map((_, index) => (
+            {images.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
@@ -264,7 +418,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
           </div>
         )}
 
-        {/* Top Actions - minimum 44px touch targets */}
+        {/* Top Actions */}
         <div className="absolute top-4 right-4 flex gap-2 lg:top-6 lg:right-6">
           <Button
             variant="ghost"
@@ -273,8 +427,13 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               isFavorited ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-white/90 hover:bg-white'
             }`}
             onClick={handleFavorite}
+            disabled={isFavoriting}
           >
-            <Heart className={`w-5 h-5 ${isFavorited ? 'fill-white' : ''}`} />
+            {isFavoriting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-white' : ''}`} />
+            )}
           </Button>
           <Button
             variant="ghost"
@@ -292,12 +451,6 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
             <Badge className="bg-emerald-500 text-sm shadow-lg">
               <Zap className="w-3.5 h-3.5 mr-1" />
               Instant Book
-            </Badge>
-          )}
-          {car.isWinterReady && (
-            <Badge className="bg-blue-500 text-sm shadow-lg">
-              <Snowflake className="w-3.5 h-3.5 mr-1" />
-              Winter Ready
             </Badge>
           )}
         </div>
@@ -323,22 +476,14 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold text-foreground">{car.rating}</span>
-                  <span>({car.reviewCount} reviews)</span>
+                  <span className="font-semibold text-foreground">{avgRating.toFixed(1)}</span>
+                  <span>({car._count.reviews} reviews)</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{car.address}</span>
+                  <span>{car.city}, {car.address}</span>
                 </div>
               </div>
-            </div>
-
-            <Separator />
-
-            {/* Description */}
-            <div>
-              <h2 className="text-xl font-semibold mb-3">About this car</h2>
-              <p className="text-muted-foreground leading-relaxed">{car.description}</p>
             </div>
 
             <Separator />
@@ -357,19 +502,20 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                     <span className="font-semibold text-lg">
                       Hosted by {car.owner.firstName}
                     </span>
-                    {car.owner.isVerified && (
+                    {car.owner.verificationStatus === 'VERIFIED' && (
                       <CheckCircle2 className="w-5 h-5 text-primary" />
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>{car.owner.rating}</span>
-                    </div>
+                    <span>{car.owner._count?.cars || 0} cars</span>
                     <span>•</span>
-                    <span>{car.owner.tripsCount} trips</span>
-                    <span>•</span>
-                    <span>Responds {car.owner.responseTime}</span>
+                    <span>Member since {new Date(car.owner.createdAt).getFullYear()}</span>
+                    {car.owner.responseTime && (
+                      <>
+                        <span>•</span>
+                        <span>Responds {car.owner.responseTime}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -423,26 +569,29 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
             <Separator />
 
             {/* Features */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Features</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {car.features.map((feature) => (
-                  <div key={feature} className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>{feature}</span>
+            {car.features.length > 0 && (
+              <>
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Features</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {car.features.map((feature) => (
+                      <div key={feature} className="flex items-center gap-2">
+                        <Check className="w-5 h-5 text-primary" />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Location */}
             <div>
               <h2 className="text-xl font-semibold mb-4">Pickup Location</h2>
               <div className="flex items-center gap-2 text-muted-foreground mb-4">
                 <MapPin className="w-5 h-5 text-primary" />
-                <span>{car.address}</span>
+                <span>{car.city}, {car.address}</span>
               </div>
               <div className="h-48 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
                 <div className="text-center text-gray-500">
@@ -455,18 +604,44 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               </p>
             </div>
 
-            <Separator />
-
-            {/* Similar Cars */}
-            {similarCars.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Similar Cars</h2>
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-                  {similarCars.map((similarCar) => (
-                    <SimilarCarCard key={similarCar.id} car={similarCar} />
-                  ))}
+            {/* Reviews */}
+            {car.reviews.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Reviews ({car._count.reviews})
+                  </h2>
+                  <div className="space-y-4">
+                    {car.reviews.slice(0, 5).map((review) => (
+                      <div key={review.id} className="p-4 bg-muted/30 rounded-xl">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={review.reviewer.avatarUrl || undefined} />
+                            <AvatarFallback>
+                              {review.reviewer.firstName[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">
+                              {review.reviewer.firstName} {review.reviewer.lastName[0]}.
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                              <span>{review.rating}</span>
+                              <span>•</span>
+                              <span>{format(new Date(review.createdAt), 'MMM yyyy')}</span>
+                            </div>
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-muted-foreground">{review.comment}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
 
@@ -476,18 +651,20 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               <CardHeader className="bg-gray-900 text-white p-6">
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold">
-                    {car.price}₾
+                    {car.pricePerDay}₾
                   </span>
                   <span className="text-white/70">/day</span>
                 </div>
-                <div className="text-white/70 text-sm mt-1">
-                  {car.pricePerHour}₾/hour available
-                </div>
+                {car.pricePerHour && (
+                  <div className="text-white/70 text-sm mt-1">
+                    {car.pricePerHour}₾/hour available
+                  </div>
+                )}
                 <div className="flex items-center gap-2 mt-2 text-white/80 text-sm">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <span>{car.rating}</span>
+                  <span>{avgRating.toFixed(1)}</span>
                   <span>•</span>
-                  <span>{car.reviewCount} reviews</span>
+                  <span>{car._count.reviews} reviews</span>
                 </div>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
@@ -543,7 +720,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                   <div className="space-y-3 pt-4 border-t">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        {car.price}₾ × {totalDays} days
+                        {car.pricePerDay}₾ × {totalDays} days
                       </span>
                       <span>{subtotal}₾</span>
                     </div>
@@ -616,13 +793,13 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold">{car.price}₾</span>
+              <span className="text-2xl font-bold">{car.pricePerDay}₾</span>
               <span className="text-sm text-muted-foreground">/day</span>
             </div>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span>{car.rating}</span>
-              <span>({car.reviewCount})</span>
+              <span>{avgRating.toFixed(1)}</span>
+              <span>({car._count.reviews})</span>
             </div>
           </div>
           <Button 
@@ -633,7 +810,8 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               if (!requireAuth('book this car')) return
               if (!startDate) setStartDate(addDays(new Date(), 1))
               if (!endDate) setEndDate(addDays(new Date(), 4))
-              handleBook()
+              // Delay to allow state update
+              setTimeout(handleBook, 100)
             }}
           >
             {isBooking ? (

@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -36,7 +37,6 @@ import {
 } from 'lucide-react'
 import { format, addDays } from 'date-fns'
 import { GEORGIAN_CITIES } from '@/types'
-import { DUMMY_CARS, DUMMY_USERS, searchCars } from '@/lib/dummy-data'
 
 // Dynamically import map to avoid SSR issues
 const CarMap = dynamic(
@@ -47,20 +47,58 @@ const CarMap = dynamic(
   }
 )
 
-const carTypes = [
-  { id: 'all', name: 'All Cars', icon: '🚗', count: DUMMY_CARS.length },
-  { id: 'SEDAN', name: 'Sedan', icon: '🚙', count: DUMMY_CARS.filter(c => c.category === 'SEDAN').length },
-  { id: 'SUV', name: 'SUV', icon: '🚐', count: DUMMY_CARS.filter(c => c.category === 'SUV').length },
-  { id: 'LUXURY', name: 'Luxury', icon: '✨', count: DUMMY_CARS.filter(c => c.category === 'LUXURY').length },
-  { id: 'SPORTS', name: 'Sports', icon: '🏎️', count: DUMMY_CARS.filter(c => c.category === 'SPORTS').length },
-  { id: 'COMPACT', name: 'Compact', icon: '🚕', count: DUMMY_CARS.filter(c => c.category === 'COMPACT').length },
+interface FeaturedCar {
+  id: string
+  make: string
+  model: string
+  year: number
+  pricePerDay: number
+  city: string
+  category: string
+  transmission: string
+  fuelType: string
+  seats: number
+  isInstantBook: boolean
+  latitude: number
+  longitude: number
+  images: { url: string }[]
+  owner: {
+    id: string
+    firstName: string
+    lastName: string
+    avatarUrl: string | null
+  }
+  _count: {
+    reviews: number
+    bookings: number
+  }
+}
+
+interface Stats {
+  totalCars: number
+  totalUsers: number
+  totalHosts: number
+  totalBookings: number
+  avgRating: number
+  cityStats: Record<string, number>
+  categoryStats: Record<string, number>
+  featuredCars: FeaturedCar[]
+}
+
+const defaultCarTypes = [
+  { id: 'all', name: 'All Cars', icon: '🚗', count: 0 },
+  { id: 'SEDAN', name: 'Sedan', icon: '🚙', count: 0 },
+  { id: 'SUV', name: 'SUV', icon: '🚐', count: 0 },
+  { id: 'LUXURY', name: 'Luxury', icon: '✨', count: 0 },
+  { id: 'SPORTS', name: 'Sports', icon: '🏎️', count: 0 },
+  { id: 'COMPACT', name: 'Compact', icon: '🚕', count: 0 },
 ]
 
-const cities = [
-  { name: 'Tbilisi', count: DUMMY_CARS.filter(c => c.city === 'Tbilisi').length, image: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=400' },
-  { name: 'Batumi', count: DUMMY_CARS.filter(c => c.city === 'Batumi').length, image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400' },
-  { name: 'Kutaisi', count: DUMMY_CARS.filter(c => c.city === 'Kutaisi').length, image: 'https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=400' },
-  { name: 'Gudauri', count: DUMMY_CARS.filter(c => c.city === 'Gudauri').length, image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=400' },
+const defaultCities = [
+  { name: 'Tbilisi', count: 0, image: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=400' },
+  { name: 'Batumi', count: 0, image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400' },
+  { name: 'Kutaisi', count: 0, image: 'https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=400' },
+  { name: 'Gudauri', count: 0, image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=400' },
 ]
 
 export function HomePage() {
@@ -71,15 +109,52 @@ export function HomePage() {
   const [selectedType, setSelectedType] = useState('all')
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null)
   const [showMap, setShowMap] = useState(false)
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Get cars based on filters
-  const filteredCars = searchCars({
-    city: city || undefined,
-    category: selectedType !== 'all' ? selectedType : undefined,
-  })
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats')
+        if (res.ok) {
+          const data = await res.json()
+          setStats(data)
+        }
+      } catch (err) {
+        console.error('Error fetching stats:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  // Build car types with counts
+  const carTypes = defaultCarTypes.map(type => ({
+    ...type,
+    count: type.id === 'all' 
+      ? stats?.totalCars || 0 
+      : stats?.categoryStats?.[type.id] || 0,
+  }))
+
+  // Build cities with counts
+  const cities = defaultCities.map(c => ({
+    ...c,
+    count: stats?.cityStats?.[c.name] || 0,
+  }))
+
+  // Filter featured cars by selected type
+  const filteredCars = stats?.featuredCars?.filter(car => 
+    selectedType === 'all' || car.category === selectedType
+  ) || []
+
+  // Filter by city if selected
+  const displayCars = city 
+    ? filteredCars.filter(car => car.city === city)
+    : filteredCars
 
   // Prepare cars for map display
-  const mapCars = filteredCars.map(car => ({
+  const mapCars = displayCars.map(car => ({
     id: car.id,
     make: car.make,
     model: car.model,
@@ -87,7 +162,7 @@ export function HomePage() {
     pricePerDay: car.pricePerDay,
     latitude: car.latitude,
     longitude: car.longitude,
-    rating: car.rating,
+    rating: 4.5,
     isInstantBook: car.isInstantBook,
     image: car.images[0]?.url || '',
   }))
@@ -126,7 +201,7 @@ export function HomePage() {
                 <span className="text-gradient-animated">when you want it</span>
               </h1>
               <p className="text-white/70 text-base md:text-lg max-w-2xl mx-auto">
-                Skip the rental counter. Book instantly from {DUMMY_CARS.length}+ cars 
+                Skip the rental counter. Book instantly from {loading ? '...' : `${stats?.totalCars || 0}+`} cars 
                 shared by local hosts in Tbilisi, Batumi, and beyond.
               </p>
             </div>
@@ -214,17 +289,23 @@ export function HomePage() {
             {/* Quick Stats */}
             <div className="flex items-center justify-center gap-6 md:gap-12 mt-8 text-center">
               <div>
-                <p className="text-2xl md:text-3xl font-bold">{DUMMY_CARS.length}+</p>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {loading ? '...' : `${stats?.totalCars || 0}+`}
+                </p>
                 <p className="text-xs md:text-sm text-white/60">Cars</p>
               </div>
               <div className="w-px h-8 bg-white/20" />
               <div>
-                <p className="text-2xl md:text-3xl font-bold">{DUMMY_USERS.filter(u => u.role === 'OWNER').length}</p>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {loading ? '...' : stats?.totalHosts || 0}
+                </p>
                 <p className="text-xs md:text-sm text-white/60">Hosts</p>
               </div>
               <div className="w-px h-8 bg-white/20" />
               <div>
-                <p className="text-2xl md:text-3xl font-bold">4.9</p>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {loading ? '...' : (stats?.avgRating || 4.9).toFixed(1)}
+                </p>
                 <p className="text-xs md:text-sm text-white/60">Rating</p>
               </div>
               <div className="w-px h-8 bg-white/20" />
@@ -270,7 +351,7 @@ export function HomePage() {
               {city ? `Cars in ${city}` : 'Cars near you'}
             </h2>
             <p className="text-muted-foreground mt-1">
-              {filteredCars.length} cars available for your dates
+              {displayCars.length} cars available for your dates
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -295,34 +376,74 @@ export function HomePage() {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Cars Grid */}
           <div className={showMap ? '' : 'lg:col-span-2'}>
-            <div className={`grid gap-4 ${showMap ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
-              {filteredCars.slice(0, showMap ? 4 : 8).map((car) => (
-                <CarCard 
-                  key={car.id} 
-                  car={{
-                    ...car,
-                    images: car.images,
-                    owner: car.owner ? {
-                      firstName: car.owner.firstName,
-                      lastName: car.owner.lastName,
-                      avatarUrl: car.owner.avatarUrl,
-                      rating: car.owner.rating
-                    } : undefined
-                  }}
-                  variant={showMap ? 'horizontal' : 'default'}
-                  showOwner
-                />
-              ))}
-            </div>
+            {loading ? (
+              <div className={`grid gap-4 ${showMap ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="rounded-2xl overflow-hidden border">
+                    <Skeleton className="h-48 w-full" />
+                    <div className="p-4 space-y-3">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-6 w-1/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : displayCars.length > 0 ? (
+              <div className={`grid gap-4 ${showMap ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                {displayCars.slice(0, showMap ? 4 : 8).map((car) => (
+                  <CarCard 
+                    key={car.id} 
+                    car={{
+                      id: car.id,
+                      make: car.make,
+                      model: car.model,
+                      year: car.year,
+                      pricePerDay: car.pricePerDay,
+                      city: car.city,
+                      rating: 4.5,
+                      reviewCount: car._count?.reviews || 0,
+                      isInstantBook: car.isInstantBook,
+                      transmission: car.transmission,
+                      fuelType: car.fuelType,
+                      seats: car.seats,
+                      category: car.category,
+                      images: car.images,
+                      owner: car.owner ? {
+                        firstName: car.owner.firstName,
+                        lastName: car.owner.lastName,
+                        avatarUrl: car.owner.avatarUrl,
+                        rating: 4.8
+                      } : undefined
+                    }}
+                    variant={showMap ? 'horizontal' : 'default'}
+                    showOwner
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Car className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">No cars available</h3>
+                <p className="text-muted-foreground mb-4">
+                  Be the first to list your car on Moova!
+                </p>
+                <Button asChild className="rounded-full">
+                  <Link href="/list-your-car">List Your Car</Link>
+                </Button>
+              </div>
+            )}
             
-            <div className="mt-6 text-center">
-              <Button variant="outline" size="lg" asChild className="rounded-full">
-                <Link href="/cars">
-                  Browse all {filteredCars.length} cars
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
+            {displayCars.length > 0 && (
+              <div className="mt-6 text-center">
+                <Button variant="outline" size="lg" asChild className="rounded-full">
+                  <Link href="/cars">
+                    Browse all {stats?.totalCars || 0} cars
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Map */}
@@ -454,12 +575,16 @@ export function HomePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white/10 rounded-2xl p-6">
                 <Users className="w-8 h-8 text-primary mb-3" />
-                <p className="text-2xl font-bold">{DUMMY_USERS.length}+</p>
+                <p className="text-2xl font-bold">
+                  {loading ? '...' : `${stats?.totalUsers || 0}+`}
+                </p>
                 <p className="text-sm text-white/60">Verified Users</p>
               </div>
               <div className="bg-white/10 rounded-2xl p-6">
                 <Star className="w-8 h-8 text-primary mb-3" />
-                <p className="text-2xl font-bold">4.9</p>
+                <p className="text-2xl font-bold">
+                  {loading ? '...' : (stats?.avgRating || 4.9).toFixed(1)}
+                </p>
                 <p className="text-sm text-white/60">Average Rating</p>
               </div>
               <div className="bg-white/10 rounded-2xl p-6">
@@ -489,7 +614,7 @@ export function HomePage() {
               Turn your car into a money machine
             </h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              Join {DUMMY_USERS.filter(u => u.role === 'OWNER').length} hosts earning up to ₾1,500/month 
+              Join {loading ? '...' : stats?.totalHosts || 0} hosts earning up to ₾1,500/month 
               by sharing their cars on Moova. Free to list, easy to manage.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import Link from 'next/link'
 import { CarCard } from '@/components/cars/CarCard'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -33,9 +33,9 @@ import {
   List,
   X,
   Zap,
+  AlertCircle,
 } from 'lucide-react'
 import { GEORGIAN_CITIES } from '@/types'
-import { searchCars } from '@/lib/dummy-data'
 
 // Dynamically import map
 const CarMap = dynamic(
@@ -54,12 +54,77 @@ const sortOptions = [
   { value: 'newest', label: 'Newest First' },
 ]
 
+interface CarImage {
+  id: string
+  url: string
+  isPrimary: boolean
+}
+
+interface CarOwner {
+  id: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+  verificationStatus: string
+}
+
+interface ApiCar {
+  id: string
+  make: string
+  model: string
+  year: number
+  color: string
+  transmission: string
+  fuelType: string
+  seats: number
+  doors: number
+  category: string
+  pricePerDay: number
+  pricePerHour: number | null
+  securityDeposit: number
+  city: string
+  address: string
+  latitude: number
+  longitude: number
+  isInstantBook: boolean
+  isActive: boolean
+  status: string
+  features: string[]
+  images: CarImage[]
+  owner: CarOwner
+  _count: {
+    bookings: number
+    reviews: number
+  }
+}
+
+function CarListSkeleton() {
+  return (
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+        <div key={i} className="rounded-2xl overflow-hidden border">
+          <Skeleton className="h-48 w-full" />
+          <div className="p-4 space-y-3">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-6 w-1/4" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function CarListingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [viewMode, setViewMode] = useState<'list' | 'map' | 'split'>('split')
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState('recommended')
+  const [cars, setCars] = useState<ApiCar[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [total, setTotal] = useState(0)
   
   const [filters, setFilters] = useState({
     city: searchParams.get('city') || '',
@@ -70,25 +135,51 @@ function CarListingContent() {
     instantBookOnly: false,
   })
 
-  // Get filtered cars
-  const allCars = searchCars({
-    city: filters.city || undefined,
-    minPrice: filters.priceRange[0] || undefined,
-    maxPrice: filters.priceRange[1] < 500 ? filters.priceRange[1] : undefined,
-    transmission: filters.transmission || undefined,
-    fuelType: filters.fuelType || undefined,
-    category: filters.category || undefined,
-    isInstantBook: filters.instantBookOnly ? true : undefined,
-  })
+  const fetchCars = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const params = new URLSearchParams()
+      
+      if (filters.city) params.set('city', filters.city)
+      if (filters.category) params.set('category', filters.category)
+      if (filters.transmission) params.set('transmission', filters.transmission)
+      if (filters.fuelType) params.set('fuelType', filters.fuelType)
+      if (filters.priceRange[0] > 0) params.set('minPrice', filters.priceRange[0].toString())
+      if (filters.priceRange[1] < 500) params.set('maxPrice', filters.priceRange[1].toString())
+      if (filters.instantBookOnly) params.set('isInstantBook', 'true')
+      if (sortBy !== 'recommended') params.set('sortBy', sortBy)
+      params.set('limit', '50')
+      
+      const res = await fetch(`/api/cars?${params.toString()}`)
+      
+      if (!res.ok) {
+        throw new Error('Failed to fetch cars')
+      }
+      
+      const data = await res.json()
+      setCars(data.cars || [])
+      setTotal(data.total || 0)
+    } catch (err: any) {
+      setError(err.message || 'Failed to load cars')
+      console.error('Error fetching cars:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, sortBy])
 
-  // Sort cars
-  const sortedCars = [...allCars].sort((a, b) => {
+  useEffect(() => {
+    fetchCars()
+  }, [fetchCars])
+
+  // Sort cars client-side for immediate feedback
+  const sortedCars = [...cars].sort((a, b) => {
     switch (sortBy) {
       case 'price_asc': return a.pricePerDay - b.pricePerDay
       case 'price_desc': return b.pricePerDay - a.pricePerDay
-      case 'rating': return b.rating - a.rating
       case 'newest': return b.year - a.year
-      default: return b.rating - a.rating // recommended = by rating
+      default: return 0 // Server handles recommended/rating
     }
   })
 
@@ -100,7 +191,7 @@ function CarListingContent() {
     pricePerDay: car.pricePerDay,
     latitude: car.latitude,
     longitude: car.longitude,
-    rating: car.rating,
+    rating: 4.5, // TODO: Calculate from reviews
     isInstantBook: car.isInstantBook,
     image: car.images[0]?.url || '',
   }))
@@ -325,7 +416,7 @@ function CarListingContent() {
               </div>
 
               <span className="text-sm text-muted-foreground hidden md:inline">
-                {sortedCars.length} cars
+                {loading ? '...' : `${total} cars`}
               </span>
             </div>
 
@@ -392,7 +483,18 @@ function CarListingContent() {
           {/* Cars List */}
           {viewMode !== 'map' && (
             <div className={`flex-1 ${viewMode === 'split' ? 'lg:w-1/2' : ''}`}>
-              {sortedCars.length > 0 ? (
+              {error ? (
+                <div className="text-center py-20">
+                  <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Failed to load cars</h3>
+                  <p className="text-muted-foreground mb-6">{error}</p>
+                  <Button variant="outline" onClick={fetchCars}>
+                    Try again
+                  </Button>
+                </div>
+              ) : loading ? (
+                <CarListSkeleton />
+              ) : sortedCars.length > 0 ? (
                 <div className={`grid gap-4 ${
                   viewMode === 'split' 
                     ? 'grid-cols-1 xl:grid-cols-2' 
@@ -406,13 +508,25 @@ function CarListingContent() {
                     >
                       <CarCard
                         car={{
-                          ...car,
+                          id: car.id,
+                          make: car.make,
+                          model: car.model,
+                          year: car.year,
+                          pricePerDay: car.pricePerDay,
+                          city: car.city,
+                          rating: 4.5, // TODO: Calculate from reviews
+                          reviewCount: car._count?.reviews || 0,
+                          isInstantBook: car.isInstantBook,
+                          transmission: car.transmission,
+                          fuelType: car.fuelType,
+                          seats: car.seats,
+                          category: car.category,
                           images: car.images,
                           owner: car.owner ? {
                             firstName: car.owner.firstName,
                             lastName: car.owner.lastName,
                             avatarUrl: car.owner.avatarUrl,
-                            rating: car.owner.rating
+                            rating: 4.8
                           } : undefined
                         }}
                         variant={viewMode === 'split' ? 'default' : 'default'}

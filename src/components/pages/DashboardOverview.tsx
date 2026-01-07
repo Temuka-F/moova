@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Calendar,
   Car,
@@ -21,41 +23,185 @@ import {
   Settings,
   CheckCircle2,
   AlertCircle,
-  Zap
+  Zap,
+  Loader2,
+  Sparkles
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { CarCard } from '@/components/cars/CarCard'
-import { 
-  DUMMY_USERS, 
-  getHostStats, 
-  getRenterStats,
-  getBookingsByUser,
-  getBookingsByHost,
-  getCarsByOwner
-} from '@/lib/dummy-data'
+import { toast } from 'sonner'
 
-// Simulated logged-in user (would come from auth in real app)
-const CURRENT_USER = DUMMY_USERS[0] // Giorgi - an OWNER
+interface User {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+  role: 'RENTER' | 'OWNER' | 'ADMIN'
+  verificationStatus: string
+  _count?: {
+    cars: number
+    bookingsAsRenter: number
+    reviewsReceived: number
+  }
+}
+
+interface Booking {
+  id: string
+  startDate: string
+  endDate: string
+  status: string
+  totalAmount: number
+  totalDays: number
+  pickupLocation: string
+  car: {
+    id: string
+    make: string
+    model: string
+    images: { url: string }[]
+    owner?: {
+      firstName: string
+      lastName: string
+    }
+  }
+  renter?: {
+    firstName: string
+    lastName: string
+  }
+}
+
+interface CarData {
+  id: string
+  make: string
+  model: string
+  pricePerDay: number
+  isActive: boolean
+  status: string
+  images: { url: string }[]
+  _count?: {
+    bookings: number
+    reviews: number
+  }
+}
 
 export function DashboardOverview() {
-  const user = CURRENT_USER
-  const isHost = user.role === 'OWNER' || user.role === 'ADMIN'
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [cars, setCars] = useState<CarData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isUpgrading, setIsUpgrading] = useState(false)
+
+  const isHost = user?.role === 'OWNER' || user?.role === 'ADMIN'
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Fetch current user
+        const userRes = await fetch('/api/me')
+        if (!userRes.ok) {
+          if (userRes.status === 401) {
+            router.push('/login?redirect=/dashboard')
+            return
+          }
+          throw new Error('Failed to fetch user')
+        }
+        const userData = await userRes.json()
+        setUser(userData)
+
+        // Fetch bookings
+        const bookingsRes = await fetch('/api/bookings')
+        if (bookingsRes.ok) {
+          const bookingsData = await bookingsRes.json()
+          setBookings(bookingsData.bookings || [])
+        }
+
+        // Fetch cars if owner
+        if (userData.role === 'OWNER' || userData.role === 'ADMIN') {
+          const carsRes = await fetch('/api/me/cars')
+          if (carsRes.ok) {
+            const carsData = await carsRes.json()
+            setCars(carsData.cars || [])
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+        toast.error('Failed to load dashboard data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [router])
+
+  const handleUpgradeToOwner = async () => {
+    if (!user) return
+    
+    setIsUpgrading(true)
+    try {
+      const res = await fetch(`/api/users/${user.id}/upgrade`, {
+        method: 'POST',
+      })
+      
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to upgrade')
+      }
+      
+      const updatedUser = await res.json()
+      setUser(updatedUser)
+      toast.success('Congratulations! You are now a host. Start listing your first car!')
+      router.push('/list-your-car')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upgrade to owner')
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
+
+  // Calculate stats
+  const upcomingBookings = bookings.filter(b => 
+    ['PENDING', 'CONFIRMED', 'ACTIVE'].includes(b.status)
+  ).slice(0, 5)
   
-  // Get stats based on role
-  const hostStats = isHost ? getHostStats(user.id) : null
-  const renterStats = getRenterStats(user.id)
-  
-  // Get bookings
-  const hostBookings = isHost ? getBookingsByHost(user.id) : []
-  const renterBookings = getBookingsByUser(user.id)
-  
-  // Get host's cars
-  const hostCars = isHost ? getCarsByOwner(user.id) : []
-  
-  // Upcoming bookings
-  const upcomingBookings = [...hostBookings, ...renterBookings]
-    .filter(b => ['PENDING', 'CONFIRMED', 'ACTIVE'].includes(b.status))
-    .slice(0, 5)
+  const pendingBookings = bookings.filter(b => b.status === 'PENDING').length
+  const completedBookings = bookings.filter(b => b.status === 'COMPLETED')
+  const totalSpent = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
+  const activeCars = cars.filter(c => c.isActive && c.status === 'APPROVED').length
+  const totalEarnings = bookings
+    .filter(b => b.status === 'COMPLETED')
+    .reduce((sum, b) => sum + b.totalAmount, 0)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-muted/30 pt-16">
+        <div className="container mx-auto px-4 py-6 md:py-8">
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-4">
+              <Skeleton className="w-16 h-16 rounded-full" />
+              <div>
+                <Skeleton className="h-8 w-48 mb-2" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {[1, 2, 3, 4].map(i => (
+              <Card key={i}>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-muted/30 pt-16">
@@ -90,9 +236,9 @@ export function DashboardOverview() {
                   </Link>
                 </Button>
                 <Button variant="outline" asChild className="rounded-full">
-                  <Link href="/dashboard/earnings">
+                  <Link href="/dashboard/bookings">
                     <Wallet className="w-4 h-4 mr-2" />
-                    View earnings
+                    View bookings
                   </Link>
                 </Button>
               </>
@@ -104,11 +250,18 @@ export function DashboardOverview() {
                     Browse cars
                   </Link>
                 </Button>
-                <Button variant="outline" asChild className="rounded-full">
-                  <Link href="/list-your-car">
+                <Button 
+                  variant="outline" 
+                  className="rounded-full"
+                  onClick={handleUpgradeToOwner}
+                  disabled={isUpgrading}
+                >
+                  {isUpgrading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
                     <TrendingUp className="w-4 h-4 mr-2" />
-                    Become a host
-                  </Link>
+                  )}
+                  Become a host
                 </Button>
               </>
             )}
@@ -121,6 +274,41 @@ export function DashboardOverview() {
           </div>
         </div>
 
+        {/* Become a Host Banner - for RENTERS */}
+        {!isHost && (
+          <Card className="mb-8 bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border-primary/20">
+            <CardContent className="flex flex-col sm:flex-row items-center gap-4 p-6">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Sparkles className="w-8 h-8 text-primary" />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <h3 className="font-semibold text-lg mb-1">Start earning with your car</h3>
+                <p className="text-sm text-muted-foreground">
+                  Hosts on Moova earn up to ₾1,500/month. List your car and start earning today!
+                </p>
+              </div>
+              <Button 
+                size="lg" 
+                className="rounded-full"
+                onClick={handleUpgradeToOwner}
+                disabled={isUpgrading}
+              >
+                {isUpgrading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Upgrading...
+                  </>
+                ) : (
+                  <>
+                    Become a Host
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {isHost ? (
@@ -131,7 +319,7 @@ export function DashboardOverview() {
                     <div>
                       <p className="text-sm text-muted-foreground">Total Earnings</p>
                       <p className="text-2xl md:text-3xl font-bold mt-1">
-                        ₾{hostStats?.totalEarnings.toLocaleString()}
+                        ₾{totalEarnings.toLocaleString()}
                       </p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
@@ -146,7 +334,7 @@ export function DashboardOverview() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Active Cars</p>
-                      <p className="text-2xl md:text-3xl font-bold mt-1">{hostStats?.activeCars}</p>
+                      <p className="text-2xl md:text-3xl font-bold mt-1">{activeCars}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
                       <Car className="w-6 h-6 text-blue-500" />
@@ -160,7 +348,7 @@ export function DashboardOverview() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Bookings</p>
-                      <p className="text-2xl md:text-3xl font-bold mt-1">{hostStats?.totalBookings}</p>
+                      <p className="text-2xl md:text-3xl font-bold mt-1">{bookings.length}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <Calendar className="w-6 h-6 text-primary" />
@@ -173,11 +361,11 @@ export function DashboardOverview() {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Avg Rating</p>
-                      <p className="text-2xl md:text-3xl font-bold mt-1">{hostStats?.avgRating.toFixed(1)}</p>
+                      <p className="text-sm text-muted-foreground">Pending</p>
+                      <p className="text-2xl md:text-3xl font-bold mt-1">{pendingBookings}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                      <Star className="w-6 h-6 text-yellow-500" />
+                      <Clock className="w-6 h-6 text-yellow-500" />
                     </div>
                   </div>
                 </CardContent>
@@ -190,7 +378,7 @@ export function DashboardOverview() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Trips</p>
-                      <p className="text-2xl md:text-3xl font-bold mt-1">{renterStats.totalTrips}</p>
+                      <p className="text-2xl md:text-3xl font-bold mt-1">{completedBookings.length}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <Calendar className="w-6 h-6 text-primary" />
@@ -204,7 +392,7 @@ export function DashboardOverview() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Upcoming</p>
-                      <p className="text-2xl md:text-3xl font-bold mt-1">{renterStats.upcomingTrips}</p>
+                      <p className="text-2xl md:text-3xl font-bold mt-1">{upcomingBookings.length}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
                       <Clock className="w-6 h-6 text-blue-500" />
@@ -218,7 +406,7 @@ export function DashboardOverview() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Spent</p>
-                      <p className="text-2xl md:text-3xl font-bold mt-1">₾{renterStats.totalSpent}</p>
+                      <p className="text-2xl md:text-3xl font-bold mt-1">₾{totalSpent.toLocaleString()}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
                       <Wallet className="w-6 h-6 text-green-500" />
@@ -232,7 +420,7 @@ export function DashboardOverview() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Saved Cars</p>
-                      <p className="text-2xl md:text-3xl font-bold mt-1">{renterStats.savedCars}</p>
+                      <p className="text-2xl md:text-3xl font-bold mt-1">{user._count?.cars || 0}</p>
                     </div>
                     <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
                       <Heart className="w-6 h-6 text-red-500" />
@@ -249,7 +437,7 @@ export function DashboardOverview() {
           {/* Left Column - Bookings */}
           <div className="lg:col-span-2 space-y-6">
             {/* Pending Actions (for hosts) */}
-            {isHost && hostStats && (hostStats.pendingBookings > 0) && (
+            {isHost && pendingBookings > 0 && (
               <Card className="border-yellow-500/50 bg-yellow-500/5">
                 <CardContent className="flex items-center gap-4 p-4">
                   <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
@@ -258,7 +446,7 @@ export function DashboardOverview() {
                   <div className="flex-1">
                     <h3 className="font-semibold">Booking Requests Pending</h3>
                     <p className="text-sm text-muted-foreground">
-                      {hostStats.pendingBookings} bookings waiting for your approval
+                      {pendingBookings} bookings waiting for your approval
                     </p>
                   </div>
                   <Button size="sm" asChild>
@@ -297,16 +485,18 @@ export function DashboardOverview() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {upcomingBookings.map((booking: any) => (
+                    {upcomingBookings.map((booking) => (
                       <Link
                         key={booking.id}
-                        href={`/dashboard/bookings/${booking.id}`}
+                        href={`/dashboard/bookings`}
                         className="flex items-center gap-4 p-4 rounded-xl border hover:bg-muted/50 transition-colors"
                       >
                         <div
-                          className="w-20 h-16 rounded-xl bg-cover bg-center shrink-0"
+                          className="w-20 h-16 rounded-xl bg-cover bg-center shrink-0 bg-muted"
                           style={{
-                            backgroundImage: `url('${booking.car?.images?.[0]?.url || 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=200'}')`,
+                            backgroundImage: booking.car?.images?.[0]?.url 
+                              ? `url('${booking.car.images[0].url}')`
+                              : undefined,
                           }}
                         />
                         <div className="flex-1 min-w-0">
@@ -359,7 +549,7 @@ export function DashboardOverview() {
             </Card>
 
             {/* Host's Cars */}
-            {isHost && hostCars.length > 0 && (
+            {isHost && cars.length > 0 && (
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
@@ -367,7 +557,7 @@ export function DashboardOverview() {
                     <CardDescription>Manage your listed cars</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/cars">
+                    <Link href="/dashboard/bookings">
                       Manage all
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Link>
@@ -375,16 +565,18 @@ export function DashboardOverview() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid sm:grid-cols-2 gap-4">
-                    {hostCars.slice(0, 4).map((car) => (
+                    {cars.slice(0, 4).map((car) => (
                       <Link
                         key={car.id}
-                        href={`/dashboard/cars/${car.id}`}
+                        href={`/cars/${car.id}`}
                         className="flex items-center gap-3 p-3 rounded-xl border hover:bg-muted/50 transition-colors"
                       >
                         <div
-                          className="w-16 h-12 rounded-lg bg-cover bg-center shrink-0"
+                          className="w-16 h-12 rounded-lg bg-cover bg-center shrink-0 bg-muted"
                           style={{
-                            backgroundImage: `url('${car.images[0]?.url}')`,
+                            backgroundImage: car.images[0]?.url 
+                              ? `url('${car.images[0].url}')`
+                              : undefined,
                           }}
                         />
                         <div className="flex-1 min-w-0">
@@ -392,16 +584,13 @@ export function DashboardOverview() {
                             {car.make} {car.model}
                           </h4>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-primary text-primary" />
-                              {car.rating}
-                            </span>
+                            <span>{car._count?.bookings || 0} bookings</span>
                             <span>•</span>
                             <span>₾{car.pricePerDay}/day</span>
                           </div>
                         </div>
-                        <Badge variant={car.isActive ? 'default' : 'secondary'} className="text-xs">
-                          {car.isActive ? 'Active' : 'Paused'}
+                        <Badge variant={car.isActive && car.status === 'APPROVED' ? 'default' : 'secondary'} className="text-xs">
+                          {car.status === 'PENDING' ? 'Pending' : car.isActive ? 'Active' : 'Paused'}
                         </Badge>
                       </Link>
                     ))}
@@ -428,15 +617,15 @@ export function DashboardOverview() {
                       </Link>
                     </Button>
                     <Button variant="outline" className="w-full justify-start rounded-xl" asChild>
-                      <Link href="/dashboard/cars">
+                      <Link href="/dashboard/bookings">
                         <Car className="w-4 h-4 mr-3" />
-                        Manage Fleet
+                        Manage Bookings
                       </Link>
                     </Button>
                     <Button variant="outline" className="w-full justify-start rounded-xl" asChild>
-                      <Link href="/dashboard/earnings">
+                      <Link href="/cars">
                         <TrendingUp className="w-4 h-4 mr-3" />
-                        View Earnings
+                        Browse Cars
                       </Link>
                     </Button>
                   </>
@@ -454,11 +643,18 @@ export function DashboardOverview() {
                         Saved Cars
                       </Link>
                     </Button>
-                    <Button variant="outline" className="w-full justify-start rounded-xl" asChild>
-                      <Link href="/list-your-car">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start rounded-xl"
+                      onClick={handleUpgradeToOwner}
+                      disabled={isUpgrading}
+                    >
+                      {isUpgrading ? (
+                        <Loader2 className="w-4 h-4 mr-3 animate-spin" />
+                      ) : (
                         <TrendingUp className="w-4 h-4 mr-3" />
-                        Become a Host
-                      </Link>
+                      )}
+                      Become a Host
                     </Button>
                   </>
                 )}
@@ -491,7 +687,7 @@ export function DashboardOverview() {
                     : 'Complete your profile verification to unlock instant booking on all cars and skip the waiting!'}
                 </p>
                 <Button variant="link" className="p-0 h-auto mt-2 text-primary" asChild>
-                  <Link href={isHost ? '/dashboard/cars' : '/dashboard/settings'}>
+                  <Link href={isHost ? '/dashboard/bookings' : '/dashboard/settings'}>
                     Learn more <ArrowRight className="w-4 h-4 ml-1" />
                   </Link>
                 </Button>
