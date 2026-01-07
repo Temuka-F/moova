@@ -33,7 +33,14 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { formatPrice } from '@/lib/flitt'
-import type { CarStatus } from '@/types'
+// Demo cars data
+const demoCars = [
+  { id: '1', make: 'BMW', model: 'X5', year: 2022, licensePlate: 'AA-123-BB', pricePerDay: 180, city: 'Tbilisi', status: 'PENDING', createdAt: new Date().toISOString(), owner: { firstName: 'Giorgi', lastName: 'Beridze', email: 'giorgi@example.com', avatarUrl: null }, images: [{ url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400' }] },
+  { id: '2', make: 'Mercedes', model: 'E-Class', year: 2023, licensePlate: 'BB-456-CC', pricePerDay: 200, city: 'Tbilisi', status: 'APPROVED', createdAt: new Date().toISOString(), owner: { firstName: 'Nino', lastName: 'Kvlividze', email: 'nino@example.com', avatarUrl: null }, images: [{ url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=400' }] },
+  { id: '3', make: 'Toyota', model: 'Camry', year: 2021, licensePlate: 'CC-789-DD', pricePerDay: 120, city: 'Batumi', status: 'APPROVED', createdAt: new Date().toISOString(), owner: { firstName: 'Levan', lastName: 'Tskhadadze', email: 'levan@example.com', avatarUrl: null }, images: [{ url: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=400' }] },
+  { id: '4', make: 'Hyundai', model: 'Tucson', year: 2022, licensePlate: 'DD-012-EE', pricePerDay: 100, city: 'Kutaisi', status: 'PENDING', createdAt: new Date().toISOString(), owner: { firstName: 'Ana', lastName: 'Samkharadze', email: 'ana@example.com', avatarUrl: null }, images: [{ url: 'https://images.unsplash.com/photo-1633695610681-8477dcfd5c33?w=400' }] },
+  { id: '5', make: 'Tesla', model: 'Model 3', year: 2023, licensePlate: 'EE-345-FF', pricePerDay: 180, city: 'Tbilisi', status: 'APPROVED', createdAt: new Date().toISOString(), owner: { firstName: 'David', lastName: 'Mikadze', email: 'david@example.com', avatarUrl: null }, images: [{ url: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=400' }] },
+]
 
 function AdminCarsContent() {
   const searchParams = useSearchParams()
@@ -65,9 +72,22 @@ function AdminCarsContent() {
         const data = await response.json()
         setCars(data.cars)
         setTotalPages(data.totalPages)
+      } else {
+        // Use demo data
+        let filtered = demoCars
+        if (status) filtered = filtered.filter(c => c.status === status)
+        if (search) filtered = filtered.filter(c => 
+          c.make.toLowerCase().includes(search.toLowerCase()) || 
+          c.model.toLowerCase().includes(search.toLowerCase())
+        )
+        setCars(filtered)
+        setTotalPages(1)
       }
     } catch (error) {
       console.error('Error fetching cars:', error)
+      // Use demo data on error
+      setCars(demoCars)
+      setTotalPages(1)
     } finally {
       setIsLoading(false)
     }

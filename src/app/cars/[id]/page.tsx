@@ -134,9 +134,9 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-16 pb-24 lg:pb-8">
       {/* Image Gallery */}
-      <div className="relative h-[50vh] md:h-[60vh] bg-muted">
+      <div className="relative h-[40vh] md:h-[60vh] bg-muted">
         <div 
           className="absolute inset-0 bg-cover bg-center transition-all duration-500"
           style={{ backgroundImage: `url('${car.images[currentImageIndex].url}')` }}
@@ -146,27 +146,27 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
+          className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
           onClick={handlePrevImage}
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
+          className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg"
           onClick={handleNextImage}
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
         </Button>
 
         {/* Image Dots */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
           {car.images.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentImageIndex(index)}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+              className={`w-2 h-2 md:w-2.5 md:h-2.5 rounded-full transition-colors ${
                 index === currentImageIndex ? 'bg-white' : 'bg-white/50'
               }`}
             />
@@ -178,17 +178,17 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
           <Button
             variant="ghost"
             size="icon"
-            className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-md"
+            className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-md"
             onClick={() => setIsFavorited(!isFavorited)}
           >
-            <Heart className={`w-5 h-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
+            <Heart className={`w-4 h-4 md:w-5 md:h-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-md"
+            className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-md"
           >
-            <Share2 className="w-5 h-5" />
+            <Share2 className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
         </div>
 
@@ -209,35 +209,35 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 lg:px-8 py-6 md:py-8">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6 md:space-y-8">
             {/* Title & Basic Info */}
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {car.isInstantBook && (
-                  <Badge className="bg-primary">
+                  <Badge className="bg-primary text-xs md:text-sm">
                     <Zap className="w-3 h-3 mr-1" />
                     Instant Book
                   </Badge>
                 )}
-                <Badge variant="secondary">{car.category}</Badge>
+                <Badge variant="secondary" className="text-xs md:text-sm">{car.category}</Badge>
               </div>
               
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              <h1 className="text-2xl md:text-4xl font-bold mb-2">
                 {car.make} {car.model} {car.year}
               </h1>
               
-              <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3 md:gap-4 text-sm md:text-base text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 fill-secondary text-secondary" />
+                  <Star className="w-4 h-4 md:w-5 md:h-5 fill-secondary text-secondary" />
                   <span className="font-medium text-foreground">{car.averageRating}</span>
-                  <span>({car.totalReviews} reviews)</span>
+                  <span>({car.totalReviews})</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{car.address}, {car.city}</span>
+                  <span className="truncate">{car.city}</span>
                 </div>
               </div>
             </div>
@@ -245,33 +245,33 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
             <Separator />
 
             {/* Host Info */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar className="w-16 h-16 border-2 border-primary/20">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
+                <Avatar className="w-12 h-12 md:w-16 md:h-16 border-2 border-primary/20">
                   <AvatarImage src={car.owner.avatarUrl || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-lg md:text-xl">
                     {car.owner.firstName[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-lg">
+                    <span className="font-semibold text-base md:text-lg">
                       Hosted by {car.owner.firstName}
                     </span>
                     {car.owner.isVerified && (
-                      <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-4 h-4 md:w-5 md:h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
                     )}
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {car.owner.tripsCount} trips • {car.owner.carsCount} cars • Joined {format(car.owner.createdAt, 'MMM yyyy')}
+                  <div className="text-xs md:text-sm text-muted-foreground">
+                    {car.owner.tripsCount} trips • {car.owner.carsCount} cars
                   </div>
                 </div>
               </div>
-              <Button variant="outline" className="hidden sm:flex">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Contact Host
+                Contact
               </Button>
             </div>
 
@@ -279,8 +279,8 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
 
             {/* Description */}
             <div>
-              <h2 className="text-xl font-semibold mb-4">About this car</h2>
-              <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
+              <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">About this car</h2>
+              <p className="text-sm md:text-base text-muted-foreground whitespace-pre-line leading-relaxed">
                 {car.description}
               </p>
             </div>
@@ -289,34 +289,34 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
 
             {/* Specs */}
             <div>
-              <h2 className="text-xl font-semibold mb-4">Specifications</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
-                  <Users className="w-6 h-6 text-primary" />
+              <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Specifications</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-xl">
+                  <Users className="w-5 h-5 md:w-6 md:h-6 text-primary shrink-0" />
                   <div>
-                    <div className="font-medium">{car.seats} Seats</div>
-                    <div className="text-sm text-muted-foreground">Passengers</div>
+                    <div className="font-medium text-sm md:text-base">{car.seats} Seats</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">Passengers</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
-                  <Gauge className="w-6 h-6 text-primary" />
+                <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-xl">
+                  <Gauge className="w-5 h-5 md:w-6 md:h-6 text-primary shrink-0" />
                   <div>
-                    <div className="font-medium">{car.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</div>
-                    <div className="text-sm text-muted-foreground">Transmission</div>
+                    <div className="font-medium text-sm md:text-base">{car.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">Transmission</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
-                  <Fuel className="w-6 h-6 text-primary" />
+                <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-xl">
+                  <Fuel className="w-5 h-5 md:w-6 md:h-6 text-primary shrink-0" />
                   <div>
-                    <div className="font-medium">{car.fuelType}</div>
-                    <div className="text-sm text-muted-foreground">Fuel Type</div>
+                    <div className="font-medium text-sm md:text-base">{car.fuelType}</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">Fuel Type</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
-                  <Car className="w-6 h-6 text-primary" />
+                <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-xl">
+                  <Car className="w-5 h-5 md:w-6 md:h-6 text-primary shrink-0" />
                   <div>
-                    <div className="font-medium">{car.doors} Doors</div>
-                    <div className="text-sm text-muted-foreground">Vehicle</div>
+                    <div className="font-medium text-sm md:text-base">{car.doors} Doors</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">Vehicle</div>
                   </div>
                 </div>
               </div>
@@ -326,11 +326,11 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
 
             {/* Features */}
             <div>
-              <h2 className="text-xl font-semibold mb-4">Features</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Features</h2>
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
                 {car.features.map((feature) => (
-                  <div key={feature} className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-500" />
+                  <div key={feature} className="flex items-center gap-2 text-sm md:text-base">
+                    <Check className="w-4 h-4 md:w-5 md:h-5 text-green-500 shrink-0" />
                     <span>{feature}</span>
                   </div>
                 ))}
@@ -341,39 +341,39 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
 
             {/* Reviews */}
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h2 className="text-lg md:text-xl font-semibold">
                   Reviews ({car.totalReviews})
                 </h2>
                 <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 fill-secondary text-secondary" />
+                  <Star className="w-4 h-4 md:w-5 md:h-5 fill-secondary text-secondary" />
                   <span className="font-medium">{car.averageRating}</span>
                 </div>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 {car.reviews.map((review) => (
-                  <div key={review.id} className="flex gap-4">
-                    <Avatar className="w-10 h-10">
+                  <div key={review.id} className="flex gap-3 md:gap-4">
+                    <Avatar className="w-9 h-9 md:w-10 md:h-10">
                       <AvatarImage src={review.reviewer.avatarUrl || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
                         {review.reviewer.firstName[0]}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">
+                        <span className="font-medium text-sm md:text-base">
                           {review.reviewer.firstName} {review.reviewer.lastName}
                         </span>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-xs md:text-sm text-muted-foreground">
                           {format(review.createdAt, 'MMM d, yyyy')}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 mb-2">
+                      <div className="flex items-center gap-0.5 mb-2">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`w-4 h-4 ${
+                            className={`w-3.5 h-3.5 md:w-4 md:h-4 ${
                               i < review.rating
                                 ? 'fill-secondary text-secondary'
                                 : 'text-muted-foreground'
@@ -381,22 +381,22 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
                           />
                         ))}
                       </div>
-                      <p className="text-muted-foreground">{review.comment}</p>
+                      <p className="text-sm md:text-base text-muted-foreground">{review.comment}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
               {car.totalReviews > 2 && (
-                <Button variant="outline" className="mt-6">
+                <Button variant="outline" className="mt-4 md:mt-6 text-sm">
                   Show all {car.totalReviews} reviews
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Booking Sidebar */}
-          <div className="lg:col-span-1">
+          {/* Booking Sidebar - Desktop */}
+          <div className="hidden lg:block lg:col-span-1">
             <Card className="sticky top-24 border-0 shadow-xl">
               <CardHeader>
                 <div className="flex items-baseline gap-2">
@@ -501,6 +501,41 @@ export default function CarDetailPage({ params }: { params: Promise<{ id: string
               </CardContent>
             </Card>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Sticky Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 lg:hidden z-40">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl font-bold text-primary">
+                {formatPrice(car.pricePerDay)}
+              </span>
+              <span className="text-sm text-muted-foreground">/day</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Star className="w-3.5 h-3.5 fill-secondary text-secondary" />
+              <span>{car.averageRating}</span>
+              <span>({car.totalReviews})</span>
+            </div>
+          </div>
+          <Button 
+            size="lg"
+            className="h-12 px-8"
+            onClick={() => {
+              // On mobile, scroll to show a date picker or open a modal
+              // For now, trigger booking with default dates
+              const today = new Date()
+              const tomorrow = addDays(today, 1)
+              const nextWeek = addDays(today, 7)
+              if (!startDate) setStartDate(tomorrow)
+              if (!endDate) setEndDate(nextWeek)
+              // Then show booking flow
+            }}
+          >
+            {car.isInstantBook ? 'Book Now' : 'Request'}
+          </Button>
         </div>
       </div>
     </div>

@@ -31,18 +31,18 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section className="py-24 bg-white">
+    <section id="how-it-works" className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-4xl font-bold tracking-tight mb-4">
+        <div className="text-center max-w-2xl mx-auto mb-10 md:mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 md:mb-4">
             How Moova works
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base md:text-lg text-muted-foreground">
             Renting a car has never been easier. Four simple steps to get on the road.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
           {steps.map((item, index) => (
             <div key={item.step} className="relative">
               {/* Connection Line */}
@@ -51,14 +51,14 @@ export function HowItWorksSection() {
               )}
               
               <div className="relative text-center">
-                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-secondary mb-6 relative z-10">
-                  <item.icon className="w-10 h-10" />
-                  <span className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-black text-white text-sm font-bold flex items-center justify-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 md:w-24 md:h-24 rounded-full bg-secondary mb-4 md:mb-6 relative z-10">
+                  <item.icon className="w-7 h-7 md:w-10 md:h-10 text-white" />
+                  <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-6 h-6 md:w-8 md:h-8 rounded-full bg-primary text-white text-xs md:text-sm font-bold flex items-center justify-center">
                     {item.step}
                   </span>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
+                <h3 className="text-base md:text-xl font-semibold mb-1 md:mb-2">{item.title}</h3>
+                <p className="text-xs md:text-base text-muted-foreground">{item.description}</p>
               </div>
             </div>
           ))}

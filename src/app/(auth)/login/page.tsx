@@ -220,9 +220,9 @@ function LoginSkeleton() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-[100dvh] flex">
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <Suspense fallback={<LoginSkeleton />}>
           <LoginForm />
         </Suspense>

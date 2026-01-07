@@ -218,13 +218,13 @@ function CarsContent() {
   )
 
   return (
-    <div className="min-h-screen bg-muted/30 pt-20">
-      <div className="container mx-auto px-4 lg:px-8 py-8">
+    <div className="min-h-screen bg-muted/30 pt-16 md:pt-20">
+      <div className="container mx-auto px-4 lg:px-8 py-4 md:py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Available cars</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl md:text-3xl font-bold">Available cars</h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-1">
               {filteredCars.length} cars found {filters.city && `in ${filters.city}`}
             </p>
           </div>
@@ -232,23 +232,23 @@ function CarsContent() {
           {/* Mobile Filter Button */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" className="lg:hidden">
+              <Button variant="outline" size="sm" className="lg:hidden w-full sm:w-auto">
                 <SlidersHorizontal className="w-4 h-4 mr-2" />
                 Filters
               </Button>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl">
               <SheetHeader>
                 <SheetTitle>Filters</SheetTitle>
               </SheetHeader>
-              <div className="mt-6">
+              <div className="mt-6 overflow-y-auto pb-20">
                 <FilterPanel />
               </div>
             </SheetContent>
           </Sheet>
         </div>
 
-        <div className="flex gap-8">
+        <div className="flex gap-6 md:gap-8">
           {/* Desktop Filters */}
           <div className="hidden lg:block w-72 shrink-0">
             <div className="bg-white rounded-2xl p-6 sticky top-24 border border-border">
@@ -264,20 +264,21 @@ function CarsContent() {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : filteredCars.length > 0 ? (
-              <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                 {filteredCars.map((car) => (
                   <CarCard key={car.id} car={car} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-20">
-                <Car className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No cars found</h3>
-                <p className="text-muted-foreground mb-6">
+              <div className="text-center py-12 md:py-20">
+                <Car className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-3 md:mb-4" />
+                <h3 className="text-lg md:text-xl font-semibold mb-2">No cars found</h3>
+                <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6">
                   Try adjusting your filters to find more cars
                 </p>
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => setFilters({ city: '', priceRange: [0, 500], transmission: '', fuelType: '', category: '' })}
                 >
                   Clear all filters

@@ -28,28 +28,28 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-secondary via-secondary to-primary/20 overflow-hidden">
+    <section className="relative min-h-[100dvh] bg-gradient-to-br from-secondary via-secondary to-primary/20 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-48 md:w-72 h-48 md:h-72 bg-primary rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-64 md:w-96 h-64 md:h-96 bg-primary rounded-full blur-3xl" />
       </div>
 
       <div className="relative container mx-auto px-4 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-screen py-24">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[100dvh] py-20 md:py-24">
           {/* Left Content */}
-          <div className="space-y-8 animate-slideUp">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm">
-              <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+          <div className="space-y-6 md:space-y-8 animate-slideUp pt-16 md:pt-0">
+            <div className="inline-flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-xs md:text-sm">
+              <span className="w-1.5 md:w-2 h-1.5 md:h-2 bg-primary rounded-full animate-pulse" />
               Now available in 20+ cities across Georgia
             </div>
 
             <div>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1]">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1]">
                 Drive your way
                 <span className="block text-primary">across Georgia</span>
               </h1>
-              <p className="mt-6 text-xl text-white/80 max-w-lg">
+              <p className="mt-4 md:mt-6 text-base md:text-xl text-white/80 max-w-lg">
                 Rent unique cars from trusted local hosts. From city drives to mountain adventures — find your perfect ride.
               </p>
             </div>
@@ -57,8 +57,8 @@ export function HeroSection() {
             {/* Search Box */}
             <div className="bg-white rounded-2xl shadow-2xl p-2 max-w-xl">
               <div className="relative">
-                <div className="flex items-center gap-3 p-4 bg-muted rounded-xl">
-                  <MapPin className="w-5 h-5 text-primary" />
+                <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 bg-muted rounded-xl">
+                  <MapPin className="w-5 h-5 text-primary shrink-0" />
                   <div className="flex-1 relative">
                     <Input
                       type="text"
@@ -69,7 +69,7 @@ export function HeroSection() {
                         setShowSuggestions(true)
                       }}
                       onFocus={() => setShowSuggestions(true)}
-                      className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 p-0 h-auto"
+                      className="border-0 bg-transparent text-base md:text-lg placeholder:text-muted-foreground focus-visible:ring-0 p-0 h-auto"
                     />
                     
                     {/* City Suggestions */}
@@ -79,7 +79,7 @@ export function HeroSection() {
                           <button
                             key={city}
                             onClick={() => handleCitySelect(city)}
-                            className="w-full flex items-center gap-3 p-4 hover:bg-muted transition-colors text-left"
+                            className="w-full flex items-center gap-3 p-3 md:p-4 hover:bg-muted transition-colors text-left"
                           >
                             <MapPin className="w-5 h-5 text-muted-foreground" />
                             <span className="font-medium">{city}</span>
@@ -93,7 +93,7 @@ export function HeroSection() {
                 <Button
                   onClick={handleSearch}
                   size="lg"
-                  className="w-full mt-2 h-14 text-lg font-semibold rounded-xl"
+                  className="w-full mt-2 h-12 md:h-14 text-base md:text-lg font-semibold rounded-xl"
                 >
                   Search available cars
                   <ArrowRight className="w-5 h-5 ml-2" />
@@ -102,17 +102,17 @@ export function HeroSection() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="flex flex-wrap gap-6 pt-4">
-              <div className="flex items-center gap-2 text-white/80">
-                <Shield className="w-5 h-5 text-primary" />
+            <div className="flex flex-wrap gap-4 md:gap-6 pt-2 md:pt-4">
+              <div className="flex items-center gap-2 text-white/80 text-sm md:text-base">
+                <Shield className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 <span>Fully insured</span>
               </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <Clock className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-2 text-white/80 text-sm md:text-base">
+                <Clock className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 <span>24/7 support</span>
               </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <Star className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-2 text-white/80 text-sm md:text-base">
+                <Star className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                 <span>Verified hosts</span>
               </div>
             </div>

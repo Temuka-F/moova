@@ -39,24 +39,24 @@ const socialLinks = [
 export function Footer() {
   return (
     <footer className="bg-secondary text-white">
-      <div className="container mx-auto px-4 lg:px-8 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
+      <div className="container mx-auto px-4 lg:px-8 py-10 md:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8 lg:gap-12">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-1">
-            <Link href="/" className="inline-block text-2xl font-bold mb-4">
+          <div className="col-span-2 md:col-span-4 lg:col-span-1 mb-4 lg:mb-0">
+            <Link href="/" className="inline-block text-2xl font-bold mb-3 md:mb-4">
               moova
             </Link>
-            <p className="text-white/60 mb-6 max-w-xs">
+            <p className="text-white/60 mb-4 md:mb-6 max-w-xs text-sm md:text-base">
               The easiest way to rent a car in Georgia. Trusted by thousands of travelers.
             </p>
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}
-                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-colors"
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-colors"
                 >
-                  <social.icon className="w-5 h-5" />
+                  <social.icon className="w-4 h-4 md:w-5 md:h-5" />
                 </a>
               ))}
             </div>
@@ -64,11 +64,11 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="font-semibold mb-4">Company</h3>
-            <ul className="space-y-3">
+            <h3 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">Company</h3>
+            <ul className="space-y-2 md:space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-white/60 hover:text-white transition-colors">
+                  <Link href={link.href} className="text-white/60 hover:text-white transition-colors text-sm md:text-base">
                     {link.name}
                   </Link>
                 </li>
@@ -78,11 +78,11 @@ export function Footer() {
 
           {/* Support */}
           <div>
-            <h3 className="font-semibold mb-4">Support</h3>
-            <ul className="space-y-3">
+            <h3 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">Support</h3>
+            <ul className="space-y-2 md:space-y-3">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-white/60 hover:text-white transition-colors">
+                  <Link href={link.href} className="text-white/60 hover:text-white transition-colors text-sm md:text-base">
                     {link.name}
                   </Link>
                 </li>
@@ -92,11 +92,11 @@ export function Footer() {
 
           {/* Hosts */}
           <div>
-            <h3 className="font-semibold mb-4">Hosts</h3>
-            <ul className="space-y-3">
+            <h3 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">Hosts</h3>
+            <ul className="space-y-2 md:space-y-3">
               {footerLinks.hosts.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-white/60 hover:text-white transition-colors">
+                  <Link href={link.href} className="text-white/60 hover:text-white transition-colors text-sm md:text-base">
                     {link.name}
                   </Link>
                 </li>
@@ -106,11 +106,11 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
-            <ul className="space-y-3">
+            <h3 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">Legal</h3>
+            <ul className="space-y-2 md:space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-white/60 hover:text-white transition-colors">
+                  <Link href={link.href} className="text-white/60 hover:text-white transition-colors text-sm md:text-base">
                     {link.name}
                   </Link>
                 </li>
@@ -120,11 +120,11 @@ export function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-white/60 text-sm">
+        <div className="mt-10 md:mt-16 pt-6 md:pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3 md:gap-4">
+          <p className="text-white/60 text-xs md:text-sm">
             © {new Date().getFullYear()} Moova. All rights reserved.
           </p>
-          <div className="flex items-center gap-6 text-sm text-white/60">
+          <div className="flex items-center gap-4 md:gap-6 text-xs md:text-sm text-white/60">
             <span>🇬🇪 Georgia</span>
             <span>English</span>
             <span>₾ GEL</span>

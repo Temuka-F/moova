@@ -29,7 +29,7 @@ interface CarCardProps {
 export function CarCard({ car }: CarCardProps) {
   return (
     <Link href={`/cars/${car.id}`} className="block group">
-      <div className="bg-white rounded-2xl overflow-hidden border border-border card-hover">
+      <div className="bg-white rounded-xl md:rounded-2xl overflow-hidden border border-border card-hover">
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           <img
@@ -42,58 +42,58 @@ export function CarCard({ car }: CarCardProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 bg-white/90 hover:bg-white rounded-full shadow-lg"
+            className="absolute top-2 right-2 md:top-3 md:right-3 w-8 h-8 md:w-9 md:h-9 bg-white/90 hover:bg-white rounded-full shadow-lg"
             onClick={(e) => {
               e.preventDefault()
               // Handle favorite
             }}
           >
-            <Heart className="w-5 h-5" />
+            <Heart className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
 
           {/* Rating Badge */}
-          <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-lg">
-            <Star className="w-4 h-4 fill-primary text-primary" />
-            <span className="text-sm font-semibold">{car.rating}</span>
-            <span className="text-xs text-muted-foreground">({car.reviewCount})</span>
+          <div className="absolute top-2 left-2 md:top-3 md:left-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5 md:px-2.5 md:py-1 shadow-lg">
+            <Star className="w-3.5 h-3.5 md:w-4 md:h-4 fill-primary text-primary" />
+            <span className="text-xs md:text-sm font-semibold">{car.rating}</span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">({car.reviewCount})</span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-3 md:p-4">
           {/* Title & Price */}
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <div>
-              <h3 className="font-semibold text-lg">
+          <div className="flex items-start justify-between gap-2 mb-2 md:mb-3">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-base md:text-lg truncate">
                 {car.make} {car.model}
               </h3>
-              <p className="text-sm text-muted-foreground">{car.year}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">{car.year}</p>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-bold">₾{car.pricePerDay}</p>
+            <div className="text-right shrink-0">
+              <p className="text-base md:text-lg font-bold">₾{car.pricePerDay}</p>
               <p className="text-xs text-muted-foreground">per day</p>
             </div>
           </div>
 
           {/* Features */}
-          <div className="flex flex-wrap gap-2 mb-3">
-            <Badge variant="secondary" className="font-normal">
+          <div className="flex flex-wrap gap-1.5 md:gap-2 mb-2 md:mb-3">
+            <Badge variant="secondary" className="font-normal text-xs px-2 py-0.5">
               <Users className="w-3 h-3 mr-1" />
-              {car.seats} seats
+              {car.seats}
             </Badge>
-            <Badge variant="secondary" className="font-normal">
+            <Badge variant="secondary" className="font-normal text-xs px-2 py-0.5">
               <Settings2 className="w-3 h-3 mr-1" />
               {car.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}
             </Badge>
-            <Badge variant="secondary" className="font-normal">
+            <Badge variant="secondary" className="font-normal text-xs px-2 py-0.5 hidden sm:flex">
               <Fuel className="w-3 h-3 mr-1" />
               {car.fuelType.charAt(0) + car.fuelType.slice(1).toLowerCase()}
             </Badge>
           </div>
 
           {/* Location */}
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
+          <div className="flex items-center gap-1 text-xs md:text-sm text-muted-foreground">
+            <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4" />
             {car.city}
           </div>
         </div>

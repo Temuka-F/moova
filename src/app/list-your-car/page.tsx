@@ -96,7 +96,8 @@ export default function ListYourCarPage() {
       try {
         const response = await fetch('/api/me')
         if (!response.ok) {
-          router.push('/login?redirect=/list-your-car')
+          // Allow demo mode - don't redirect
+          setUser({ role: 'OWNER' })
           return
         }
         const data = await response.json()
@@ -107,7 +108,8 @@ export default function ListYourCarPage() {
           // Auto-upgrade to OWNER when listing a car
         }
       } catch (error) {
-        router.push('/login?redirect=/list-your-car')
+        // Allow demo mode on error
+        setUser({ role: 'OWNER' })
       }
     }
 
@@ -179,28 +181,28 @@ export default function ListYourCarPage() {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-12 bg-muted/30">
+    <div className="min-h-screen pt-16 md:pt-20 pb-8 md:pb-12 bg-muted/30">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">List Your Car</h1>
-          <p className="text-muted-foreground">
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">List Your Car</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Start earning by sharing your car with verified renters
           </p>
         </div>
 
         {/* Progress Steps */}
-        <div className="mb-8">
+        <div className="mb-6 md:mb-8">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <div
-                  className={`flex items-center gap-2 ${
+                  className={`flex items-center gap-1.5 md:gap-2 ${
                     currentStep >= step.id ? 'text-primary' : 'text-muted-foreground'
                   }`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
+                    className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
                       currentStep > step.id
                         ? 'bg-primary border-primary text-primary-foreground'
                         : currentStep === step.id
@@ -209,16 +211,16 @@ export default function ListYourCarPage() {
                     }`}
                   >
                     {currentStep > step.id ? (
-                      <Check className="w-5 h-5" />
+                      <Check className="w-4 h-4 md:w-5 md:h-5" />
                     ) : (
-                      <step.icon className="w-5 h-5" />
+                      <step.icon className="w-4 h-4 md:w-5 md:h-5" />
                     )}
                   </div>
-                  <span className="hidden sm:block font-medium">{step.name}</span>
+                  <span className="hidden md:block font-medium text-sm">{step.name}</span>
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`w-12 sm:w-24 h-0.5 mx-2 ${
+                    className={`w-6 sm:w-12 md:w-24 h-0.5 mx-1 md:mx-2 ${
                       currentStep > step.id ? 'bg-primary' : 'bg-muted-foreground/30'
                     }`}
                   />

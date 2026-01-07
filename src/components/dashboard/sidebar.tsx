@@ -25,7 +25,7 @@ import {
   Plus,
   ChevronLeft,
 } from 'lucide-react'
-import type { UserRole } from '@/types'
+type UserRole = 'RENTER' | 'OWNER' | 'ADMIN'
 
 interface NavItem {
   name: string

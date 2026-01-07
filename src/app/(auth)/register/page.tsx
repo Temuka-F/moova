@@ -96,7 +96,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-[100dvh] flex">
       {/* Left side - Image */}
       <div className="hidden lg:block lg:w-1/2 relative bg-secondary">
         <div className="absolute inset-0 flex items-center justify-center p-16">
@@ -115,8 +115,8 @@ export default function RegisterPage() {
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8 overflow-y-auto">
+        <div className="w-full max-w-md py-8">
           {/* Header */}
           <div className="text-center mb-8">
             <Link href="/" className="inline-block text-3xl font-bold text-primary mb-6">
