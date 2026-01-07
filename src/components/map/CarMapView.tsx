@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Locate, ZoomIn, ZoomOut, Layers, Star, Zap } from 'lucide-react'
+import { Locate, ZoomIn, ZoomOut, Star, Zap } from 'lucide-react'
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(
