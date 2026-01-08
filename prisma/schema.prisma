@@ -55,6 +55,7 @@ model User {
   payouts            Payout[]
   reviewsReceived    Review[]           @relation("RevieweeReviews")
   reviewsGiven       Review[]           @relation("ReviewerReviews")
+  reportsMade        Report[]           @relation("ReportedBy")
 
   @@index([email])
   @@index([phone])
@@ -446,4 +447,32 @@ enum NotificationType {
   CAR_REJECTED
   PAYOUT_SENT
   SYSTEM
+}
+
+model Report {
+  id         String       @id @default(uuid())
+  reporterId String
+  reportedId String
+  type       ReportType
+  reason     String
+  status     ReportStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  reporter User @relation("ReportedBy", fields: [reporterId], references: [id])
+
+  @@index([reporterId])
+  @@index([type, reportedId])
+}
+
+enum ReportType {
+  USER
+  CAR
+  BOOKING
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
 }
