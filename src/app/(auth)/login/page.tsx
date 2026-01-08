@@ -24,11 +24,11 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/dashboard'
-  
+
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [supabaseError, setSupabaseError] = useState<string | null>(null)
-  
+
   // Initialize Supabase client with error handling
   let supabase: ReturnType<typeof createClient> | null = null
   try {
@@ -51,9 +51,9 @@ function LoginForm() {
       toast.error('Authentication service unavailable. Please refresh the page.')
       return
     }
-    
+
     setIsLoading(true)
-    
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -61,6 +61,10 @@ function LoginForm() {
       })
 
       if (error) {
+        if (error.message.includes('Email not confirmed')) {
+          toast.error('Please verify your email address before logging in.')
+          return
+        }
         toast.error(error.message)
         return
       }
@@ -81,7 +85,7 @@ function LoginForm() {
       toast.error('Authentication service unavailable. Please refresh the page.')
       return
     }
-    
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

@@ -7,14 +7,19 @@ import { TopNav } from '@/components/ui/TopNav'
 import { DesktopSidebar } from '@/components/ui/DesktopSidebar'
 import { CarPopup } from '@/components/ui/CarPopup'
 import { MapControls } from '@/components/ui/MapControls'
-import { 
-  ALL_CARS, 
-  MapCar, 
+import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav' // Verify path
+import { SearchBar } from '@/components/search/SearchBar'
+import { ControlBar } from '@/components/search/ControlBar'
+import { CarList } from '@/components/listing/CarList'
+import { MobileCarSheet } from '@/components/ui/MobileCarSheet'
+import {
+  ALL_CARS,
+  MapCar,
   CityName,
   CITIES,
   getCarsByCity,
-  getWinterReadyCars, 
-  getCarsByCategory, 
+  getWinterReadyCars,
+  getCarsByCategory,
   getHybridElectricCars,
   getCarsByPriceRange
 } from '@/lib/map-cars'
@@ -30,15 +35,20 @@ export function MapHomePage() {
   const [showCarPopup, setShowCarPopup] = useState(false)
   const [cityCars, setCityCars] = useState<MapCar[]>([])
   const [isLoadingCars, setIsLoadingCars] = useState(true)
-  
+
   // Date state for booking
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  
+
   // Price range filter - initialize with reasonable defaults
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 300])
   const [sortBy, setSortBy] = useState<string>('rating')
-  
+
+  // Mobile View Mode
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
+  const [isMobileSheetExpanded, setIsMobileSheetExpanded] = useState(false)
+
+
   // Map ref for imperative control
   const mapRef = useRef<MapCanvasHandle>(null)
 
@@ -149,7 +159,7 @@ export function MapHomePage() {
   }, [filteredCars])
 
   // ===== EVENT HANDLERS =====
-  
+
   // Handle city change
   const handleCityChange = useCallback((city: CityName) => {
     setCurrentCity(city)
@@ -228,74 +238,126 @@ export function MapHomePage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-100 overflow-hidden">
-      {/* Full-screen map as base layer */}
-      <div className="absolute inset-0" style={{ touchAction: 'none' }}>
-        <MapCanvas
-          ref={mapRef}
-          cars={filteredCars}
-          selectedCar={selectedCar}
-          hoveredCar={hoveredCar}
-          onMarkerClick={handleMarkerClick}
-          onMapClick={handleMapClick}
-          currentCity={currentCity}
-        />
+    <>
+      {/* ==============================================
+          MOBILE LAYOUT - "App-Like" Overhaul
+          ============================================== */}
+      <div className="lg:hidden flex flex-col h-screen bg-slate-50 relative custom-safe-area-bottom">
+        {/* Top Search Area */}
+        <div className="flex-none z-30 bg-white">
+          <SearchBar
+            currentCity={currentCity}
+            onCityChange={setCurrentCity}
+            startDate={startDate}
+            endDate={endDate}
+            onDateChange={(s, e) => { setStartDate(s); setEndDate(e) }}
+          />
+          <ControlBar
+            viewMode={viewMode}
+            onViewChange={setViewMode}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            totalCars={filteredCars.length}
+          />
+        </div>
+
+        {/* Content Area (Map or List) */}
+        <div className="flex-1 relative overflow-hidden">
+          {viewMode === 'map' ? (
+            <MapCanvas
+              id="mobile-map"
+              ref={mapRef}
+              cars={filteredCars}
+              selectedCar={selectedCar}
+              hoveredCar={null}
+              onMarkerClick={handleCarSelect}
+              onMapClick={() => handleCarSelect(null)}
+              currentCity={currentCity}
+              className="absolute inset-0"
+            />
+          ) : (
+            <div className="absolute inset-0 overflow-y-auto pb-24 bg-gray-50">
+              <CarList cars={filteredCars} />
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Car Sheet (Details) - Only when a car is selected */}
+        {viewMode === 'map' && (
+          <MobileCarSheet
+            selectedCar={selectedCar}
+            onCarSelect={handleCarSelect}
+          // Other filters are handled by ControlBar at the top
+          />
+        )}
+
+        {/* Bottom Navigation */}
+        <MobileBottomNav onMenuClick={() => { }} />
       </div>
 
-      {/* Top navigation - positioned to avoid sidebar on desktop */}
-      <div className="absolute top-0 left-0 right-0 z-50 lg:left-[400px]">
-        <TopNav
-          currentCity={currentCity}
-          onCityChange={handleCityChange}
-          carCount={filteredCars.length}
-          startDate={startDate}
-          endDate={endDate}
-          onDateChange={handleDateChange}
-        />
-      </div>
 
-      {/* Map controls - positioned to avoid sidebar */}
-      <div className="absolute bottom-24 lg:bottom-8 right-4 z-40">
-        <MapControls
-          onRecenter={handleRecenter}
-          currentCity={currentCity}
-          carCount={filteredCars.length}
-          winterReadyCount={winterReadyCount}
-        />
-      </div>
+      {/* ==============================================
+          DESKTOP LAYOUT - Original Design
+          ============================================== */}
+      <div className="hidden lg:block fixed inset-0 bg-gray-100 overflow-hidden">
+        {/* Full-screen map as base layer */}
+        <div className="absolute inset-0" style={{ touchAction: 'none' }}>
+          <MapCanvas
+            id="desktop-map"
+            ref={mapRef}
+            cars={filteredCars}
+            selectedCar={selectedCar}
+            hoveredCar={hoveredCar}
+            onMarkerClick={handleMarkerClick}
+            onMapClick={handleMapClick}
+            currentCity={currentCity}
+          />
+        </div>
 
-      {/* Desktop Sidebar - Floating panel on the left */}
-      <DesktopSidebar
-        cars={filteredCars}
-        selectedCar={selectedCar}
-        onCarSelect={handleCarSelect}
-        onCarHover={handleCarHover}
-        activeFilter={activeFilter}
-        onFilterChange={handleFilterChange}
-        priceRange={priceRange}
-        onPriceRangeChange={setPriceRange}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
+        {/* Top navigation - positioned to avoid sidebar on desktop */}
+        <div className="absolute top-0 left-0 right-0 z-50 lg:left-[400px]">
+          <TopNav
+            currentCity={currentCity}
+            onCityChange={handleCityChange}
+            carCount={filteredCars.length}
+            startDate={startDate}
+            endDate={endDate}
+            onDateChange={handleDateChange}
+          />
+        </div>
 
-      {/* Mobile Bottom drawer */}
-      <div className="lg:hidden absolute inset-x-0 bottom-0 z-40">
-        <CarDrawer
+        {/* Map controls */}
+        <div className="absolute bottom-8 right-4 z-40">
+          <MapControls
+            onRecenter={handleRecenter}
+            currentCity={currentCity}
+            carCount={filteredCars.length}
+            winterReadyCount={winterReadyCount}
+          />
+        </div>
+
+        {/* Desktop Sidebar - Floating panel on the left */}
+        <DesktopSidebar
           cars={filteredCars}
           selectedCar={selectedCar}
           onCarSelect={handleCarSelect}
+          onCarHover={handleCarHover}
           activeFilter={activeFilter}
           onFilterChange={handleFilterChange}
+          priceRange={priceRange}
+          onPriceRangeChange={setPriceRange}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
         />
-      </div>
 
-      {/* Car popup modal */}
-      {showCarPopup && (
-        <CarPopup
-          car={selectedCar}
-          onClose={handlePopupClose}
-        />
-      )}
-    </div>
+        {/* Car popup modal */}
+        {showCarPopup && (
+          <CarPopup
+            car={selectedCar}
+            onClose={handlePopupClose}
+          />
+        )}
+      </div>
+    </>
   )
 }

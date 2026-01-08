@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { DashboardSidebar } from '@/components/dashboard/sidebar'
+import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav'
 import { ProfileSwitcher } from '@/components/ui/profile-switcher'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
@@ -123,6 +124,7 @@ export default function DashboardLayout({
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(true)}
+            className="md:hidden" // Hide hamburger on tablet/desktop, only show if really needed or remove entirely if BottomNav covers it. Let's keep it but maybe we don't need it if BottomNav has Menu.
           >
             <Menu className="w-5 h-5" />
           </Button>
@@ -133,7 +135,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-8">
+        <main className="flex-1 p-4 lg:p-8 pb-24 lg:pb-8"> {/* Added pb-24 for bottom nav space */}
           {user.role === 'OWNER' && (
             <div className="mb-6">
               <ProfileSwitcher
@@ -157,6 +159,11 @@ export default function DashboardLayout({
           )}
           {children}
         </main>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="lg:hidden">
+          <MobileBottomNav onMenuClick={() => setMobileMenuOpen(true)} />
+        </div>
       </div>
     </div>
   )

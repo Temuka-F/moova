@@ -1,9 +1,9 @@
 "use client"
 
 import { useRef, useCallback, useEffect, useState, forwardRef, useImperativeHandle } from 'react'
-import Map, { 
-  Marker, 
-  GeolocateControl, 
+import Map, {
+  Marker,
+  GeolocateControl,
   NavigationControl,
   MapRef,
   Popup
@@ -25,6 +25,8 @@ interface MapCanvasProps {
   onMarkerClick: (car: MapCar) => void
   onMapClick: () => void
   currentCity: CityName
+  className?: string
+  id?: string
 }
 
 interface ViewState {
@@ -34,24 +36,24 @@ interface ViewState {
 }
 
 // Custom price pill marker component
-function CarMarker({ 
-  car, 
+function CarMarker({
+  car,
   isSelected,
   isHovered,
-  onClick 
-}: { 
+  onClick
+}: {
   car: MapCar
   isSelected: boolean
   isHovered: boolean
-  onClick: (e: React.MouseEvent) => void 
+  onClick: (e: React.MouseEvent) => void
 }) {
   const highlighted = isSelected || isHovered
 
   return (
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
-      animate={{ 
-        scale: highlighted ? 1.2 : 1, 
+      animate={{
+        scale: highlighted ? 1.2 : 1,
         opacity: 1,
         zIndex: highlighted ? 100 : 1,
       }}
@@ -62,13 +64,13 @@ function CarMarker({
       className="cursor-pointer select-none"
       style={{ touchAction: 'manipulation' }}
     >
-      <div 
+      <div
         className={`
           relative flex items-center gap-1.5 px-3 py-2 rounded-full
           font-bold text-sm whitespace-nowrap select-none
           transition-all duration-200 ease-out
-          ${highlighted 
-            ? 'bg-black text-white shadow-2xl ring-4 ring-white' 
+          ${highlighted
+            ? 'bg-black text-white shadow-2xl ring-4 ring-white'
             : 'bg-white text-gray-900 shadow-lg hover:shadow-xl'
           }
           ${car.isWinterReady && !highlighted ? 'ring-2 ring-blue-400' : ''}
@@ -78,9 +80,9 @@ function CarMarker({
           <span className="text-sm">❄️</span>
         )}
         <span className="text-base">{car.price}₾</span>
-        
+
         {/* Pointer triangle */}
-        <div 
+        <div
           className={`
             absolute -bottom-2 left-1/2 -translate-x-1/2 
             w-0 h-0 
@@ -96,7 +98,7 @@ function CarMarker({
 }
 
 export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function MapCanvas(
-  { cars, selectedCar, hoveredCar, onMarkerClick, onMapClick, currentCity },
+  { cars, selectedCar, hoveredCar, onMarkerClick, onMapClick, currentCity, id, className },
   ref
 ) {
   const mapRef = useRef<MapRef>(null)
@@ -109,7 +111,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   const [popupInfo, setPopupInfo] = useState<MapCar | null>(null)
 
   // Mapbox access token
-  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
     'pk.eyJ1IjoibW9vdmExIiwiYSI6ImNtazQwOHM3NTAyajMzZnNjODVoMjA5MXUifQ.-uV331lmyvZseA3DQjsVaQ'
 
   // Map styles - winter/mountain style for ski resorts
@@ -155,10 +157,10 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     // CRITICAL: Stop propagation to prevent map click
     e.stopPropagation()
     e.preventDefault()
-    
+
     // Fly to the car
     flyToCar(car)
-    
+
     // Notify parent
     onMarkerClick(car)
   }, [onMarkerClick, flyToCar])
@@ -170,11 +172,12 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   }, [onMapClick])
 
   return (
-    <div 
-      className="absolute inset-0 z-0" 
+    <div
+      className={`absolute inset-0 z-0 ${className || ''}`}
       style={{ touchAction: 'pan-x pan-y' }}
     >
       <Map
+        id={id}
         ref={mapRef}
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
@@ -202,8 +205,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         />
 
         {/* Navigation controls */}
-        <NavigationControl 
-          position="bottom-right" 
+        <NavigationControl
+          position="bottom-right"
           showCompass={false}
           style={{
             marginBottom: '220px',
@@ -261,7 +264,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
 
       {/* Mountain mode overlay gradient for ski resorts */}
       {mountainCities.includes(currentCity) && (
-        <div 
+        <div
           className="absolute inset-0 pointer-events-none bg-gradient-to-b from-blue-100/20 via-transparent to-blue-200/10"
           aria-hidden="true"
         />

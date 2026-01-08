@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { checkUserExists } from '@/app/actions/auth-actions'
 
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -33,7 +34,7 @@ type RegisterFormData = z.infer<typeof registerSchema>
 export default function RegisterPage() {
   const router = useRouter()
   const supabase = createClient()
-  
+
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -54,8 +55,17 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
-    
+
     try {
+      // Check if user exists in our database first
+      const exists = await checkUserExists(data.email)
+
+      if (exists) {
+        toast.error('Account already exists. Please sign in.')
+        setIsLoading(false)
+        return
+      }
+
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -69,12 +79,21 @@ export default function RegisterPage() {
       })
 
       if (error) {
+        if (error.message.includes('User already registered')) {
+          toast.error('Account already exists. Please sign in.')
+          return
+        }
         toast.error(error.message)
         return
       }
 
       toast.success('Account created! Please check your email to verify your account.')
-      router.push('/login')
+
+      // Don't redirect immediately if email verification is enabled, 
+      // let the user see the success message and maybe redirect after a delay or let them click
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
     } catch (error) {
       toast.error('An unexpected error occurred')
     } finally {
