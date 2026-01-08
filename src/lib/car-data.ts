@@ -110,7 +110,6 @@ export async function fetchCarsWithFallback(options: FetchCarsOptions = {}): Pro
     }
 
     // DB is empty, fall back to mock data
-    console.log('📦 Database empty - using mock data for display')
     return {
       cars: options.city ? getMockCarsByCity(options.city) : ALL_CARS,
       isRealData: false,
@@ -118,7 +117,6 @@ export async function fetchCarsWithFallback(options: FetchCarsOptions = {}): Pro
 
   } catch (error) {
     // API failed, fall back to mock data
-    console.log('⚠️ API error - using mock data fallback:', error)
     return {
       cars: options.city ? getMockCarsByCity(options.city) : ALL_CARS,
       isRealData: false,

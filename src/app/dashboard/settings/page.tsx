@@ -14,12 +14,12 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Bell, 
-  Shield, 
+import {
+  User,
+  Mail,
+  Phone,
+  Bell,
+  Shield,
   Lock,
   Upload,
   CheckCircle2,
@@ -97,10 +97,10 @@ export default function SettingsPage() {
   const fetchUser = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const res = await fetch('/api/me')
-      
+
       if (!res.ok) {
         if (res.status === 401) {
           router.push('/login?redirect=/dashboard/settings')
@@ -117,14 +117,14 @@ export default function SettingsPage() {
         }
         throw new Error(errorMessage)
       }
-      
+
       const data = await res.json()
-      
+
       // Validate user data
       if (!data || !data.id) {
         throw new Error('Invalid user data received')
       }
-      
+
       setUser(data)
       setFormData({
         firstName: data.firstName || '',
@@ -147,9 +147,9 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     if (!user) return
-    
+
     setIsSaving(true)
-    
+
     try {
       const res = await fetch('/api/me', {
         method: 'PATCH',
@@ -174,19 +174,19 @@ export default function SettingsPage() {
 
   const handleUpgradeToOwner = async () => {
     if (!user) return
-    
+
     setIsUpgrading(true)
-    
+
     try {
       const res = await fetch(`/api/users/${user.id}/upgrade`, {
         method: 'POST',
       })
-      
+
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || 'Failed to upgrade')
       }
-      
+
       const updatedUser = await res.json()
       setUser({ ...user, role: updatedUser.role })
       toast.success('Congratulations! You are now a host. Start listing your first car!')
@@ -247,8 +247,8 @@ export default function SettingsPage() {
                     Start earning by sharing your car. Hosts earn up to ₾1,500/month on Moova!
                   </p>
                 </div>
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="rounded-full"
                   onClick={handleUpgradeToOwner}
                   disabled={isUpgrading}
@@ -321,7 +321,7 @@ export default function SettingsPage() {
                     onChange={async (e) => {
                       const file = e.target.files?.[0]
                       if (!file) return
-                      
+
                       if (file.size > 5 * 1024 * 1024) {
                         toast.error('File size must be less than 5MB')
                         return
@@ -363,9 +363,9 @@ export default function SettingsPage() {
                       }
                     }}
                   />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="rounded-full min-h-[44px]"
                     onClick={() => document.getElementById('avatar-upload')?.click()}
                   >
@@ -381,49 +381,49 @@ export default function SettingsPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input 
-                    id="firstName" 
+                  <Input
+                    id="firstName"
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="rounded-xl" 
+                    className="rounded-xl"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input 
-                    id="lastName" 
+                  <Input
+                    id="lastName"
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="rounded-xl" 
+                    className="rounded-xl"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
+                  <Input
+                    id="email"
+                    type="email"
                     value={user.email}
                     disabled
-                    className="rounded-xl bg-muted" 
+                    className="rounded-xl bg-muted"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone</Label>
-                  <Input 
-                    id="phone" 
-                    type="tel" 
+                  <Input
+                    id="phone"
+                    type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+995 555 123 456"
-                    className="rounded-xl" 
+                    className="rounded-xl"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
-                <Textarea 
-                  id="bio" 
+                <Textarea
+                  id="bio"
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   placeholder="Tell us a bit about yourself..."
@@ -446,9 +446,8 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 bg-muted/50 rounded-xl">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    user.isEmailVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${user.isEmailVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
+                    }`}>
                     <Mail className={`w-5 h-5 ${user.isEmailVerified ? 'text-green-500' : 'text-yellow-500'}`} />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -472,9 +471,8 @@ export default function SettingsPage() {
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 bg-muted/50 rounded-xl">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    user.isPhoneVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${user.isPhoneVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
+                    }`}>
                     <Phone className={`w-5 h-5 ${user.isPhoneVerified ? 'text-green-500' : 'text-yellow-500'}`} />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -498,9 +496,8 @@ export default function SettingsPage() {
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 bg-muted/50 rounded-xl">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    user.isLicenseVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${user.isLicenseVerified ? 'bg-green-500/10' : 'bg-yellow-500/10'
+                    }`}>
                     <Shield className={`w-5 h-5 ${user.isLicenseVerified ? 'text-green-500' : 'text-yellow-500'}`} />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -531,7 +528,7 @@ export default function SettingsPage() {
                         onChange={async (e) => {
                           const file = e.target.files?.[0]
                           if (!file) return
-                          
+
                           if (file.size > 5 * 1024 * 1024) {
                             toast.error('File size must be less than 5MB')
                             return
@@ -573,9 +570,9 @@ export default function SettingsPage() {
                           }
                         }}
                       />
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="rounded-full min-h-[44px] w-full sm:w-auto"
                         onClick={() => document.getElementById('license-upload')?.click()}
                       >
@@ -604,7 +601,7 @@ export default function SettingsPage() {
                   <p className="font-medium">Email Notifications</p>
                   <p className="text-sm text-muted-foreground">Receive updates via email</p>
                 </div>
-                <Switch 
+                <Switch
                   checked={notifications.email}
                   onCheckedChange={(v) => setNotifications({ ...notifications, email: v })}
                 />
@@ -615,7 +612,7 @@ export default function SettingsPage() {
                   <p className="font-medium">SMS Notifications</p>
                   <p className="text-sm text-muted-foreground">Receive updates via text message</p>
                 </div>
-                <Switch 
+                <Switch
                   checked={notifications.sms}
                   onCheckedChange={(v) => setNotifications({ ...notifications, sms: v })}
                 />
@@ -626,7 +623,7 @@ export default function SettingsPage() {
                   <p className="font-medium">Booking Updates</p>
                   <p className="text-sm text-muted-foreground">Get notified about booking changes</p>
                 </div>
-                <Switch 
+                <Switch
                   checked={notifications.bookingUpdates}
                   onCheckedChange={(v) => setNotifications({ ...notifications, bookingUpdates: v })}
                 />
@@ -637,7 +634,7 @@ export default function SettingsPage() {
                   <p className="font-medium">Marketing Emails</p>
                   <p className="text-sm text-muted-foreground">Receive tips, promotions, and news</p>
                 </div>
-                <Switch 
+                <Switch
                   checked={notifications.marketing}
                   onCheckedChange={(v) => setNotifications({ ...notifications, marketing: v })}
                 />
@@ -660,7 +657,7 @@ export default function SettingsPage() {
                   <p className="font-medium">Change Password</p>
                   <p className="text-sm text-muted-foreground">Update your password regularly</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-full min-h-[44px]">
+                <Button variant="outline" size="sm" className="rounded-full min-h-[44px]" onClick={() => toast.info('Change password feature coming soon')}>
                   Change
                 </Button>
               </div>
@@ -670,7 +667,7 @@ export default function SettingsPage() {
                   <p className="font-medium">Two-Factor Authentication</p>
                   <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-full min-h-[44px]">
+                <Button variant="outline" size="sm" className="rounded-full min-h-[44px]" onClick={() => toast.info('Two-Factor Authentication coming soon')}>
                   Enable
                 </Button>
               </div>

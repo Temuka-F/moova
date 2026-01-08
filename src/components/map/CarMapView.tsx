@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Locate, ZoomIn, ZoomOut, Star, Zap } from 'lucide-react'
+import { toast } from 'sonner'
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(
@@ -83,17 +84,15 @@ export function CarMap({
         className: 'custom-map-marker',
         html: `
           <div class="relative group">
-            <div class="flex items-center gap-1 px-2.5 py-1.5 rounded-full font-semibold text-sm shadow-lg transition-all duration-200 ${
-              isSelected 
-                ? 'bg-primary text-white scale-110' 
-                : 'bg-white text-foreground hover:scale-105'
-            }" style="border: 2px solid ${isSelected ? 'hsl(174, 100%, 41%)' : '#e5e5e5'}">
+            <div class="flex items-center gap-1 px-2.5 py-1.5 rounded-full font-semibold text-sm shadow-lg transition-all duration-200 cursor-pointer ${isSelected
+            ? 'bg-primary text-white scale-110'
+            : 'bg-white text-foreground hover:scale-105'
+          }" style="border: 2px solid ${isSelected ? 'hsl(174, 100%, 41%)' : '#e5e5e5'}">
               ${isInstantBook ? '<span class="text-xs">⚡</span>' : ''}
               <span>₾${price}</span>
             </div>
-            <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 ${
-              isSelected ? 'bg-primary' : 'bg-white'
-            }" style="border-right: 2px solid ${isSelected ? 'hsl(174, 100%, 41%)' : '#e5e5e5'}; border-bottom: 2px solid ${isSelected ? 'hsl(174, 100%, 41%)' : '#e5e5e5'}"></div>
+            <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 ${isSelected ? 'bg-primary' : 'bg-white'
+          }" style="border-right: 2px solid ${isSelected ? 'hsl(174, 100%, 41%)' : '#e5e5e5'}; border-bottom: 2px solid ${isSelected ? 'hsl(174, 100%, 41%)' : '#e5e5e5'}"></div>
           </div>
         `,
         iconSize: [80, 40],
@@ -109,7 +108,7 @@ export function CarMap({
           mapRef.flyTo([position.coords.latitude, position.coords.longitude], 14)
         },
         () => {
-          console.log('Unable to get location')
+          toast.error('Unable to get location')
         }
       )
     }
@@ -146,7 +145,7 @@ export function CarMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-        
+
         {cars.map((car) => (
           createCustomIcon && (
             <Marker
@@ -159,7 +158,7 @@ export function CarMap({
             >
               <Popup className="car-popup">
                 <div className="w-64 p-0">
-                  <div 
+                  <div
                     className="h-32 bg-cover bg-center rounded-t-lg"
                     style={{ backgroundImage: `url('${car.image}')` }}
                   />
@@ -233,11 +232,11 @@ export function CarMap({
 }
 
 // Mini map component for car cards
-export function MiniCarMap({ 
-  latitude, 
+export function MiniCarMap({
+  latitude,
   longitude,
   className = ''
-}: { 
+}: {
   latitude: number
   longitude: number
   className?: string

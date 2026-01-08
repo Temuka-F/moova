@@ -12,6 +12,7 @@ import { SearchBar } from '@/components/search/SearchBar'
 import { ControlBar } from '@/components/search/ControlBar'
 import { CarList } from '@/components/listing/CarList'
 import { MobileCarSheet } from '@/components/ui/MobileCarSheet'
+import { toast } from 'sonner'
 import {
   ALL_CARS,
   MapCar,
@@ -292,7 +293,7 @@ export function MapHomePage() {
         )}
 
         {/* Bottom Navigation */}
-        <MobileBottomNav onMenuClick={() => { }} />
+        <MobileBottomNav onMenuClick={() => toast.info('Menu coming soon!')} />
       </div>
 
 
