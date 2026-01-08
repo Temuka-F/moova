@@ -44,3 +44,11 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# IDE-specific files
+.cursor/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

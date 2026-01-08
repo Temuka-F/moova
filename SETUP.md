@@ -2,6 +2,8 @@
 
 This document contains all connection credentials, setup information, and deployment procedures for the Moova car rental platform.
 
+> **Note:** For detailed architecture, features, and technical decisions, see [PROJECT_DOCUMENTATION.md](./PROJECT_DOCUMENTATION.md)
+
 ---
 
 ## 🚀 DEPLOYMENT CHECKLIST (For Every Change)
@@ -201,5 +203,16 @@ If you see `EPERM: operation not permitted` when running `prisma generate`:
 
 ---
 
-**Live URL:** https://moova-lilac.vercel.app
-**Last Updated:** 2025-01-07
+---
+
+## 📚 Additional Documentation
+
+- **[README.md](./README.md)** - Project overview and getting started
+- **[PROJECT_DOCUMENTATION.md](./PROJECT_DOCUMENTATION.md)** - Comprehensive architecture and feature documentation
+- **[SEED_PRODUCTION.md](./SEED_PRODUCTION.md)** - Production database seeding guide
+
+---
+
+**Live URL:** https://moova-lilac.vercel.app  
+**Last Updated:** January 2025  
+**Project Status:** Production Ready
