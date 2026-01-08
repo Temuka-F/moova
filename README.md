@@ -73,12 +73,16 @@ Moova is a peer-to-peer car sharing platform that enables car owners to list the
 - **Intuitive Linking:** Direct profile access via avatar clicks across the platform.
 - **Mobile-Ready:** Fully functional hamburger menus and bottom navigation for mobile users.
 
-### 📱 Dual Design Interface
+### 📱 Unified Mobile-First Interface
 
-Moova features a sophisticated dual-design architecture that provides optimized experiences for both desktop and mobile users:
+Moova features a single, unified responsive architecture designed with a "Mobile-First, Desktop-Friendly" philosophy:
 
-- **Desktop Experience:** A productivity-focused layout with a persistent side navigation and floating top bar overlaying a full-screen map, maximizing visible information density.
-- **Mobile Experience:** A touch-first interface with a bottom navigation bar, stacked UI elements, and drawer-based interactions for seamless one-handed use.
+- **Mobile First Core:** All features function identically on mobile and desktop, sharing the same codebase (Map, Search, Details).
+- **Desktop Friendly Adaptations:** Mobile components intelligently adapt to larger screens:
+    - **Navigation:** Bottom bar morphs into a floating "Dock".
+    - **Details:** Bottom sheets transform into floating Side Panels.
+    - **Modals:** Full-screen views become centered focus modals.
+- **Benefits:** Seamless feature parity, consistent design language, and easier maintenance.
 
 ## 🛠 Tech Stack
 

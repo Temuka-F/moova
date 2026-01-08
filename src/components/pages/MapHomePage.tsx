@@ -1,12 +1,11 @@
 "use client"
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { motion, AnimatePresence } from 'motion/react'
+import { CarDetailPage } from '@/components/pages/CarDetailPage'
 import { MapCanvas, MapCanvasHandle } from '@/components/map/MapCanvas'
 import { CarDrawer } from '@/components/ui/CarDrawer'
-import { TopNav } from '@/components/ui/TopNav'
-import { DesktopSidebar } from '@/components/ui/DesktopSidebar'
-import { CarPopup } from '@/components/ui/CarPopup'
-import { MapControls } from '@/components/ui/MapControls'
 import { MobileBottomNav } from '@/components/dashboard/MobileBottomNav' // Verify path
 import { SearchBar } from '@/components/search/SearchBar'
 import { ControlBar } from '@/components/search/ControlBar'
@@ -14,6 +13,7 @@ import { CarList } from '@/components/listing/CarList'
 import { MobileCarSheet } from '@/components/ui/MobileCarSheet'
 import { MobileListMenu } from '@/components/ui/MobileListMenu'
 import { toast } from 'sonner'
+import { parseISO } from 'date-fns'
 import {
   ALL_CARS,
   MapCar,
@@ -28,23 +28,63 @@ import {
 import { fetchCarsWithFallback } from '@/lib/car-data'
 
 export function MapHomePage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   // ===== CENTRALIZED STATE =====
-  const [currentCity, setCurrentCity] = useState<CityName>('Tbilisi')
+  // Initialize from URL or defaults
+  const [currentCity, setCurrentCity] = useState<CityName>(() => {
+    const cityParam = searchParams.get('city')
+    return (cityParam && Object.keys(CITIES).includes(cityParam))
+      ? (cityParam as CityName)
+      : 'Tbilisi'
+  })
+
+  // View state for Details Modal
+  const [viewingCarId, setViewingCarId] = useState<string | null>(null)
+
   const [selectedCar, setSelectedCar] = useState<MapCar | null>(null)
   const [hoveredCar, setHoveredCar] = useState<MapCar | null>(null)
-  const [activeFilter, setActiveFilter] = useState<string | null>(null)
+
+  // ... existing state ...
+
+  const [activeFilter, setActiveFilter] = useState<string | null>(() => {
+    return searchParams.get('category') || null
+  })
+
   const [isClient, setIsClient] = useState(false)
   const [showCarPopup, setShowCarPopup] = useState(false)
   const [cityCars, setCityCars] = useState<MapCar[]>([])
   const [isLoadingCars, setIsLoadingCars] = useState(true)
 
   // Date state for booking
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const start = searchParams.get('startDate')
+    return start ? parseISO(start) : undefined
+  })
+  const [endDate, setEndDate] = useState<Date | undefined>(() => {
+    const end = searchParams.get('endDate')
+    return end ? parseISO(end) : undefined
+  })
 
   // Price range filter - initialize with reasonable defaults
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 300])
   const [sortBy, setSortBy] = useState<string>('rating')
+
+  // Helper to update URL params
+  const updateUrlParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString())
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null) {
+        params.delete(key)
+      } else {
+        params.set(key, value)
+      }
+    })
+
+    router.replace(`/?${params.toString()}`, { scroll: false })
+  }, [searchParams, router])
 
   // Mobile View Mode
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
@@ -59,6 +99,26 @@ export function MapHomePage() {
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  // Sync state with URL params on mount/change (in case of back/forward navigation)
+  useEffect(() => {
+    const cityParam = searchParams.get('city')
+    if (cityParam && Object.keys(CITIES).includes(cityParam)) {
+      setCurrentCity(cityParam as CityName)
+    }
+
+    const categoryParam = searchParams.get('category')
+    setActiveFilter(categoryParam || null)
+
+    const startParam = searchParams.get('startDate')
+    if (startParam) setStartDate(parseISO(startParam))
+    else setStartDate(undefined)
+
+    const endParam = searchParams.get('endDate')
+    if (endParam) setEndDate(parseISO(endParam))
+    else setEndDate(undefined)
+
+  }, [searchParams])
 
   // Fetch cars from database (with fallback to mock data)
   useEffect(() => {
@@ -169,19 +229,25 @@ export function MapHomePage() {
     setSelectedCar(null)
     setActiveFilter(null)
     setShowCarPopup(false)
-  }, [])
+    updateUrlParams({ city })
+  }, [updateUrlParams])
 
   // Handle date change
   const handleDateChange = useCallback((start: Date | undefined, end: Date | undefined) => {
     setStartDate(start)
     setEndDate(end)
-  }, [])
+    updateUrlParams({
+      startDate: start ? start.toISOString() : null,
+      endDate: end ? end.toISOString() : null
+    })
+  }, [updateUrlParams])
 
   // Handle marker click - show popup
   const handleMarkerClick = useCallback((car: MapCar) => {
     setSelectedCar(car)
     setShowCarPopup(true)
   }, [])
+
 
   // Handle map click - deselect car
   const handleMapClick = useCallback(() => {
@@ -249,25 +315,27 @@ export function MapHomePage() {
         </div>
       )}
       {/* ==============================================
-          MOBILE LAYOUT - "App-Like" Overhaul
+          UNIFIED LAYOUT - Mobile First, Desktop Friendly
           ============================================== */}
-      <div className="lg:hidden flex flex-col h-screen bg-slate-50 relative custom-safe-area-bottom">
+      <div className="flex flex-col h-screen bg-slate-50 relative custom-safe-area-bottom w-full overflow-hidden">
         {/* Top Search Area */}
-        <div className="flex-none z-30 bg-white">
-          <SearchBar
-            currentCity={currentCity}
-            onCityChange={setCurrentCity}
-            startDate={startDate}
-            endDate={endDate}
-            onDateChange={(s, e) => { setStartDate(s); setEndDate(e) }}
-          />
-          <ControlBar
-            viewMode={viewMode}
-            onViewChange={setViewMode}
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            totalCars={filteredCars.length}
-          />
+        <div className="flex-none z-30 bg-white lg:bg-transparent lg:absolute lg:top-4 lg:left-0 lg:right-0 lg:flex lg:justify-center lg:pointer-events-none">
+          <div className="w-full lg:max-w-2xl lg:pointer-events-auto space-y-2 lg:px-4">
+            <SearchBar
+              currentCity={currentCity}
+              onCityChange={setCurrentCity}
+              startDate={startDate}
+              endDate={endDate}
+              onDateChange={(s, e) => { setStartDate(s); setEndDate(e) }}
+            />
+            <ControlBar
+              viewMode={viewMode}
+              onViewChange={setViewMode}
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+              totalCars={filteredCars.length}
+            />
+          </div>
         </div>
 
         {/* Content Area (Map or List) */}
@@ -296,9 +364,49 @@ export function MapHomePage() {
           <MobileCarSheet
             selectedCar={selectedCar}
             onCarSelect={handleCarSelect}
+            startDate={startDate}
+            endDate={endDate}
+            onViewDetails={setViewingCarId}
           // Other filters are handled by ControlBar at the top
           />
         )}
+
+        {/* Full Screen Details Modal */}
+        {/* Full Screen Details Modal */}
+        <AnimatePresence>
+          {viewingCarId && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[55] bg-black/30 backdrop-blur-[2px]"
+                onClick={() => setViewingCarId(null)}
+              />
+
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed inset-x-0 top-4 bottom-0 z-[60] lg:inset-x-auto lg:inset-y-8 lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-4xl lg:h-auto lg:rounded-3xl lg:border lg:shadow-2xl lg:overflow-hidden"
+              >
+                <div className="h-full w-full bg-background rounded-t-3xl lg:rounded-3xl overflow-hidden shadow-2xl relative">
+                  <div className="h-full overflow-y-auto custom-scrollbar">
+                    <CarDetailPage
+                      carId={viewingCarId}
+                      isModal
+                      onClose={() => setViewingCarId(null)}
+                      initialStartDate={startDate}
+                      initialEndDate={endDate}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Bottom Navigation */}
         <MobileBottomNav onMenuClick={() => setIsMobileMenuOpen(true)} />
@@ -308,68 +416,6 @@ export function MapHomePage() {
       </div>
 
 
-      {/* ==============================================
-          DESKTOP LAYOUT - Original Design
-          ============================================== */}
-      <div className="hidden lg:block fixed inset-0 bg-gray-100 overflow-hidden">
-        {/* Full-screen map as base layer */}
-        <div className="absolute inset-0" style={{ touchAction: 'none' }}>
-          <MapCanvas
-            id="desktop-map"
-            ref={mapRef}
-            cars={filteredCars}
-            selectedCar={selectedCar}
-            hoveredCar={hoveredCar}
-            onMarkerClick={handleMarkerClick}
-            onMapClick={handleMapClick}
-            currentCity={currentCity}
-          />
-        </div>
-
-        {/* Top navigation - positioned to avoid sidebar on desktop */}
-        <div className="absolute top-0 left-0 right-0 z-50 lg:left-[400px]">
-          <TopNav
-            currentCity={currentCity}
-            onCityChange={handleCityChange}
-            carCount={filteredCars.length}
-            startDate={startDate}
-            endDate={endDate}
-            onDateChange={handleDateChange}
-          />
-        </div>
-
-        {/* Map controls */}
-        <div className="absolute bottom-8 right-4 z-40">
-          <MapControls
-            onRecenter={handleRecenter}
-            currentCity={currentCity}
-            carCount={filteredCars.length}
-            winterReadyCount={winterReadyCount}
-          />
-        </div>
-
-        {/* Desktop Sidebar - Floating panel on the left */}
-        <DesktopSidebar
-          cars={filteredCars}
-          selectedCar={selectedCar}
-          onCarSelect={handleCarSelect}
-          onCarHover={handleCarHover}
-          activeFilter={activeFilter}
-          onFilterChange={handleFilterChange}
-          priceRange={priceRange}
-          onPriceRangeChange={setPriceRange}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-        />
-
-        {/* Car popup modal */}
-        {showCarPopup && (
-          <CarPopup
-            car={selectedCar}
-            onClose={handlePopupClose}
-          />
-        )}
-      </div>
     </>
   )
 }

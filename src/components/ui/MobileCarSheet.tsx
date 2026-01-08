@@ -23,41 +23,69 @@ import { Button } from '@/components/ui/button'
 interface MobileCarSheetProps {
     selectedCar: MapCar | null
     onCarSelect: (car: MapCar | null) => void
+    startDate?: Date
+    endDate?: Date
+    onViewDetails?: (carId: string) => void
 }
 
-const FILTER_CHIPS = [
-    { id: 'winter', label: 'Winter Ready', icon: Snowflake, color: 'bg-blue-500' },
-    { id: 'suv', label: 'SUV', icon: Car, color: 'bg-orange-500' },
-    { id: 'luxury', label: 'Luxury', icon: Sparkles, color: 'bg-purple-500' },
-    { id: 'hybrid', label: 'Hybrid/EV', icon: Leaf, color: 'bg-green-500' },
-    { id: 'instant', label: 'Instant Book', icon: Zap, color: 'bg-emerald-500' },
-    { id: 'compact', label: 'Compact', icon: Car, color: 'bg-gray-500' },
-    { id: 'sedan', label: 'Sedan', icon: Car, color: 'bg-indigo-500' },
-]
+// ... existing code ...
 
 export function MobileCarSheet({
     selectedCar,
     onCarSelect,
+    startDate,
+    endDate,
+    onViewDetails,
 }: MobileCarSheetProps) {
+
+    const [isDesktop, setIsDesktop] = useState(false)
+
+    useEffect(() => {
+        const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024)
+        checkDesktop()
+        window.addEventListener('resize', checkDesktop)
+        return () => window.removeEventListener('resize', checkDesktop)
+    }, [])
+
+    // Construct URL with date params
+    const getCarUrl = (carId: string) => {
+        const params = new URLSearchParams()
+        if (startDate) params.set('startDate', startDate.toISOString())
+        if (endDate) params.set('endDate', endDate.toISOString())
+        const queryString = params.toString()
+        return `/cars/${carId}${queryString ? `?${queryString}` : ''}`
+    }
+
     return (
         <AnimatePresence>
             {selectedCar && (
                 <motion.div
-                    initial={{ y: "100%" }}
+                    initial={{ y: '100%' }}
                     animate={{ y: 0 }}
-                    exit={{ y: "100%" }}
+                    exit={{ y: '100%' }}
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                    className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)] px-4 pt-4 pb-safe border-t border-gray-100"
-                    style={{ maxHeight: '85vh', overflowY: 'auto' }}
+                    drag={isDesktop ? false : "y"}
+                    dragConstraints={{ top: 0, bottom: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(_, info) => {
+                        if (isDesktop) return
+                        if (info.offset.y < -50 && onViewDetails) {
+                            onViewDetails(selectedCar.id)
+                        } else if (info.offset.y > 50) {
+                            onCarSelect(null)
+                        }
+                    }}
+                    className="fixed bottom-0 left-0 right-0 lg:left-4 lg:right-auto lg:top-24 lg:w-[400px] lg:bottom-auto lg:rounded-3xl lg:border lg:shadow-2xl z-50 bg-white rounded-t-3xl shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)] px-4 pt-4 pb-safe border-t border-gray-100"
+                    style={{ maxHeight: isDesktop ? 'calc(100vh - 120px)' : '85vh', overflowY: 'visible' }}
                 >
-                    {/* Close Handle / Indicator */}
-                    <div className="w-full flex justify-center mb-4 cursor-pointer" onClick={() => onCarSelect(null)}>
-                        <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
-                    </div>
+                    {/* Drag Handle - Hide on Desktop */}
+                    <div className="w-12 h-1.5 bg-gray-300/80 rounded-full mx-auto mb-4 lg:hidden" />
+                    {/* ... existing content ... */}
 
                     {/* Content */}
                     <div className="pb-24">
                         <div className="relative h-48 w-full rounded-xl overflow-hidden mb-4 bg-gray-100">
+                            {/* ... image content ... */}
                             <Image
                                 src={selectedCar.images[0]}
                                 alt={selectedCar.make}
@@ -101,9 +129,18 @@ export function MobileCarSheet({
                             </div>
                         </div>
 
-                        <Link href={`/cars/${selectedCar.id}`} className="w-full block">
-                            <Button className="w-full h-12 text-lg">View Details & Book</Button>
-                        </Link>
+                        {onViewDetails ? (
+                            <Button
+                                className="w-full h-12 text-lg"
+                                onClick={() => onViewDetails(selectedCar.id)}
+                            >
+                                View Details & Book
+                            </Button>
+                        ) : (
+                            <Link href={getCarUrl(selectedCar.id)} className="w-full block">
+                                <Button className="w-full h-12 text-lg">View Details & Book</Button>
+                            </Link>
+                        )}
                     </div>
                 </motion.div>
             )}

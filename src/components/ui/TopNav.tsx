@@ -196,42 +196,30 @@ export function TopNav({
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 rounded-2xl" align="end">
-                    <div className="p-4 border-b border-gray-100">
+                    <div className="p-4 border-b border-gray-100 bg-gray-50/50">
                       <h3 className="font-semibold text-gray-900">Select dates</h3>
                       <p className="text-sm text-gray-500">When do you need the car?</p>
                     </div>
-                    <div className="flex gap-4 p-4">
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 mb-2">Pick-up</p>
-                        <CalendarComponent
-                          mode="single"
-                          selected={startDate}
-                          onSelect={(date) => onDateChange?.(date, endDate)}
-                          disabled={(date) => date < new Date()}
-                          className="rounded-xl"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 mb-2">Return</p>
-                        <CalendarComponent
-                          mode="single"
-                          selected={endDate}
-                          onSelect={(date) => onDateChange?.(startDate, date)}
-                          disabled={(date) => date <= (startDate || new Date())}
-                          className="rounded-xl"
-                        />
-                      </div>
+                    <div className="p-4 flex justify-center">
+                      <CalendarComponent
+                        mode="range"
+                        selected={{ from: startDate, to: endDate }}
+                        onSelect={(range) => onDateChange?.(range?.from, range?.to)}
+                        disabled={(date) => date < new Date()}
+                        numberOfMonths={2}
+                        className="rounded-xl border border-gray-100 bg-white"
+                      />
                     </div>
-                    <div className="p-4 border-t border-gray-100 flex justify-between items-center">
+                    <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50/50">
                       <button
                         onClick={() => onDateChange?.(undefined, undefined)}
-                        className="text-sm text-gray-500 hover:text-gray-700 min-h-[44px] px-2"
+                        className="text-sm text-gray-500 hover:text-gray-900 font-medium px-2"
                       >
                         Clear dates
                       </button>
                       <button
                         onClick={() => setIsDatePickerOpen(false)}
-                        className="px-4 py-2 min-h-[44px] bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-900 active:scale-95 transition-transform"
+                        className="px-6 py-2 bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-900 active:scale-95 transition-transform"
                       >
                         Apply
                       </button>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -13,15 +13,15 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Heart, 
-  Share2, 
-  Star, 
-  MapPin, 
-  Users, 
-  Fuel, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Share2,
+  Star,
+  MapPin,
+  Users,
+  Fuel,
   Gauge,
   Shield,
   Check,
@@ -35,9 +35,10 @@ import {
   Phone,
   Navigation,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react'
-import { format, differenceInDays, addDays } from 'date-fns'
+import { format, differenceInDays, addDays, parseISO } from 'date-fns'
 import { useAuth } from '@/hooks/useAuth'
 
 interface CarDetailPageProps {
@@ -141,15 +142,49 @@ function CarDetailSkeleton() {
   )
 }
 
-export function CarDetailPage({ carId }: CarDetailPageProps) {
+interface CarDetailPageProps {
+  carId: string
+  isModal?: boolean
+  onClose?: () => void
+  initialStartDate?: Date
+  initialEndDate?: Date
+}
+
+export function CarDetailPage({
+  carId,
+  isModal,
+  onClose,
+  initialStartDate,
+  initialEndDate
+}: CarDetailPageProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { isAuthenticated, requireAuth } = useAuth()
   const [car, setCar] = useState<ApiCar | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [startDate, setStartDate] = useState<Date>()
-  const [endDate, setEndDate] = useState<Date>()
+
+  // Initialize dates from props first, then URL params, or default to undefined
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    if (initialStartDate) return initialStartDate
+    const startObj = searchParams.get('startDate')
+    return startObj ? parseISO(startObj) : undefined
+  })
+  const [endDate, setEndDate] = useState<Date | undefined>(() => {
+    if (initialEndDate) return initialEndDate
+    const endObj = searchParams.get('endDate')
+    return endObj ? parseISO(endObj) : undefined
+  })
+
+  // Update dates if URL params change (e.g. navigation)
+  useEffect(() => {
+    const startObj = searchParams.get('startDate')
+    const endObj = searchParams.get('endDate')
+    if (startObj) setStartDate(parseISO(startObj))
+    if (endObj) setEndDate(parseISO(endObj))
+  }, [searchParams])
+
   const [isFavorited, setIsFavorited] = useState(false)
   const [isBooking, setIsBooking] = useState(false)
   const [isFavoriting, setIsFavoriting] = useState(false)
@@ -157,10 +192,10 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
   const fetchCar = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const res = await fetch(`/api/cars/${carId}`)
-      
+
       if (!res.ok) {
         let errorMessage = 'Failed to fetch car'
         try {
@@ -180,16 +215,16 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         setLoading(false)
         return
       }
-      
+
       const data = await res.json()
-      
+
       // Validate car data structure
       if (!data || !data.id) {
         setError('Invalid car data received')
         setLoading(false)
         return
       }
-      
+
       // Ensure required fields have defaults
       const carData: ApiCar = {
         ...data,
@@ -210,9 +245,9 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         },
         _count: data._count || { bookings: 0, reviews: 0 },
       }
-      
+
       setCar(carData)
-      
+
       // Check if favorited
       if (isAuthenticated) {
         try {
@@ -249,7 +284,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         <AlertCircle className="w-16 h-16 text-destructive mb-4" />
         <h1 className="text-2xl font-bold mb-2 text-center">{error || 'Car not found'}</h1>
         <p className="text-muted-foreground mb-6 text-center max-w-md">
-          {error === 'Car not found' 
+          {error === 'Car not found'
             ? 'This car may no longer be available or the link is invalid.'
             : 'We encountered an error loading this car. Please try again.'}
         </p>
@@ -266,10 +301,10 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
   }
 
   const images = car.images.length > 0 ? car.images.map(img => img.url) : ['/car-placeholder.svg']
-  const avgRating = car.reviews.length > 0 
-    ? car.reviews.reduce((sum, r) => sum + r.rating, 0) / car.reviews.length 
+  const avgRating = car.reviews.length > 0
+    ? car.reviews.reduce((sum, r) => sum + r.rating, 0) / car.reviews.length
     : 0
-  
+
   const totalDays = startDate && endDate ? differenceInDays(endDate, startDate) : 0
   const subtotal = totalDays * car.pricePerDay
   const serviceFee = Math.round(subtotal * 0.15)
@@ -297,10 +332,28 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
       toast.error('Please select at least 1 day')
       return
     }
-    
+
     setIsBooking(true)
-    
+
     try {
+      // Check current user mode and switch to Renter if needed
+      const userRes = await fetch('/api/me')
+      if (userRes.ok) {
+        const userData = await userRes.json()
+        if (userData.role === 'OWNER' && userData.activeProfileMode === 'OWNER') {
+          const switchRes = await fetch('/api/me', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ activeProfileMode: 'RENTER' }),
+          })
+
+          if (switchRes.ok) {
+            toast.success('Switched to Renter profile for booking')
+            // Refresh navigation/interface if needed, though router.push below handles redirection
+          }
+        }
+      }
+
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -318,13 +371,13 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
       }
 
       const booking = await res.json()
-      
+
       if (car.isInstantBook) {
         toast.success('Booking confirmed! Check your email for details.')
       } else {
         toast.success('Booking request sent! The host will respond within 24 hours.')
       }
-      
+
       router.push('/dashboard/bookings')
     } catch (err: any) {
       toast.error(err.message || 'Failed to create booking')
@@ -337,9 +390,9 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
     if (!requireAuth('save cars')) {
       return
     }
-    
+
     setIsFavoriting(true)
-    
+
     try {
       if (isFavorited) {
         const res = await fetch(`/api/favorites?carId=${car.id}`, {
@@ -393,33 +446,36 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
   }
 
   return (
-    <div className="min-h-screen pb-24 lg:pb-8 bg-background">
-      {/* Back Button - Mobile */}
-      <div className="lg:hidden fixed top-4 left-4 z-20">
+    <div className={`min-h-screen pb-24 lg:pb-8 bg-background ${isModal ? 'rounded-t-3xl overflow-hidden' : ''}`}>
+      {/* Back/Close Button - Mobile */}
+      {/* Back/Close Button - Mobile */}
+      <div className={`lg:hidden ${isModal ? 'absolute' : 'fixed'} top-4 left-4 z-50`}>
         <Button
-          variant="secondary"
+          variant="outline"
           size="icon"
-          className="w-10 h-10 rounded-full shadow-lg bg-white"
-          onClick={() => router.back()}
+          className="w-10 h-10 rounded-full bg-background/90 backdrop-blur shadow-sm border-input hover:bg-accent hover:text-accent-foreground"
+          onClick={() => isModal ? onClose?.() : router.back()}
         >
-          <ArrowLeft className="w-5 h-5" />
+          {isModal ? <X className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
         </Button>
       </div>
 
       {/* Desktop Back link */}
-      <div className="hidden lg:block container mx-auto px-8 pt-6">
-        <Button
-          variant="ghost"
-          className="gap-2"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to search
-        </Button>
-      </div>
+      {!isModal && (
+        <div className="hidden lg:block container mx-auto px-8 pt-6">
+          <Button
+            variant="ghost"
+            className="gap-2"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to search
+          </Button>
+        </div>
+      )}
 
       {/* Image Gallery */}
-      <div className="relative h-[40vh] sm:h-[45vh] md:h-[55vh] lg:h-[50vh] lg:mx-8 lg:mt-4 lg:rounded-3xl overflow-hidden bg-secondary">
+      <div className="relative h-[40vh] sm:h-[45vh] lg:h-[50vh] lg:mx-8 lg:mt-4 lg:rounded-3xl overflow-hidden bg-secondary">
         <Image
           src={images[currentImageIndex]}
           alt={`${car.make} ${car.model}`}
@@ -428,10 +484,10 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
           priority
           sizes="100vw"
         />
-        
+
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        
+
         {/* Navigation Arrows */}
         {images.length > 1 && (
           <>
@@ -452,31 +508,32 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
               <ChevronRight className="w-6 h-6" />
             </Button>
           </>
-        )}
+        )
+        }
 
         {/* Image Dots */}
-        {images.length > 1 && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-            {images.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  index === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'
-                }`}
-              />
-            ))}
-          </div>
-        )}
+        {
+          images.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+              {images.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${index === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'
+                    }`}
+                />
+              ))}
+            </div>
+          )
+        }
 
         {/* Top Actions */}
         <div className="absolute top-4 right-4 flex gap-2 lg:top-6 lg:right-6">
           <Button
             variant="ghost"
             size="icon"
-            className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full shadow-lg ${
-              isFavorited ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-white/90 hover:bg-white'
-            }`}
+            className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full shadow-lg ${isFavorited ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-white/90 hover:bg-white'
+              }`}
             onClick={handleFavorite}
             disabled={isFavoriting}
           >
@@ -497,7 +554,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
         </div>
 
         {/* Badges */}
-        <div className="absolute top-4 left-4 lg:top-6 lg:left-6 flex flex-wrap gap-2">
+        <div className="absolute top-20 right-4 lg:top-6 lg:left-6 flex flex-col items-end lg:flex-row lg:items-start gap-2">
           {car.isInstantBook && (
             <Badge className="bg-emerald-500 text-sm shadow-lg">
               <Zap className="w-3.5 h-3.5 mr-1" />
@@ -505,10 +562,10 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
             </Badge>
           )}
         </div>
-      </div>
+      </div >
 
       {/* Content */}
-      <div className="container mx-auto px-4 lg:px-8 py-6 md:py-8 pb-24 lg:pb-8">
+      < div className="container mx-auto px-4 lg:px-8 py-6 md:py-8 pb-24 lg:pb-8" >
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
@@ -519,11 +576,11 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                 <Badge variant="outline">{car.year}</Badge>
                 <Badge variant="outline">{car.color}</Badge>
               </div>
-              
+
               <h1 className="text-3xl md:text-4xl font-bold mb-3">
                 {car.make} {car.model}
               </h1>
-              
+
               <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
@@ -570,8 +627,8 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                   </div>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full sm:w-auto rounded-full min-h-[44px]"
                 onClick={handleMessage}
               >
@@ -636,6 +693,62 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                 <Separator />
               </>
             )}
+
+            {/* Mobile Date Selection */}
+            <div className="lg:hidden" id="mobile-date-picker">
+              <h2 className="text-xl font-semibold mb-4">Trip Dates</h2>
+              <div className="grid grid-cols-2 gap-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-16 justify-start text-left font-normal rounded-xl border-2 hover:bg-background">
+                      <div className="w-full">
+                        <div className="text-xs text-muted-foreground uppercase font-semibold mb-1">Pick-up</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-base truncate">
+                            {startDate ? format(startDate, 'MMM d, yyyy') : 'Select date'}
+                          </span>
+                        </div>
+                      </div>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-16 justify-start text-left font-normal rounded-xl border-2 hover:bg-background">
+                      <div className="w-full">
+                        <div className="text-xs text-muted-foreground uppercase font-semibold mb-1">Return</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-base truncate">
+                            {endDate ? format(endDate, 'MMM d, yyyy') : 'Select date'}
+                          </span>
+                        </div>
+                      </div>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      disabled={(date) => date <= (startDate || new Date())}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <Separator className="lg:hidden" />
 
             {/* Location */}
             <div>
@@ -788,8 +901,8 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                 )}
 
                 {/* Book Button */}
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="w-full h-14 min-h-[56px] text-lg rounded-xl bg-black hover:bg-gray-900"
                   disabled={!startDate || !endDate || isBooking}
                   onClick={handleBook}
@@ -825,8 +938,8 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
                 </div>
 
                 {/* Contact host */}
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full rounded-xl min-h-[44px]"
                   onClick={handleContactHost}
                 >
@@ -837,36 +950,52 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
             </Card>
           </div>
         </div>
-      </div>
+      </div >
 
       {/* Mobile Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl p-4 lg:hidden z-40 safe-pb">
+      < div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl p-4 lg:hidden z-40 safe-pb" >
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold">{car.pricePerDay}₾</span>
-              <span className="text-sm text-muted-foreground">/day</span>
+              <span className="text-2xl font-bold">
+                {totalDays > 0 ? `${totalPrice}` : car.pricePerDay}₾
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {totalDays > 0 ? ' total' : '/day'}
+              </span>
             </div>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span>{avgRating.toFixed(1)}</span>
-              <span>({car._count.reviews})</span>
+              {totalDays > 0 ? (
+                <span>
+                  {format(startDate!, 'MMM d')} - {format(endDate!, 'MMM d')}
+                </span>
+              ) : (
+                <>
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>{avgRating.toFixed(1)}</span>
+                  <span>({car._count.reviews})</span>
+                </>
+              )}
             </div>
           </div>
-          <Button 
+          <Button
             size="lg"
             className="h-12 min-h-[48px] px-8 rounded-xl bg-black hover:bg-gray-900"
             disabled={isBooking}
             onClick={() => {
               if (!requireAuth('book this car')) return
-              if (!startDate) setStartDate(addDays(new Date(), 1))
-              if (!endDate) setEndDate(addDays(new Date(), 4))
-              // Delay to allow state update
-              setTimeout(handleBook, 100)
+              if (!startDate || !endDate) {
+                document.getElementById('mobile-date-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                toast.error('Please select your trip dates first')
+                return
+              }
+              handleBook()
             }}
           >
             {isBooking ? (
               <Loader2 className="w-4 h-4 animate-spin" />
+            ) : !startDate || !endDate ? (
+              'Select Dates'
             ) : car.isInstantBook ? (
               <>
                 <Zap className="w-4 h-4 mr-2" />
@@ -877,7 +1006,7 @@ export function CarDetailPage({ carId }: CarDetailPageProps) {
             )}
           </Button>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   )
 }

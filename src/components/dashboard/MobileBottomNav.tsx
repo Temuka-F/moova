@@ -42,8 +42,8 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
     ]
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-200 pb-safe">
-            <div className="flex items-center justify-around h-16 px-2">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-200 pb-safe lg:bottom-8 lg:top-auto lg:left-1/2 lg:right-auto lg:-translate-x-1/2 lg:w-auto lg:rounded-full lg:border lg:shadow-2xl lg:pb-0 lg:bg-white/90">
+            <div className="grid grid-cols-5 h-16 w-full lg:flex lg:items-center lg:justify-center lg:w-auto lg:px-6 lg:gap-2">
                 {items.map((item) => {
                     const Icon = item.icon
                     const active = item.isActive(pathname)
@@ -53,7 +53,7 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                'flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform',
+                                'flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform lg:w-16 lg:hover:scale-110',
                                 active ? 'text-primary' : 'text-muted-foreground hover:text-gray-900'
                             )}
                         >
@@ -65,7 +65,7 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
 
                 <button
                     onClick={onMenuClick}
-                    className="flex flex-col items-center justify-center w-full h-full gap-1 text-muted-foreground hover:text-gray-900 active:scale-95 transition-transform"
+                    className="flex flex-col items-center justify-center w-full h-full gap-1 text-muted-foreground hover:text-gray-900 active:scale-95 transition-transform lg:w-16 lg:hover:scale-110"
                 >
                     <Menu className="w-6 h-6" />
                     <span className="text-[10px] font-medium">Menu</span>

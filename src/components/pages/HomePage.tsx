@@ -18,11 +18,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CarCard } from '@/components/cars/CarCard'
-import { 
-  MapPin, 
-  CalendarDays, 
-  Search, 
-  Car, 
+import {
+  MapPin,
+  CalendarDays,
+  Search,
+  Car,
   Shield,
   Users,
   Star,
@@ -41,7 +41,7 @@ import { GEORGIAN_CITIES } from '@/types'
 // Dynamically import map to avoid SSR issues
 const CarMap = dynamic(
   () => import('@/components/map/CarMapView').then((mod) => mod.CarMap),
-  { 
+  {
     ssr: false,
     loading: () => <div className="w-full h-full bg-muted animate-pulse rounded-2xl" />
   }
@@ -132,8 +132,8 @@ export function HomePage() {
   // Build car types with counts
   const carTypes = defaultCarTypes.map(type => ({
     ...type,
-    count: type.id === 'all' 
-      ? stats?.totalCars || 0 
+    count: type.id === 'all'
+      ? stats?.totalCars || 0
       : stats?.categoryStats?.[type.id] || 0,
   }))
 
@@ -144,12 +144,12 @@ export function HomePage() {
   }))
 
   // Filter featured cars by selected type
-  const filteredCars = stats?.featuredCars?.filter(car => 
+  const filteredCars = stats?.featuredCars?.filter(car =>
     selectedType === 'all' || car.category === selectedType
   ) || []
 
   // Filter by city if selected
-  const displayCars = city 
+  const displayCars = city
     ? filteredCars.filter(car => car.city === city)
     : filteredCars
 
@@ -187,7 +187,7 @@ export function HomePage() {
           }} />
         </div>
 
-        <div className="container mx-auto px-4 pt-24 pb-12 md:pt-32 md:pb-16 relative">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 md:pt-32 md:pb-16 relative">
           <div className="max-w-5xl mx-auto">
             {/* Hero Text */}
             <div className="text-center mb-8 md:mb-12">
@@ -201,7 +201,7 @@ export function HomePage() {
                 <span className="text-gradient-animated">when you want it</span>
               </h1>
               <p className="text-white/70 text-base md:text-lg max-w-2xl mx-auto">
-                Skip the rental counter. Book instantly from {loading ? '...' : `${stats?.totalCars || 0}+`} cars 
+                Skip the rental counter. Book instantly from {loading ? '...' : `${stats?.totalCars || 0}+`} cars
                 shared by local hosts in Tbilisi, Batumi, and beyond.
               </p>
             </div>
@@ -274,9 +274,9 @@ export function HomePage() {
                 {/* Search Button */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium text-transparent">Search</Label>
-                  <Button 
+                  <Button
                     onClick={handleSearch}
-                    size="lg" 
+                    size="lg"
                     className="w-full h-14 text-base font-semibold rounded-xl glow-primary"
                   >
                     <Search className="w-5 h-5 mr-2" />
@@ -320,17 +320,16 @@ export function HomePage() {
 
       {/* Car Type Quick Filters */}
       <section className="sticky top-16 z-30 bg-background border-b">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex gap-2 py-4 overflow-x-auto no-scrollbar">
             {carTypes.map((type) => (
               <button
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all btn-press ${
-                  selectedType === type.id
-                    ? 'bg-secondary text-white shadow-lg'
-                    : 'bg-muted hover:bg-muted/80 text-foreground'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all btn-press ${selectedType === type.id
+                  ? 'bg-secondary text-white shadow-lg'
+                  : 'bg-muted hover:bg-muted/80 text-foreground'
+                  }`}
               >
                 <span>{type.icon}</span>
                 <span>{type.name}</span>
@@ -344,7 +343,7 @@ export function HomePage() {
       </section>
 
       {/* Map + Cars Section */}
-      <section className="container mx-auto px-4 py-8">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold">
@@ -392,8 +391,8 @@ export function HomePage() {
             ) : displayCars.length > 0 ? (
               <div className={`grid gap-4 ${showMap ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
                 {displayCars.slice(0, showMap ? 4 : 8).map((car) => (
-                  <CarCard 
-                    key={car.id} 
+                  <CarCard
+                    key={car.id}
                     car={{
                       id: car.id,
                       make: car.make,
@@ -417,6 +416,8 @@ export function HomePage() {
                     }}
                     variant={showMap ? 'horizontal' : 'default'}
                     showOwner
+                    startDate={startDate}
+                    endDate={endDate}
                   />
                 ))}
               </div>
@@ -432,7 +433,7 @@ export function HomePage() {
                 </Button>
               </div>
             )}
-            
+
             {displayCars.length > 0 && (
               <div className="mt-6 text-center">
                 <Button variant="outline" size="lg" asChild className="rounded-full">
@@ -453,7 +454,11 @@ export function HomePage() {
                 selectedCarId={selectedCarId}
                 onCarSelect={(id) => {
                   setSelectedCarId(id)
-                  router.push(`/cars/${id}`)
+                  const params = new URLSearchParams()
+                  if (startDate) params.set('startDate', startDate.toISOString())
+                  if (endDate) params.set('endDate', endDate.toISOString())
+                  const queryString = params.toString()
+                  router.push(`/cars/${id}${queryString ? `?${queryString}` : ''}`)
                 }}
                 className="w-full h-full"
               />
@@ -464,12 +469,12 @@ export function HomePage() {
 
       {/* Popular Cities */}
       <section className="bg-muted/50 py-12 md:py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold mb-2">Explore by City</h2>
             <p className="text-muted-foreground">Find the perfect car wherever you&apos;re headed</p>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {cities.map((c) => (
               <Link
@@ -495,12 +500,12 @@ export function HomePage() {
 
       {/* How It Works */}
       <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold mb-2">How Moova Works</h2>
             <p className="text-muted-foreground">Get on the road in three simple steps</p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -511,7 +516,7 @@ export function HomePage() {
                 Search by location and dates. Filter by type, price, and features to find your perfect match.
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Zap className="w-8 h-8 text-primary" />
@@ -521,7 +526,7 @@ export function HomePage() {
                 Book cars marked with ⚡ instantly, or send a request. Secure payment through the app.
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Car className="w-8 h-8 text-primary" />
@@ -537,7 +542,7 @@ export function HomePage() {
 
       {/* Trust & Safety */}
       <section className="bg-secondary text-white py-12 md:py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-8 items-center max-w-5xl mx-auto">
             <div>
               <Badge className="bg-primary/20 text-primary border-0 mb-4">
@@ -548,7 +553,7 @@ export function HomePage() {
                 Drive with confidence
               </h2>
               <p className="text-white/70 mb-6">
-                Every trip on Moova is protected. We verify all hosts and renters, 
+                Every trip on Moova is protected. We verify all hosts and renters,
                 and provide comprehensive insurance coverage for peace of mind.
               </p>
               <div className="space-y-3">
@@ -570,7 +575,7 @@ export function HomePage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white/10 rounded-2xl p-6">
                 <Users className="w-8 h-8 text-primary mb-3" />
@@ -603,7 +608,7 @@ export function HomePage() {
 
       {/* Become a Host CTA */}
       <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 rounded-3xl p-8 md:p-12 text-center">
             <Badge className="bg-primary/20 text-primary border-0 mb-4">
               <TrendingUp className="w-3.5 h-3.5 mr-1.5" />
@@ -613,7 +618,7 @@ export function HomePage() {
               Turn your car into a money machine
             </h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              Join {loading ? '...' : stats?.totalHosts || 0} hosts earning up to ₾1,500/month 
+              Join {loading ? '...' : stats?.totalHosts || 0} hosts earning up to ₾1,500/month
               by sharing their cars on Moova. Free to list, easy to manage.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

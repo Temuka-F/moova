@@ -30,15 +30,27 @@ interface CarCardProps {
   }
   variant?: 'default' | 'compact' | 'horizontal'
   showOwner?: boolean
+  startDate?: Date
+  endDate?: Date
 }
 
-export function CarCard({ car, variant = 'default', showOwner = false }: CarCardProps) {
+export function CarCard({ car, variant = 'default', showOwner = false, startDate, endDate }: CarCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isFavorited, setIsFavorited] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
   const primaryImage = car.images.find(img => img.isPrimary)?.url || car.images[0]?.url || ''
   const images = car.images.map(img => img.url)
+
+  const getCarUrl = () => {
+    const params = new URLSearchParams()
+    if (startDate) params.set('startDate', startDate.toISOString())
+    if (endDate) params.set('endDate', endDate.toISOString())
+    const queryString = params.toString()
+    return `/cars/${car.id}${queryString ? `?${queryString}` : ''}`
+  }
+
+  const carUrl = getCarUrl()
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -60,7 +72,7 @@ export function CarCard({ car, variant = 'default', showOwner = false }: CarCard
 
   if (variant === 'horizontal') {
     return (
-      <Link href={`/cars/${car.id}`} className="block group">
+      <Link href={carUrl} className="block group">
         <div className="flex gap-4 bg-card rounded-2xl overflow-hidden border border-border card-hover p-3">
           {/* Image */}
           <div className="relative w-32 h-24 md:w-40 md:h-28 rounded-xl overflow-hidden bg-muted shrink-0">
@@ -92,7 +104,7 @@ export function CarCard({ car, variant = 'default', showOwner = false }: CarCard
                 <p className="text-xs text-muted-foreground">/day</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 fill-primary text-primary" />
@@ -115,7 +127,7 @@ export function CarCard({ car, variant = 'default', showOwner = false }: CarCard
 
   if (variant === 'compact') {
     return (
-      <Link href={`/cars/${car.id}`} className="block group">
+      <Link href={carUrl} className="block group">
         <div className="bg-card rounded-xl overflow-hidden border border-border card-hover">
           {/* Image */}
           <div className="relative aspect-[4/3] overflow-hidden bg-muted">
@@ -124,7 +136,7 @@ export function CarCard({ car, variant = 'default', showOwner = false }: CarCard
               alt={`${car.make} ${car.model}`}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            
+
             {/* Price Badge */}
             <div className="absolute bottom-2 right-2 bg-secondary text-secondary-foreground px-2 py-1 rounded-lg text-sm font-bold">
               ₾{car.pricePerDay}
@@ -158,8 +170,8 @@ export function CarCard({ car, variant = 'default', showOwner = false }: CarCard
   }
 
   return (
-    <Link 
-      href={`/cars/${car.id}`} 
+    <Link
+      href={carUrl}
       className="block group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -172,16 +184,15 @@ export function CarCard({ car, variant = 'default', showOwner = false }: CarCard
             alt={`${car.make} ${car.model}`}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          
+
           {/* Favorite Button */}
           <Button
             variant="ghost"
             size="icon"
-            className={`absolute top-3 right-3 w-9 h-9 rounded-full shadow-lg transition-all ${
-              isFavorited 
-                ? 'bg-red-500 hover:bg-red-600 text-white' 
-                : 'bg-white/90 hover:bg-white text-foreground'
-            }`}
+            className={`absolute top-3 right-3 w-9 h-9 rounded-full shadow-lg transition-all ${isFavorited
+              ? 'bg-red-500 hover:bg-red-600 text-white'
+              : 'bg-white/90 hover:bg-white text-foreground'
+              }`}
             onClick={handleFavorite}
           >
             <Heart className={`w-4 h-4 ${isFavorited ? 'fill-white' : ''}`} />
@@ -225,9 +236,8 @@ export function CarCard({ car, variant = 'default', showOwner = false }: CarCard
               {images.slice(0, 5).map((_, index) => (
                 <div
                   key={index}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    index === currentImageIndex ? 'bg-white w-3' : 'bg-white/50'
-                  }`}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${index === currentImageIndex ? 'bg-white w-3' : 'bg-white/50'
+                    }`}
                 />
               ))}
             </div>
