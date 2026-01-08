@@ -249,20 +249,24 @@ components/
 
 ## 🎨 UI/UX Design Decisions
 
-### 1. Mobile-First Design
+### 1. Dual Design Strategy
 
-**Decision:** Design for mobile, enhance for desktop
+**Decision:** Implement distinct, optimized layouts for Desktop and Mobile
 
 **Rationale:**
-- Car rental is often done on mobile
-- Touch-friendly interactions
-- Responsive layouts
+- **Contextual Usage:** Desktop users often perform deeper research/management, while mobile users need quick access and touch-friendly controls.
+- **Screen Real Estate:** Desktop offers ample space for persistent sidebars and floating elements; mobile requires efficient stacking and drawer usage.
+- **No Compromises:** Avoids the "stretched mobile app" feel on desktop and the "cramped desktop site" feel on mobile.
 
 **Implementation:**
-- Tailwind responsive classes
-- Mobile drawer for car list
-- Desktop sidebar for map view
-- Touch-optimized buttons (min 44px)
+- **Desktop Layout:** 
+  - Floating `TopNav` and `DesktopSidebar` overlaying the map.
+  - Persistent visibility of key filters and controls.
+- **Mobile Layout:** 
+  - `MobileBottomNav` for primary navigation.
+  - `MobileCarSheet` (Drawer) for car details and listings.
+  - Stacked `ControlBar` and hidden map/list toggles.
+- **Responsive Logic:** Conditionals based on viewport breakpoints (Tailwind `md:`, `lg:`) and custom hooks to swap entire layout components.
 
 ### 2. Map-First Interface
 

@@ -57,6 +57,13 @@ Moova is a peer-to-peer car sharing platform that enables car owners to list the
 - **Analytics Dashboard:** Platform-wide statistics and insights
 - **Admin Logs:** Comprehensive audit trail of admin actions
 
+### 📱 Dual Design Interface
+
+Moova features a sophisticated dual-design architecture that provides optimized experiences for both desktop and mobile users:
+
+- **Desktop Experience:** A productivity-focused layout with a persistent side navigation and floating top bar overlaying a full-screen map, maximizing visible information density.
+- **Mobile Experience:** A touch-first interface with a bottom navigation bar, stacked UI elements, and drawer-based interactions for seamless one-handed use.
+
 ## 🛠 Tech Stack
 
 ### Frontend
