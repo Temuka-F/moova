@@ -92,8 +92,8 @@ export function Header() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isDashboard || !isHomePage
-          ? 'bg-white/80 backdrop-blur-md border-b border-gray-100 py-3 shadow-sm'
-          : 'bg-transparent py-5'
+        ? 'bg-white/80 backdrop-blur-md border-b border-gray-100 py-3 shadow-sm'
+        : 'bg-transparent py-5'
         }`}
     >
       <nav className="container mx-auto px-4 flex items-center justify-between">
@@ -133,140 +133,144 @@ export function Header() {
           {loading ? (
             <div className="w-20 h-10 bg-muted rounded-full animate-pulse" />
           ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className={`flex items-center gap-2 rounded-full pl-2 pr-3 ${isDashboard || isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'
-                    }`}
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                      {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden lg:inline font-medium">
-                    {user.user_metadata?.first_name || 'Account'}
-                  </span>
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <div className="px-3 py-3 border-b">
-                  <p className="font-semibold">
-                    {user.user_metadata?.first_name || 'User'} {user.user_metadata?.last_name || ''}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm text-muted-foreground truncate max-w-[140px]">
-                      {user.email}
+            <div className="flex items-center gap-1">
+              <Link href="/dashboard/profile">
+                <Avatar className="h-8 w-8 hover:opacity-80 transition-opacity cursor-pointer">
+                  <AvatarImage src={user.user_metadata?.avatar_url} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                    {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`flex items-center gap-2 rounded-full px-2 ${isDashboard || isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'
+                      }`}
+                  >
+                    <span className="hidden lg:inline font-medium">
+                      {user.user_metadata?.first_name || 'Account'}
+                    </span>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <div className="px-3 py-3 border-b">
+                    <p className="font-semibold">
+                      {user.user_metadata?.first_name || 'User'} {user.user_metadata?.last_name || ''}
                     </p>
-                    {profile && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium border uppercase tracking-wider">
-                        {profile.activeProfileMode}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground truncate max-w-[140px]">
+                        {user.email}
+                      </p>
+                      {profile && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-medium border uppercase tracking-wider">
+                          {profile.activeProfileMode}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Mode Switcher */}
-                {isOwner && (
-                  <>
-                    <DropdownMenuItem
-                      onClick={handleSwitchMode}
-                      disabled={switching}
-                      className="cursor-pointer font-medium text-primary bg-primary/5 focus:bg-primary/10 focus:text-primary"
-                    >
-                      <div className="flex items-center w-full">
-                        <LayoutDashboard className="mr-3 h-4 w-4" />
-                        Switch to {mode === 'OWNER' ? 'Renter' : 'Owner'}
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
+                  {/* Mode Switcher */}
+                  {isOwner && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={handleSwitchMode}
+                        disabled={switching}
+                        className="cursor-pointer font-medium text-primary bg-primary/5 focus:bg-primary/10 focus:text-primary"
+                      >
+                        <div className="flex items-center w-full">
+                          <LayoutDashboard className="mr-3 h-4 w-4" />
+                          Switch to {mode === 'OWNER' ? 'Renter' : 'Owner'}
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
 
-                {/* Owner Items */}
-                {mode === 'OWNER' && (
-                  <>
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link href="/dashboard">
-                        <LayoutDashboard className="mr-3 h-4 w-4" />
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link href="/dashboard/cars">
-                        <Car className="mr-3 h-4 w-4" />
-                        My Cars
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link href="/dashboard/earnings">
-                        <div className="mr-3 h-4 w-4 flex items-center justify-center font-bold text-xs">$</div>
-                        Earnings
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
+                  {/* Owner Items */}
+                  {mode === 'OWNER' && (
+                    <>
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link href="/dashboard">
+                          <LayoutDashboard className="mr-3 h-4 w-4" />
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link href="/dashboard/cars">
+                          <Car className="mr-3 h-4 w-4" />
+                          My Cars
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link href="/dashboard/earnings">
+                          <div className="mr-3 h-4 w-4 flex items-center justify-center font-bold text-xs">$</div>
+                          Earnings
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
 
-                {/* Renter Items */}
-                {mode === 'RENTER' && (
-                  <>
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link href="/dashboard/bookings">
-                        <Car className="mr-3 h-4 w-4" />
-                        My Bookings
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link href="/dashboard/favorites">
-                        <Heart className="mr-3 h-4 w-4" />
-                        Saved Cars
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
+                  {/* Renter Items */}
+                  {mode === 'RENTER' && (
+                    <>
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link href="/dashboard/bookings">
+                          <Car className="mr-3 h-4 w-4" />
+                          My Bookings
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link href="/dashboard/favorites">
+                          <Heart className="mr-3 h-4 w-4" />
+                          Saved Cars
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
 
-                <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link href="/dashboard/messages">
-                    <MessageCircle className="mr-3 h-4 w-4" />
-                    Messages
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                {/* Shared Items */}
-                {mode === 'OWNER' && (
                   <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/list-your-car">
-                      <Plus className="mr-3 h-4 w-4" />
-                      List Your Car
+                    <Link href="/dashboard/messages">
+                      <MessageCircle className="mr-3 h-4 w-4" />
+                      Messages
                     </Link>
                   </DropdownMenuItem>
-                )}
 
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link href="/dashboard/settings">
-                    <Settings className="mr-3 h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link href="/help">
-                    <HelpCircle className="mr-3 h-4 w-4" />
-                    Help
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="mr-3 h-4 w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuSeparator />
+
+                  {/* Shared Items */}
+                  {mode === 'OWNER' && (
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link href="/list-your-car">
+                        <Plus className="mr-3 h-4 w-4" />
+                        List Your Car
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/dashboard/settings">
+                      <Settings className="mr-3 h-4 w-4" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/help">
+                      <HelpCircle className="mr-3 h-4 w-4" />
+                      Help
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="mr-3 h-4 w-4" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <>
               <Button

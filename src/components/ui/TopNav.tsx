@@ -13,7 +13,8 @@ import {
   X,
   Menu,
   Mountain,
-  CalendarDays
+  CalendarDays,
+  Settings
 } from 'lucide-react'
 import { CITIES, CityName } from '@/lib/map-cars'
 import { format, addDays } from 'date-fns'
@@ -337,7 +338,7 @@ export function TopNav({
               <div className="mt-6 space-y-2">
                 {/* User Info */}
                 {user ? (
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-6">
+                  <Link href="/dashboard/profile" className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-6 hover:bg-gray-100 transition-colors">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white font-bold text-xl">
                       {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
                     </div>
@@ -354,7 +355,7 @@ export function TopNav({
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ) : (
                   <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-6">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
@@ -441,6 +442,21 @@ export function TopNav({
                     <div>
                       <p className="font-medium text-gray-900">My Bookings</p>
                       <p className="text-sm text-gray-500">View your trips</p>
+                    </div>
+                  </Link>
+                )}
+
+                {user && (
+                  <Link
+                    href="/dashboard/settings"
+                    className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                      <Settings className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">Settings</p>
+                      <p className="text-sm text-gray-500">Account preferences</p>
                     </div>
                   </Link>
                 )}

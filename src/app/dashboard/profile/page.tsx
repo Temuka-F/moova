@@ -7,14 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  Shield, 
-  CheckCircle2, 
-  Clock, 
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Shield,
+  CheckCircle2,
+  Clock,
   XCircle,
   Car,
   Star,
@@ -32,6 +32,7 @@ interface UserData {
   phone: string | null
   avatarUrl: string | null
   role: 'RENTER' | 'OWNER' | 'ADMIN'
+  activeProfileMode?: 'RENTER' | 'OWNER' | 'ADMIN' | null
   verificationStatus: string
   isEmailVerified: boolean
   isPhoneVerified: boolean
@@ -55,7 +56,7 @@ export default function ProfilePage() {
   const fetchUser = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const res = await fetch('/api/me')
       if (!res.ok) {
@@ -75,12 +76,12 @@ export default function ProfilePage() {
         throw new Error(errorMessage)
       }
       const data = await res.json()
-      
+
       // Validate user data
       if (!data || !data.id) {
         throw new Error('Invalid user data received')
       }
-      
+
       setUser(data)
     } catch (err: any) {
       console.error('Error fetching profile:', err)
@@ -135,9 +136,11 @@ export default function ProfilePage() {
     )
   }
 
+  const isOwnerView = user.role === 'OWNER' && user.activeProfileMode === 'OWNER'
+
   return (
     <div className="space-y-6">
-      {/* Profile Header */}
+      {/* Shared Profile Header */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-6">
@@ -159,8 +162,8 @@ export default function ProfilePage() {
               </div>
               <div className="flex flex-wrap gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary">
-                    {user.role === 'ADMIN' ? 'Admin' : user.role === 'OWNER' ? 'Host' : 'Renter'}
+                  <Badge variant={isOwnerView ? 'default' : 'secondary'}>
+                    {isOwnerView ? 'Host Profile' : 'Renter Profile'}
                   </Badge>
                 </div>
                 {user.phone && (
@@ -177,152 +180,204 @@ export default function ProfilePage() {
               {user.bio && (
                 <p className="mt-4 text-muted-foreground">{user.bio}</p>
               )}
-              <div className="mt-4">
+              <div className="mt-4 flex gap-3">
                 <Button asChild variant="outline">
                   <Link href="/dashboard/settings">Edit Profile</Link>
                 </Button>
+                {isOwnerView ? (
+                  <Button asChild>
+                    <Link href="/list-your-car">List New Car</Link>
+                  </Button>
+                ) : (
+                  <Button asChild>
+                    <Link href="/cars">Find a Car</Link>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {user.role === 'OWNER' && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <Car className="w-6 h-6 text-primary" />
+      {/* Role-Specific Content */}
+      {isOwnerView ? (
+        // OWNER VIEW
+        <>
+          {/* Owner Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <Car className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{user._count?.cars || 0}</p>
+                    <p className="text-sm text-muted-foreground">Cars Listed</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{user._count?.cars || 0}</p>
-                  <p className="text-sm text-muted-foreground">Cars Listed</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-green-500/10">
+                    <Star className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">--</p>
+                    <p className="text-sm text-muted-foreground">Host Rating</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-blue-500/10">
+                    <User className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">--</p>
+                    <p className="text-sm text-muted-foreground">Trips Hosted</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Owner Verifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Host Verification
+              </CardTitle>
+              <CardDescription>Required to list cars</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <User className="w-5 h-5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">Identity Verification</p>
+                    <p className="text-sm text-muted-foreground">Government ID check</p>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {user.isIdVerified ? (
+                    <Badge className="bg-green-500/10 text-green-600 border-0">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />Verified
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">Unverified</Badge>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Phone className="w-5 h-5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">Phone Number</p>
+                    <p className="text-sm text-muted-foreground">Contact verification</p>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {user.isPhoneVerified ? (
+                    <Badge className="bg-green-500/10 text-green-600 border-0">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />Verified
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">Unverified</Badge>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
-        )}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-blue-500/10">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{user._count?.bookingsAsRenter || 0}</p>
-                <p className="text-sm text-muted-foreground">Total Trips</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-yellow-500/10">
-                <Star className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{user._count?.reviewsReceived || 0}</p>
-                <p className="text-sm text-muted-foreground">Reviews</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Verification Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Verification Status
-          </CardTitle>
-          <CardDescription>Your account verification details</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Mail className="w-5 h-5 text-muted-foreground shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">Email</p>
-                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-              </div>
-            </div>
-            <div className="shrink-0">
-              {user.isEmailVerified ? (
-                <Badge className="bg-green-500/10 text-green-600 border-0">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />Verified
-                </Badge>
-              ) : (
-                <Badge variant="outline">Unverified</Badge>
-              )}
-            </div>
+        </>
+      ) : (
+        // RENTER VIEW
+        <>
+          {/* Renter Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-blue-500/10">
+                    <Calendar className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{user._count?.bookingsAsRenter || 0}</p>
+                    <p className="text-sm text-muted-foreground">Trips Taken</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-yellow-500/10">
+                    <Star className="w-6 h-6 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{user._count?.reviewsReceived || 0}</p>
+                    <p className="text-sm text-muted-foreground">Reviews Received</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          {user.phone && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <Phone className="w-5 h-5 text-muted-foreground shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">Phone</p>
-                  <p className="text-sm text-muted-foreground">{user.phone}</p>
+
+          {/* Renter Verifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Driver Verification
+              </CardTitle>
+              <CardDescription>Required to book cars</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Car className="w-5 h-5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">Driving License</p>
+                    <p className="text-sm text-muted-foreground">Valid driver's license</p>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {user.isLicenseVerified ? (
+                    <Badge className="bg-green-500/10 text-green-600 border-0">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />Verified
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">Unverified</Badge>
+                  )}
                 </div>
               </div>
-              <div className="shrink-0">
-                {user.isPhoneVerified ? (
-                  <Badge className="bg-green-500/10 text-green-600 border-0">
-                    <CheckCircle2 className="w-3 h-3 mr-1" />Verified
-                  </Badge>
-                ) : (
-                  <Badge variant="outline">Unverified</Badge>
-                )}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <User className="w-5 h-5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">ID Document</p>
+                    <p className="text-sm text-muted-foreground">Identity verification</p>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {user.isIdVerified ? (
+                    <Badge className="bg-green-500/10 text-green-600 border-0">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />Verified
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">Unverified</Badge>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <User className="w-5 h-5 text-muted-foreground shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">ID Document</p>
-                <p className="text-sm text-muted-foreground">Identity verification</p>
-              </div>
-            </div>
-            <div className="shrink-0">
-              {user.isIdVerified ? (
-                <Badge className="bg-green-500/10 text-green-600 border-0">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />Verified
-                </Badge>
-              ) : (
-                <Badge variant="outline">Unverified</Badge>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Car className="w-5 h-5 text-muted-foreground shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">Driving License</p>
-                <p className="text-sm text-muted-foreground">License verification</p>
-              </div>
-            </div>
-            <div className="shrink-0">
-              {user.isLicenseVerified ? (
-                <Badge className="bg-green-500/10 text-green-600 border-0">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />Verified
-                </Badge>
-              ) : (
-                <Badge variant="outline">Unverified</Badge>
-              )}
-            </div>
-          </div>
-          {user.verificationStatus === 'UNVERIFIED' && (
-            <Button asChild className="w-full">
-              <Link href="/dashboard/settings">Complete Verification</Link>
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }

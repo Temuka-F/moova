@@ -102,18 +102,22 @@ export function DashboardSidebar({ user, navigation, isCollapsed, onToggle }: Da
       {/* User Info */}
       <div className={cn('p-4 border-b', isCollapsed && 'flex justify-center')}>
         <div className={cn('flex items-center gap-3', isCollapsed && 'flex-col')}>
-          <Avatar className="w-10 h-10 border-2 border-primary/20">
-            <AvatarImage src={user.avatarUrl || undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {user.firstName[0]}
-            </AvatarFallback>
-          </Avatar>
+          <Link href="/dashboard/profile" className="hover:opacity-80 transition-opacity">
+            <Avatar className="w-10 h-10 border-2 border-primary/20">
+              <AvatarImage src={user.avatarUrl || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {user.firstName[0]}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">
-                {user.firstName} {user.lastName}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              <Link href="/dashboard/profile" className="block hover:underline">
+                <p className="font-medium truncate">
+                  {user.firstName} {user.lastName}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </Link>
               <Badge variant="secondary" className="mt-1 text-xs">
                 {user.role === 'ADMIN' ? 'Admin' : user.role === 'OWNER' ? 'Host' : 'Renter'}
               </Badge>

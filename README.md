@@ -63,6 +63,16 @@ Moova is a peer-to-peer car sharing platform that enables car owners to list the
 - **Smart Redirects:** Automatic redirection to the correct dashboard view when switching roles.
 - **Protected Routes:** Server-side and client-side guards prevent unauthorized access to role-specific pages.
 
+### 👤 Dual Profile Experience
+- **Distinct Views:** Specialized profile pages for Renters (Trip stats, License verification) and Owners (Business stats, Identity verification).
+- **Context-Aware Actions:** "Find a Car" for renters vs "List Your Car" for owners.
+- **Unified Settings:** Seamless access to account settings from both profile views.
+
+### 🧭 Enhanced Navigation
+- **Consistent Access:** Profile and Settings accessible from every view (Home Map, Dashboard Sidebar, Header).
+- **Intuitive Linking:** Direct profile access via avatar clicks across the platform.
+- **Mobile-Ready:** Fully functional hamburger menus and bottom navigation for mobile users.
+
 ### 📱 Dual Design Interface
 
 Moova features a sophisticated dual-design architecture that provides optimized experiences for both desktop and mobile users:
