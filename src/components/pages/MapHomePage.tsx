@@ -12,6 +12,7 @@ import { SearchBar } from '@/components/search/SearchBar'
 import { ControlBar } from '@/components/search/ControlBar'
 import { CarList } from '@/components/listing/CarList'
 import { MobileCarSheet } from '@/components/ui/MobileCarSheet'
+import { MobileListMenu } from '@/components/ui/MobileListMenu'
 import { toast } from 'sonner'
 import {
   ALL_CARS,
@@ -48,6 +49,7 @@ export function MapHomePage() {
   // Mobile View Mode
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
   const [isMobileSheetExpanded, setIsMobileSheetExpanded] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
 
   // Map ref for imperative control
@@ -221,8 +223,7 @@ export function MapHomePage() {
     mapRef.current?.flyToCity(currentCity)
   }, [currentCity])
 
-  // Show loading state until client-side or cars are loading
-  if (!isClient || isLoadingCars) {
+  if (!isClient) {
     return (
       <div className="fixed inset-0 bg-gray-100 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -231,7 +232,7 @@ export function MapHomePage() {
             <div className="absolute inset-0 border-4 border-black border-t-transparent rounded-full animate-spin" />
           </div>
           <p className="text-gray-600 font-medium">
-            {!isClient ? 'Loading map...' : 'Loading cars...'}
+            Loading map...
           </p>
         </div>
       </div>
@@ -240,6 +241,13 @@ export function MapHomePage() {
 
   return (
     <>
+      {/* Loading Indicator for Cars */}
+      {isLoadingCars && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg flex items-center gap-3 border border-gray-100 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-medium text-gray-700">Finding cars...</span>
+        </div>
+      )}
       {/* ==============================================
           MOBILE LAYOUT - "App-Like" Overhaul
           ============================================== */}
@@ -293,7 +301,10 @@ export function MapHomePage() {
         )}
 
         {/* Bottom Navigation */}
-        <MobileBottomNav onMenuClick={() => toast.info('Menu coming soon!')} />
+        <MobileBottomNav onMenuClick={() => setIsMobileMenuOpen(true)} />
+
+        {/* Mobile Menu Drawer */}
+        <MobileListMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen} />
       </div>
 
 

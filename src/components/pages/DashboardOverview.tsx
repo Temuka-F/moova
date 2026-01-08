@@ -94,8 +94,8 @@ export function DashboardOverview() {
   const [isUpgrading, setIsUpgrading] = useState(false)
 
   // For OWNER users, check activeProfileMode to determine view
-  const effectiveMode = user?.role === 'OWNER' && user?.activeProfileMode 
-    ? user.activeProfileMode 
+  const effectiveMode = user?.role === 'OWNER' && user?.activeProfileMode
+    ? user.activeProfileMode
     : user?.role || 'RENTER'
   const isHost = effectiveMode === 'OWNER' || user?.role === 'ADMIN'
 
@@ -114,8 +114,14 @@ export function DashboardOverview() {
         const userData = await userRes.json()
         setUser(userData)
 
-        // Fetch bookings
-        const bookingsRes = await fetch('/api/bookings')
+        // Fetch bookings based on active profile mode
+        const effectiveMode = userData.role === 'OWNER' && userData.activeProfileMode
+          ? userData.activeProfileMode
+          : userData.role || 'RENTER'
+
+        const type = effectiveMode === 'OWNER' ? 'host' : 'renter'
+        const bookingsRes = await fetch(`/api/bookings?type=${type}`)
+
         if (bookingsRes.ok) {
           const bookingsData = await bookingsRes.json()
           setBookings(bookingsData.bookings || [])
@@ -142,18 +148,18 @@ export function DashboardOverview() {
 
   const handleUpgradeToOwner = async () => {
     if (!user) return
-    
+
     setIsUpgrading(true)
     try {
       const res = await fetch(`/api/users/${user.id}/upgrade`, {
         method: 'POST',
       })
-      
+
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || 'Failed to upgrade')
       }
-      
+
       const updatedUser = await res.json()
       setUser(updatedUser)
       toast.success('Congratulations! You are now a host. Start listing your first car!')
@@ -166,10 +172,10 @@ export function DashboardOverview() {
   }
 
   // Calculate stats
-  const upcomingBookings = bookings.filter(b => 
+  const upcomingBookings = bookings.filter(b =>
     ['PENDING', 'CONFIRMED', 'ACTIVE'].includes(b.status)
   ).slice(0, 5)
-  
+
   const pendingBookings = bookings.filter(b => b.status === 'PENDING').length
   const completedBookings = bookings.filter(b => b.status === 'COMPLETED')
   const totalSpent = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
@@ -230,7 +236,7 @@ export function DashboardOverview() {
               </p>
             </div>
           </div>
-          
+
           {/* Quick Actions */}
           <div className="flex flex-wrap gap-2">
             {isHost ? (
@@ -256,8 +262,8 @@ export function DashboardOverview() {
                     Browse cars
                   </Link>
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="rounded-full min-h-[44px]"
                   onClick={handleUpgradeToOwner}
                   disabled={isUpgrading}
@@ -293,8 +299,8 @@ export function DashboardOverview() {
                   Hosts on Moova earn up to ₾1,500/month. List your car and start earning today!
                 </p>
               </div>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="rounded-full"
                 onClick={handleUpgradeToOwner}
                 disabled={isUpgrading}
@@ -334,7 +340,7 @@ export function DashboardOverview() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -348,7 +354,7 @@ export function DashboardOverview() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -362,7 +368,7 @@ export function DashboardOverview() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -392,7 +398,7 @@ export function DashboardOverview() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -406,7 +412,7 @@ export function DashboardOverview() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -420,7 +426,7 @@ export function DashboardOverview() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -500,7 +506,7 @@ export function DashboardOverview() {
                         <div
                           className="w-20 h-16 rounded-xl bg-cover bg-center shrink-0 bg-muted"
                           style={{
-                            backgroundImage: booking.car?.images?.[0]?.url 
+                            backgroundImage: booking.car?.images?.[0]?.url
                               ? `url('${booking.car.images[0].url}')`
                               : undefined,
                           }}
@@ -580,7 +586,7 @@ export function DashboardOverview() {
                         <div
                           className="w-16 h-12 rounded-lg bg-cover bg-center shrink-0 bg-muted"
                           style={{
-                            backgroundImage: car.images[0]?.url 
+                            backgroundImage: car.images[0]?.url
                               ? `url('${car.images[0].url}')`
                               : undefined,
                           }}
@@ -649,8 +655,8 @@ export function DashboardOverview() {
                         Saved Cars
                       </Link>
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full justify-start rounded-xl"
                       onClick={handleUpgradeToOwner}
                       disabled={isUpgrading}

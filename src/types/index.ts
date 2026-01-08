@@ -315,11 +315,9 @@ export const getDashboardNavigation = (role: UserRole, activeProfileMode?: UserR
   ]
 
   const ownerNav = [
-    { name: 'My Bookings', href: '/dashboard/bookings', icon: 'Calendar' },
     { name: 'My Cars', href: '/dashboard/cars', icon: 'Car' },
     { name: 'Earnings', href: '/dashboard/earnings', icon: 'Wallet' },
     { name: 'Reviews', href: '/dashboard/reviews', icon: 'Star' },
-    { name: 'Favorites', href: '/dashboard/favorites', icon: 'Heart' },
   ]
 
   const adminNav = [

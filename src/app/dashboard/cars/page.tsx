@@ -9,13 +9,13 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { 
-  Car, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Pause, 
-  Play, 
+import {
+  Car,
+  Plus,
+  Edit,
+  Trash2,
+  Pause,
+  Play,
   Eye,
   TrendingUp,
   Calendar,
@@ -24,6 +24,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { RoleGuard } from '@/components/auth/role-guard'
 
 interface CarData {
   id: string
@@ -84,7 +85,7 @@ export default function CarsPage() {
         throw new Error('Failed to update car')
       }
 
-      setCars(prev => prev.map(c => 
+      setCars(prev => prev.map(c =>
         c.id === carId ? { ...c, isActive: !currentStatus } : c
       ))
       toast.success(`Car ${!currentStatus ? 'activated' : 'paused'}`)
@@ -121,11 +122,11 @@ export default function CarsPage() {
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link 
+          <Link
             href={`/cars/${car.id}`}
             className="w-full sm:w-32 h-40 sm:h-32 rounded-xl bg-cover bg-center shrink-0 bg-muted"
             style={{
-              backgroundImage: car.images?.[0]?.url 
+              backgroundImage: car.images?.[0]?.url
                 ? `url('${car.images[0].url}')`
                 : undefined,
             }}
@@ -172,8 +173,8 @@ export default function CarsPage() {
                   Edit
                 </Link>
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={() => handleToggleActive(car.id, car.isActive)}
                 disabled={actionLoading === car.id}
@@ -222,90 +223,92 @@ export default function CarsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">My Cars</h1>
-          <p className="text-muted-foreground">Manage your fleet</p>
+    <RoleGuard allowedModes={['OWNER']}>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">My Cars</h1>
+            <p className="text-muted-foreground">Manage your fleet</p>
+          </div>
+          <Button asChild className="rounded-full">
+            <Link href="/list-your-car">
+              <Plus className="w-4 h-4 mr-2" />
+              List New Car
+            </Link>
+          </Button>
         </div>
-        <Button asChild className="rounded-full">
-          <Link href="/list-your-car">
-            <Plus className="w-4 h-4 mr-2" />
-            List New Car
-          </Link>
-        </Button>
+
+        <Tabs defaultValue="active" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="active">
+              Active ({activeCars.length})
+            </TabsTrigger>
+            <TabsTrigger value="pending">
+              Pending ({pendingCars.length})
+            </TabsTrigger>
+            <TabsTrigger value="inactive">
+              Inactive ({inactiveCars.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="space-y-4">
+            {activeCars.length > 0 ? (
+              activeCars.map(car => (
+                <CarCard key={car.id} car={car} />
+              ))
+            ) : (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <Car className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">No active cars</h3>
+                  <p className="text-muted-foreground mb-4">
+                    List your first car to start earning
+                  </p>
+                  <Button asChild className="rounded-full">
+                    <Link href="/list-your-car">List Your Car</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="pending" className="space-y-4">
+            {pendingCars.length > 0 ? (
+              pendingCars.map(car => (
+                <CarCard key={car.id} car={car} />
+              ))
+            ) : (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">No pending cars</h3>
+                  <p className="text-muted-foreground">
+                    All your cars have been reviewed
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="inactive" className="space-y-4">
+            {inactiveCars.length > 0 ? (
+              inactiveCars.map(car => (
+                <CarCard key={car.id} car={car} />
+              ))
+            ) : (
+              <Card className="text-center py-12">
+                <CardContent>
+                  <Pause className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">No inactive cars</h3>
+                  <p className="text-muted-foreground">
+                    All your cars are active
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="active" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="active">
-            Active ({activeCars.length})
-          </TabsTrigger>
-          <TabsTrigger value="pending">
-            Pending ({pendingCars.length})
-          </TabsTrigger>
-          <TabsTrigger value="inactive">
-            Inactive ({inactiveCars.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="active" className="space-y-4">
-          {activeCars.length > 0 ? (
-            activeCars.map(car => (
-              <CarCard key={car.id} car={car} />
-            ))
-          ) : (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Car className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">No active cars</h3>
-                <p className="text-muted-foreground mb-4">
-                  List your first car to start earning
-                </p>
-                <Button asChild className="rounded-full">
-                  <Link href="/list-your-car">List Your Car</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="pending" className="space-y-4">
-          {pendingCars.length > 0 ? (
-            pendingCars.map(car => (
-              <CarCard key={car.id} car={car} />
-            ))
-          ) : (
-            <Card className="text-center py-12">
-              <CardContent>
-                <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">No pending cars</h3>
-                <p className="text-muted-foreground">
-                  All your cars have been reviewed
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="inactive" className="space-y-4">
-          {inactiveCars.length > 0 ? (
-            inactiveCars.map(car => (
-              <CarCard key={car.id} car={car} />
-            ))
-          ) : (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Pause className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">No inactive cars</h3>
-                <p className="text-muted-foreground">
-                  All your cars are active
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
+    </RoleGuard>
   )
 }

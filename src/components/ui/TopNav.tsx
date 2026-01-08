@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { 
-  Search, 
-  MapPin, 
-  ChevronDown, 
-  User, 
-  LogIn, 
-  Car, 
-  Calendar, 
+import {
+  Search,
+  MapPin,
+  ChevronDown,
+  User,
+  LogIn,
+  Car,
+  Calendar,
   X,
   Menu,
   Mountain,
@@ -31,6 +31,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import Link from 'next/link'
+import { useAuth } from '@/hooks/useAuth'
 
 interface TopNavProps {
   currentCity: CityName
@@ -41,9 +42,9 @@ interface TopNavProps {
   onDateChange?: (start: Date | undefined, end: Date | undefined) => void
 }
 
-export function TopNav({ 
-  currentCity, 
-  onCityChange, 
+export function TopNav({
+  currentCity,
+  onCityChange,
   carCount,
   startDate,
   endDate,
@@ -52,6 +53,52 @@ export function TopNav({
   const [isCityPickerOpen, setIsCityPickerOpen] = useState(false)
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const { user, logout } = useAuth()
+  const [profile, setProfile] = useState<any>(null)
+  const [switching, setSwitching] = useState(false)
+
+  // Fetch extended profile data
+  useEffect(() => {
+    if (!user) return
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/me')
+        if (res.ok) {
+          const data = await res.json()
+          setProfile(data)
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+      }
+    }
+    fetchProfile()
+  }, [user])
+
+  const handleSwitchMode = async () => {
+    if (!profile || switching) return
+    setSwitching(true)
+    const newMode = profile.activeProfileMode === 'OWNER' ? 'RENTER' : 'OWNER'
+
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activeProfileMode: newMode }),
+      })
+      if (!res.ok) throw new Error('Failed to switch mode')
+
+      // Redirect to dashboard to ensure valid page for new mode
+      window.location.href = '/dashboard'
+    } catch (error) {
+      console.error('Failed to switch mode', error)
+    } finally {
+      setSwitching(false)
+    }
+  }
+
+  const mode = profile?.activeProfileMode || 'RENTER'
+  const isOwner = profile?.role === 'OWNER' || profile?.role === 'ADMIN'
 
   const cityInfo = CITIES[currentCity]
 
@@ -113,10 +160,9 @@ export function TopNav({
                       <p className="font-semibold text-gray-900 truncate">
                         {currentCity}
                       </p>
-                      <ChevronDown 
-                        className={`w-4 h-4 text-gray-400 transition-transform duration-300 flex-shrink-0 ${
-                          isCityPickerOpen ? 'rotate-180' : ''
-                        }`} 
+                      <ChevronDown
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-300 flex-shrink-0 ${isCityPickerOpen ? 'rotate-180' : ''
+                          }`}
                       />
                     </div>
                   </div>
@@ -140,7 +186,7 @@ export function TopNav({
                       <div className="text-left hidden sm:block">
                         <p className="text-xs text-gray-500 mb-0.5">Dates</p>
                         <p className="font-medium text-gray-900 text-sm">
-                          {startDate && endDate 
+                          {startDate && endDate
                             ? `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d')}`
                             : 'Add dates'
                           }
@@ -242,8 +288,8 @@ export function TopNav({
                             className={`
                               w-full flex items-center gap-3 px-3 py-3 min-h-[52px] rounded-xl
                               transition-all duration-200 active:scale-[0.98]
-                              ${currentCity === city 
-                                ? 'bg-black text-white' 
+                              ${currentCity === city
+                                ? 'bg-black text-white'
                                 : 'hover:bg-gray-50 text-gray-700'
                               }
                             `}
@@ -256,9 +302,9 @@ export function TopNav({
                               </p>
                             </div>
                             {currentCity === city && (
-                              <motion.div 
+                              <motion.div
                                 layoutId="cityIndicator"
-                                className="w-2 h-2 rounded-full bg-emerald-400" 
+                                className="w-2 h-2 rounded-full bg-emerald-400"
                               />
                             )}
                           </button>
@@ -289,56 +335,130 @@ export function TopNav({
                 <SheetTitle className="text-left">Menu</SheetTitle>
               </SheetHeader>
               <div className="mt-6 space-y-2">
-                {/* User avatar placeholder */}
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-6">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                    <User className="w-6 h-6 text-gray-500" />
+                {/* User Info */}
+                {user ? (
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-6">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-white font-bold text-xl">
+                      {user.user_metadata?.first_name?.[0] || user.email?.[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {user.user_metadata?.first_name}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                        {profile && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium uppercase tracking-wider">
+                            {mode}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Guest User</p>
-                    <p className="text-sm text-gray-500">Sign in to book</p>
+                ) : (
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl mb-6">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                      <User className="w-6 h-6 text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Guest User</p>
+                      <p className="text-sm text-gray-500">Sign in to book</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Menu items - minimum 44px touch targets */}
-                <Link 
-                  href="/login"
-                  className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center">
-                    <LogIn className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Login / Sign Up</p>
-                    <p className="text-sm text-gray-500">Access your account</p>
-                  </div>
-                </Link>
+                {/* Switcher */}
+                {user && isOwner && (
+                  <button
+                    onClick={handleSwitchMode}
+                    disabled={switching}
+                    className="w-full flex items-center gap-4 p-4 min-h-[56px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors border-2 border-dashed border-gray-200 mb-4"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <User className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-gray-900">Switch to {mode === 'OWNER' ? 'Renter' : 'Owner'}</p>
+                    </div>
+                  </button>
+                )}
 
-                <Link 
-                  href="/list-your-car"
-                  className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
-                    <Car className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">List Your Car</p>
-                    <p className="text-sm text-gray-500">Earn money sharing</p>
-                  </div>
-                </Link>
+                {/* Items */}
+                {!user && (
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center">
+                      <LogIn className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">Login / Sign Up</p>
+                      <p className="text-sm text-gray-500">Access your account</p>
+                    </div>
+                  </Link>
+                )}
 
-                <Link 
-                  href="/dashboard/bookings"
-                  className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">My Bookings</p>
-                    <p className="text-sm text-gray-500">View your trips</p>
-                  </div>
-                </Link>
+                {/* Owner Items */}
+                {user && mode === 'OWNER' && (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center">
+                        <ChevronDown className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Dashboard</p>
+                        <p className="text-sm text-gray-500">Manage your business</p>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/list-your-car"
+                      className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
+                        <Car className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">List Your Car</p>
+                        <p className="text-sm text-gray-500">Earn money sharing</p>
+                      </div>
+                    </Link>
+                  </>
+                )}
+
+                {/* Renter Items */}
+                {user && mode === 'RENTER' && (
+                  <Link
+                    href="/dashboard/bookings"
+                    className="flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
+                      <Calendar className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">My Bookings</p>
+                      <p className="text-sm text-gray-500">View your trips</p>
+                    </div>
+                  </Link>
+                )}
+
+                {user && (
+                  <button
+                    onClick={() => logout()}
+                    className="w-full flex items-center gap-4 p-4 min-h-[64px] rounded-xl hover:bg-red-50 active:bg-red-100 transition-colors text-left"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                      <X className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-600">Log Out</p>
+                    </div>
+                  </button>
+                )}
+
               </div>
             </SheetContent>
           </Sheet>

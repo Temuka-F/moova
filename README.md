@@ -57,6 +57,12 @@ Moova is a peer-to-peer car sharing platform that enables car owners to list the
 - **Analytics Dashboard:** Platform-wide statistics and insights
 - **Admin Logs:** Comprehensive audit trail of admin actions
 
+### 🛡️ Role-Based Access Control
+- **Strict Role Enforcement:** Dashboard views and navigation are guarded based on active profile mode (Renter vs Owner).
+- **Separated Statistics:** Dashboard metrics (earnings, bookings, trips) are strictly separated by role to prevent data mixing.
+- **Smart Redirects:** Automatic redirection to the correct dashboard view when switching roles.
+- **Protected Routes:** Server-side and client-side guards prevent unauthorized access to role-specific pages.
+
 ### 📱 Dual Design Interface
 
 Moova features a sophisticated dual-design architecture that provides optimized experiences for both desktop and mobile users:

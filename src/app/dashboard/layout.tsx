@@ -142,17 +142,11 @@ export default function DashboardLayout({
                 currentRole={user.role}
                 activeProfileMode={user.activeProfileMode || null}
                 onSwitch={async (newMode) => {
-                  // Refetch user data to update state
-                  try {
-                    const response = await fetch('/api/me')
-                    if (response.ok) {
-                      const updatedUser = await response.json()
-                      setUser(updatedUser)
-                      // Navigation will update automatically via getDashboardNavigation
-                    }
-                  } catch (error) {
-                    console.error('Error refetching user:', error)
-                  }
+                  // Force a hard redirect to the dashboard root to ensure:
+                  // 1. Tests for role-based access are re-run
+                  // 2. Navigation is rebuilt
+                  // 3. Stale content (like Earnings for Renters) is cleared
+                  window.location.href = '/dashboard'
                 }}
               />
             </div>

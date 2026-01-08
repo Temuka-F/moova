@@ -9,12 +9,12 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  CheckCircle2,
+  XCircle,
   Zap,
   Car,
   MessageCircle,
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { getErrorMessage } from '@/lib/error-utils'
+import { RoleGuard } from '@/components/auth/role-guard'
 
 interface BookingCar {
   id: string
@@ -103,7 +104,7 @@ export default function BookingsPage() {
     async function fetchBookings() {
       try {
         const res = await fetch('/api/bookings')
-        
+
         if (!res.ok) {
           if (res.status === 401) {
             router.push('/login?redirect=/dashboard/bookings')
@@ -111,7 +112,7 @@ export default function BookingsPage() {
           }
           throw new Error('Failed to fetch bookings')
         }
-        
+
         const data = await res.json()
         setBookings(data.bookings || [])
       } catch (err) {
@@ -127,7 +128,7 @@ export default function BookingsPage() {
 
   const handleConfirmBooking = async (bookingId: string) => {
     setActionLoading(bookingId)
-    
+
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
@@ -140,7 +141,7 @@ export default function BookingsPage() {
         throw new Error(data.error || 'Failed to confirm booking')
       }
 
-      setBookings(prev => prev.map(b => 
+      setBookings(prev => prev.map(b =>
         b.id === bookingId ? { ...b, status: 'CONFIRMED' } : b
       ))
       toast.success('Booking confirmed!')
@@ -153,7 +154,7 @@ export default function BookingsPage() {
 
   const handleCancelBooking = async (bookingId: string) => {
     setActionLoading(bookingId)
-    
+
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
         method: 'PATCH',
@@ -166,7 +167,7 @@ export default function BookingsPage() {
         throw new Error(data.error || 'Failed to cancel booking')
       }
 
-      setBookings(prev => prev.map(b => 
+      setBookings(prev => prev.map(b =>
         b.id === bookingId ? { ...b, status: 'CANCELLED' } : b
       ))
       toast.success('Booking cancelled')
@@ -201,11 +202,11 @@ export default function BookingsPage() {
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link 
+          <Link
             href={`/cars/${booking.car.id}`}
             className="w-full sm:w-24 h-40 sm:h-20 rounded-xl bg-cover bg-center shrink-0 bg-muted"
             style={{
-              backgroundImage: booking.car?.images?.[0]?.url 
+              backgroundImage: booking.car?.images?.[0]?.url
                 ? `url('${booking.car.images[0].url}')`
                 : undefined,
             }}
@@ -246,54 +247,54 @@ export default function BookingsPage() {
                   </Link>
                 </Button>
                 <div className="flex gap-2">
-              {booking.status === 'PENDING' && (
-                <>
-                  <Button 
-                    size="sm" 
-                    className="rounded-full"
-                    onClick={() => handleConfirmBooking(booking.id)}
-                    disabled={actionLoading === booking.id}
-                  >
-                    {actionLoading === booking.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      'Confirm'
-                    )}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    className="rounded-full"
-                    onClick={() => handleCancelBooking(booking.id)}
-                    disabled={actionLoading === booking.id}
-                  >
-                    Decline
-                  </Button>
-                </>
-              )}
-              {['CONFIRMED', 'ACTIVE'].includes(booking.status) && (
-                <>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="rounded-full"
-                    onClick={() => handleCancelBooking(booking.id)}
-                    disabled={actionLoading === booking.id}
-                  >
-                    Cancel
-                  </Button>
-                  <Button size="sm" variant="ghost" asChild className="rounded-full">
-                    <Link href={`/dashboard/messages?bookingId=${booking.id}`}>
-                      <MessageCircle className="w-4 h-4" />
-                    </Link>
-                  </Button>
-                </>
-              )}
-              {booking.status === 'COMPLETED' && !booking.review && (
-                <Button size="sm" variant="outline" className="rounded-full min-h-[44px]">
-                  Leave Review
-                </Button>
-              )}
+                  {booking.status === 'PENDING' && (
+                    <>
+                      <Button
+                        size="sm"
+                        className="rounded-full"
+                        onClick={() => handleConfirmBooking(booking.id)}
+                        disabled={actionLoading === booking.id}
+                      >
+                        {actionLoading === booking.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          'Confirm'
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => handleCancelBooking(booking.id)}
+                        disabled={actionLoading === booking.id}
+                      >
+                        Decline
+                      </Button>
+                    </>
+                  )}
+                  {['CONFIRMED', 'ACTIVE'].includes(booking.status) && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => handleCancelBooking(booking.id)}
+                        disabled={actionLoading === booking.id}
+                      >
+                        Cancel
+                      </Button>
+                      <Button size="sm" variant="ghost" asChild className="rounded-full">
+                        <Link href={`/dashboard/messages?bookingId=${booking.id}`}>
+                          <MessageCircle className="w-4 h-4" />
+                        </Link>
+                      </Button>
+                    </>
+                  )}
+                  {booking.status === 'COMPLETED' && !booking.review && (
+                    <Button size="sm" variant="outline" className="rounded-full min-h-[44px]">
+                      Leave Review
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -304,88 +305,90 @@ export default function BookingsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-muted/30 pt-16">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">My Bookings</h1>
-            <p className="text-muted-foreground">Manage your trips and reservations</p>
+    <RoleGuard allowedModes={['RENTER']}>
+      <div className="min-h-screen bg-muted/30 pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">My Bookings</h1>
+              <p className="text-muted-foreground">Manage your trips and reservations</p>
+            </div>
+            <Button asChild className="rounded-full">
+              <Link href="/cars">
+                <Car className="w-4 h-4 mr-2" />
+                Book a Car
+              </Link>
+            </Button>
           </div>
-          <Button asChild className="rounded-full">
-            <Link href="/cars">
-              <Car className="w-4 h-4 mr-2" />
-              Book a Car
-            </Link>
-          </Button>
+
+          {error ? (
+            <Card className="text-center py-12">
+              <CardContent>
+                <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">Failed to load bookings</h3>
+                <p className="text-muted-foreground mb-4">{error}</p>
+                <Button onClick={() => window.location.reload()} className="rounded-full">
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Tabs defaultValue="upcoming" className="space-y-6">
+              <TabsList className="bg-white rounded-full p-1">
+                <TabsTrigger value="upcoming" className="rounded-full">
+                  Upcoming ({loading ? '...' : upcomingBookings.length})
+                </TabsTrigger>
+                <TabsTrigger value="past" className="rounded-full">
+                  Past ({loading ? '...' : pastBookings.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="upcoming" className="space-y-4">
+                {loading ? (
+                  <BookingsSkeleton />
+                ) : upcomingBookings.length > 0 ? (
+                  upcomingBookings.map((booking) => (
+                    <BookingCard key={booking.id} booking={booking} />
+                  ))
+                ) : (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <h3 className="text-lg font-semibold mb-2">No upcoming bookings</h3>
+                      <p className="text-muted-foreground mb-4">
+                        You don't have any upcoming trips scheduled
+                      </p>
+                      <Button asChild className="rounded-full">
+                        <Link href="/cars">Browse Cars</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="past" className="space-y-4">
+                {loading ? (
+                  <BookingsSkeleton />
+                ) : pastBookings.length > 0 ? (
+                  pastBookings.map((booking) => (
+                    <BookingCard key={booking.id} booking={booking} />
+                  ))
+                ) : (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <h3 className="text-lg font-semibold mb-2">No past bookings</h3>
+                      <p className="text-muted-foreground">
+                        Your completed trips will appear here
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
-
-        {error ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">Failed to load bookings</h3>
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <Button onClick={() => window.location.reload()} className="rounded-full">
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Tabs defaultValue="upcoming" className="space-y-6">
-            <TabsList className="bg-white rounded-full p-1">
-              <TabsTrigger value="upcoming" className="rounded-full">
-                Upcoming ({loading ? '...' : upcomingBookings.length})
-              </TabsTrigger>
-              <TabsTrigger value="past" className="rounded-full">
-                Past ({loading ? '...' : pastBookings.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="upcoming" className="space-y-4">
-              {loading ? (
-                <BookingsSkeleton />
-              ) : upcomingBookings.length > 0 ? (
-                upcomingBookings.map((booking) => (
-                  <BookingCard key={booking.id} booking={booking} />
-                ))
-              ) : (
-                <Card className="text-center py-12">
-                  <CardContent>
-                    <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                    <h3 className="text-lg font-semibold mb-2">No upcoming bookings</h3>
-                    <p className="text-muted-foreground mb-4">
-                      You don't have any upcoming trips scheduled
-                    </p>
-                    <Button asChild className="rounded-full">
-                      <Link href="/cars">Browse Cars</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="past" className="space-y-4">
-              {loading ? (
-                <BookingsSkeleton />
-              ) : pastBookings.length > 0 ? (
-                pastBookings.map((booking) => (
-                  <BookingCard key={booking.id} booking={booking} />
-                ))
-              ) : (
-                <Card className="text-center py-12">
-                  <CardContent>
-                    <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                    <h3 className="text-lg font-semibold mb-2">No past bookings</h3>
-                    <p className="text-muted-foreground">
-                      Your completed trips will appear here
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-        )}
       </div>
-    </div>
+    </RoleGuard>
   )
 }

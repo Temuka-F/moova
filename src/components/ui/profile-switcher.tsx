@@ -21,15 +21,15 @@ export function ProfileSwitcher({ currentRole, activeProfileMode, onSwitch }: Pr
     activeProfileMode || (currentRole === 'OWNER' ? 'OWNER' : 'RENTER')
   )
 
-  // Only show switcher for OWNER users
-  if (currentRole !== 'OWNER') {
-    return null
-  }
-
   // Update local state when prop changes
   useEffect(() => {
     setCurrentMode(activeProfileMode || 'OWNER')
   }, [activeProfileMode])
+
+  // Only show switcher for OWNER users
+  if (currentRole !== 'OWNER') {
+    return null
+  }
 
   const handleSwitch = async (newMode: UserRole) => {
     if (newMode === currentMode || loading) return
@@ -50,7 +50,7 @@ export function ProfileSwitcher({ currentRole, activeProfileMode, onSwitch }: Pr
       const updatedUser = await response.json()
       setCurrentMode(newMode)
       toast.success(`Switched to ${newMode === 'OWNER' ? 'Owner' : 'Renter'} profile`)
-      
+
       // Call onSwitch callback to update parent state
       if (onSwitch) {
         onSwitch(newMode)
@@ -74,7 +74,7 @@ export function ProfileSwitcher({ currentRole, activeProfileMode, onSwitch }: Pr
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Renter Mode Card */}
-        <Card 
+        <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
             isRenterMode && "ring-2 ring-primary shadow-md",
@@ -109,7 +109,7 @@ export function ProfileSwitcher({ currentRole, activeProfileMode, onSwitch }: Pr
         </Card>
 
         {/* Owner Mode Card */}
-        <Card 
+        <Card
           className={cn(
             "cursor-pointer transition-all hover:shadow-md",
             isOwnerMode && "ring-2 ring-primary shadow-md",

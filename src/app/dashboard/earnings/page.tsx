@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { 
-  Wallet, 
-  Clock, 
-  CheckCircle2, 
+import {
+  Wallet,
+  Clock,
+  CheckCircle2,
   AlertCircle
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { RoleGuard } from '@/components/auth/role-guard'
 
 interface EarningsStats {
   totalEarnings: number
@@ -53,10 +54,10 @@ export default function EarningsPage() {
         // Calculate stats
         const completedBookings = bookings.filter((b: any) => b.status === 'COMPLETED')
         const totalEarnings = completedBookings.reduce((sum: number, b: any) => sum + (b.subtotal || 0), 0)
-        
+
         const now = new Date()
         const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-        const thisMonthBookings = completedBookings.filter((b: any) => 
+        const thisMonthBookings = completedBookings.filter((b: any) =>
           new Date(b.endDate) >= thisMonthStart
         )
         const thisMonth = thisMonthBookings.reduce((sum: number, b: any) => sum + (b.subtotal || 0), 0)
@@ -112,119 +113,121 @@ export default function EarningsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold">Earnings</h1>
-        <p className="text-muted-foreground">Track your income and payouts</p>
-      </div>
+    <RoleGuard allowedModes={['OWNER']}>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">Earnings</h1>
+          <p className="text-muted-foreground">Track your income and payouts</p>
+        </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-primary/10">
-                <Wallet className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">₾{stats?.totalEarnings.toLocaleString() || 0}</p>
-                <p className="text-sm text-muted-foreground">Total Earnings</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-yellow-500/10">
-                <Clock className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">₾{stats?.pendingPayouts.toLocaleString() || 0}</p>
-                <p className="text-sm text-muted-foreground">Pending Payouts</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-green-500/10">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">₾{stats?.completedPayouts.toLocaleString() || 0}</p>
-                <p className="text-sm text-muted-foreground">Paid Out</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Monthly Comparison */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Earnings</CardTitle>
-          <CardDescription>Compare your earnings month over month</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">This Month</p>
-              <p className="text-2xl font-bold">₾{stats?.thisMonth.toLocaleString() || 0}</p>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Last Month</p>
-              <p className="text-2xl font-bold">₾{stats?.lastMonth.toLocaleString() || 0}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Payouts */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payout History</CardTitle>
-          <CardDescription>View your payout transactions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {payouts.length > 0 ? (
-            <div className="space-y-4">
-              {payouts.map((payout) => (
-                <div key={payout.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-semibold">₾{payout.amount.toLocaleString()}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(payout.createdAt), 'MMM d, yyyy')}
-                    </p>
-                  </div>
-                  <div>
-                    {payout.status === 'COMPLETED' ? (
-                      <Badge className="bg-green-500/10 text-green-600 border-0">
-                        <CheckCircle2 className="w-3 h-3 mr-1" />Completed
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">
-                        <Clock className="w-3 h-3 mr-1" />Pending
-                      </Badge>
-                    )}
-                  </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <Wallet className="w-6 h-6 text-primary" />
                 </div>
-              ))}
+                <div>
+                  <p className="text-2xl font-bold">₾{stats?.totalEarnings.toLocaleString() || 0}</p>
+                  <p className="text-sm text-muted-foreground">Total Earnings</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-yellow-500/10">
+                  <Clock className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">₾{stats?.pendingPayouts.toLocaleString() || 0}</p>
+                  <p className="text-sm text-muted-foreground">Pending Payouts</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-green-500/10">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">₾{stats?.completedPayouts.toLocaleString() || 0}</p>
+                  <p className="text-sm text-muted-foreground">Paid Out</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Monthly Comparison */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Earnings</CardTitle>
+            <CardDescription>Compare your earnings month over month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">This Month</p>
+                <p className="text-2xl font-bold">₾{stats?.thisMonth.toLocaleString() || 0}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Last Month</p>
+                <p className="text-2xl font-bold">₾{stats?.lastMonth.toLocaleString() || 0}</p>
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No payouts yet</h3>
-              <p className="text-muted-foreground">
-                Your completed bookings will generate payouts here
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+
+        {/* Payouts */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Payout History</CardTitle>
+            <CardDescription>View your payout transactions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {payouts.length > 0 ? (
+              <div className="space-y-4">
+                {payouts.map((payout) => (
+                  <div key={payout.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-semibold">₾{payout.amount.toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(payout.createdAt), 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                    <div>
+                      {payout.status === 'COMPLETED' ? (
+                        <Badge className="bg-green-500/10 text-green-600 border-0">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />Completed
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <Clock className="w-3 h-3 mr-1" />Pending
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">No payouts yet</h3>
+                <p className="text-muted-foreground">
+                  Your completed bookings will generate payouts here
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </RoleGuard>
   )
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -60,6 +61,7 @@ interface DashboardSidebarProps {
     email: string
     avatarUrl?: string | null
     role: UserRole
+    activeProfileMode?: UserRole | null
   }
   navigation: NavItem[]
   isCollapsed?: boolean
@@ -68,6 +70,9 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ user, navigation, isCollapsed, onToggle }: DashboardSidebarProps) {
   const pathname = usePathname()
+  const { logout } = useAuth()
+
+  const effectiveRole = user.role === 'OWNER' && user.activeProfileMode ? user.activeProfileMode : user.role
 
   return (
     <div className={cn(
@@ -140,8 +145,8 @@ export function DashboardSidebar({ user, navigation, isCollapsed, onToggle }: Da
                     <>
                       <span className="flex-1 font-medium">{item.name}</span>
                       {item.badge !== undefined && item.badge > 0 && (
-                        <Badge 
-                          variant={isActive ? 'secondary' : 'default'} 
+                        <Badge
+                          variant={isActive ? 'secondary' : 'default'}
                           className="min-w-[20px] h-5 text-xs"
                         >
                           {item.badge}
@@ -156,7 +161,7 @@ export function DashboardSidebar({ user, navigation, isCollapsed, onToggle }: Da
         </nav>
 
         {/* Quick Actions */}
-        {user.role !== 'RENTER' && !isCollapsed && (
+        {effectiveRole === 'OWNER' && !isCollapsed && (
           <div className="mt-6 px-3">
             <Button asChild className="w-full shadow-lg shadow-primary/20">
               <Link href="/list-your-car">
@@ -173,12 +178,10 @@ export function DashboardSidebar({ user, navigation, isCollapsed, onToggle }: Da
         <Button
           variant="ghost"
           className={cn('w-full justify-start text-muted-foreground', isCollapsed && 'justify-center')}
-          asChild
+          onClick={() => logout()}
         >
-          <Link href="/api/auth/signout">
-            <LogOut className="w-5 h-5" />
-            {!isCollapsed && <span className="ml-3">Log out</span>}
-          </Link>
+          <LogOut className="w-5 h-5" />
+          {!isCollapsed && <span className="ml-3">Log out</span>}
         </Button>
       </div>
     </div>

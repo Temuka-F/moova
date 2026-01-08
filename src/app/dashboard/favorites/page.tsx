@@ -10,6 +10,7 @@ import { CarCard } from '@/components/cars/CarCard'
 import { Heart, Car, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/error-utils'
+import { RoleGuard } from '@/components/auth/role-guard'
 
 interface FavoriteCar {
   id: string
@@ -70,7 +71,7 @@ export default function FavoritesPage() {
     async function fetchFavorites() {
       try {
         const res = await fetch('/api/favorites')
-        
+
         if (!res.ok) {
           if (res.status === 401) {
             router.push('/login?redirect=/dashboard/favorites')
@@ -78,7 +79,7 @@ export default function FavoritesPage() {
           }
           throw new Error('Failed to fetch favorites')
         }
-        
+
         const data = await res.json()
         setFavorites(data.favorites || [])
       } catch (err) {
@@ -97,11 +98,11 @@ export default function FavoritesPage() {
       const res = await fetch(`/api/favorites?carId=${carId}`, {
         method: 'DELETE',
       })
-      
+
       if (!res.ok) {
         throw new Error('Failed to remove favorite')
       }
-      
+
       setFavorites(prev => prev.filter(f => f.car.id !== carId))
       toast.success('Removed from favorites')
     } catch (err) {
@@ -110,82 +111,84 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 pt-16">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Saved Cars</h1>
-            <p className="text-muted-foreground">Cars you've saved for later</p>
+    <RoleGuard allowedModes={['RENTER']}>
+      <div className="min-h-screen bg-muted/30 pt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Saved Cars</h1>
+              <p className="text-muted-foreground">Cars you've saved for later</p>
+            </div>
+            <Button asChild className="rounded-full">
+              <Link href="/cars">
+                <Car className="w-4 h-4 mr-2" />
+                Browse More
+              </Link>
+            </Button>
           </div>
-          <Button asChild className="rounded-full">
-            <Link href="/cars">
-              <Car className="w-4 h-4 mr-2" />
-              Browse More
-            </Link>
-          </Button>
-        </div>
 
-        {loading ? (
-          <FavoritesSkeleton />
-        ) : error ? (
-          <Card className="text-center py-16">
-            <CardContent>
-              <AlertCircle className="w-16 h-16 mx-auto mb-4 text-destructive opacity-50" />
-              <h3 className="text-xl font-semibold mb-2">Failed to load favorites</h3>
-              <p className="text-muted-foreground mb-6">{error}</p>
-              <Button onClick={() => window.location.reload()} className="rounded-full">
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        ) : favorites.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {favorites.map((favorite) => (
-              <CarCard 
-                key={favorite.id} 
-                car={{
-                  id: favorite.car.id,
-                  make: favorite.car.make,
-                  model: favorite.car.model,
-                  year: favorite.car.year,
-                  pricePerDay: favorite.car.pricePerDay,
-                  city: favorite.car.city,
-                  rating: 4.5, // TODO: Calculate from reviews
-                  reviewCount: favorite.car._count?.reviews || 0,
-                  isInstantBook: favorite.car.isInstantBook,
-                  transmission: favorite.car.transmission,
-                  fuelType: favorite.car.fuelType,
-                  seats: favorite.car.seats,
-                  images: favorite.car.images.map(img => ({ url: img.url, isPrimary: false })),
-                  owner: favorite.car.owner ? {
-                    firstName: favorite.car.owner.firstName,
-                    lastName: favorite.car.owner.lastName,
-                    avatarUrl: favorite.car.owner.avatarUrl,
-                    rating: 4.8
-                  } : undefined
-                }} 
-                showOwner 
-              />
-            ))}
-          </div>
-        ) : (
-          <Card className="text-center py-16">
-            <CardContent>
-              <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-xl font-semibold mb-2">No saved cars yet</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                When you find a car you love, click the heart icon to save it here for easy access later.
-              </p>
-              <Button asChild className="rounded-full">
-                <Link href="/cars">
-                  Explore Cars
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+          {loading ? (
+            <FavoritesSkeleton />
+          ) : error ? (
+            <Card className="text-center py-16">
+              <CardContent>
+                <AlertCircle className="w-16 h-16 mx-auto mb-4 text-destructive opacity-50" />
+                <h3 className="text-xl font-semibold mb-2">Failed to load favorites</h3>
+                <p className="text-muted-foreground mb-6">{error}</p>
+                <Button onClick={() => window.location.reload()} className="rounded-full">
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          ) : favorites.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {favorites.map((favorite) => (
+                <CarCard
+                  key={favorite.id}
+                  car={{
+                    id: favorite.car.id,
+                    make: favorite.car.make,
+                    model: favorite.car.model,
+                    year: favorite.car.year,
+                    pricePerDay: favorite.car.pricePerDay,
+                    city: favorite.car.city,
+                    rating: 4.5, // TODO: Calculate from reviews
+                    reviewCount: favorite.car._count?.reviews || 0,
+                    isInstantBook: favorite.car.isInstantBook,
+                    transmission: favorite.car.transmission,
+                    fuelType: favorite.car.fuelType,
+                    seats: favorite.car.seats,
+                    images: favorite.car.images.map(img => ({ url: img.url, isPrimary: false })),
+                    owner: favorite.car.owner ? {
+                      firstName: favorite.car.owner.firstName,
+                      lastName: favorite.car.owner.lastName,
+                      avatarUrl: favorite.car.owner.avatarUrl,
+                      rating: 4.8
+                    } : undefined
+                  }}
+                  showOwner
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="text-center py-16">
+              <CardContent>
+                <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-xl font-semibold mb-2">No saved cars yet</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  When you find a car you love, click the heart icon to save it here for easy access later.
+                </p>
+                <Button asChild className="rounded-full">
+                  <Link href="/cars">
+                    Explore Cars
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
+    </RoleGuard>
   )
 }
