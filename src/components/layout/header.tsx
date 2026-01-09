@@ -91,7 +91,7 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isDashboard || !isHomePage
+      className={`${isScrolled || isDashboard || true ? 'relative' : 'fixed'} top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isDashboard || true // Always opaque for now to ensure visibility on MapHomePage
         ? 'bg-white/80 backdrop-blur-md border-b border-gray-100 py-3 shadow-sm'
         : 'bg-transparent py-5'
         }`}
@@ -100,7 +100,7 @@ export function Header() {
         {/* Logo */}
         <Link
           href="/"
-          className={`text-2xl font-bold tracking-tight transition-colors ${isDashboard || isScrolled || !isHomePage ? 'text-primary' : 'text-white'
+          className={`text-2xl font-bold tracking-tight transition-colors ${isDashboard || isScrolled || true ? 'text-primary' : 'text-white'
             }`}
         >
           moova
@@ -111,15 +111,15 @@ export function Header() {
           {!isDashboard && (
             <>
               <Link
-                href="/cars"
-                className={`text-sm font-medium transition-colors hover:opacity-80 ${isScrolled || !isHomePage ? 'text-foreground' : 'text-white'
+                href="/?view=list#cars-section"
+                className={`text-sm font-medium transition-colors hover:opacity-80 ${isScrolled || true ? 'text-foreground' : 'text-white'
                   }`}
               >
                 Browse Cars
               </Link>
               <Link
                 href="/list-your-car"
-                className={`text-sm font-medium transition-colors hover:opacity-80 ${isScrolled || !isHomePage ? 'text-foreground' : 'text-white'
+                className={`text-sm font-medium transition-colors hover:opacity-80 ${isScrolled || true ? 'text-foreground' : 'text-white'
                   }`}
               >
                 List Your Car
@@ -146,7 +146,7 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className={`flex items-center gap-2 rounded-full px-2 ${isDashboard || isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'
+                    className={`flex items-center gap-2 rounded-full px-2 ${isDashboard || isScrolled || true ? '' : 'text-white hover:bg-white/10'
                       }`}
                   >
                     <span className="hidden lg:inline font-medium">
@@ -275,7 +275,7 @@ export function Header() {
             <>
               <Button
                 variant="ghost"
-                className={`rounded-full ${isDashboard || isScrolled || !isHomePage ? '' : 'text-white hover:bg-white/10'
+                className={`rounded-full ${isDashboard || isScrolled || true ? '' : 'text-white hover:bg-white/10'
                   }`}
                 asChild
               >
@@ -310,7 +310,7 @@ export function Header() {
               <div className="flex-1 p-6">
                 <div className="space-y-1">
                   <Link
-                    href="/cars"
+                    href="/?view=list#cars-section"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-lg font-medium transition-colors hover:bg-muted"
                   >
@@ -402,6 +402,6 @@ export function Header() {
           </SheetContent>
         </Sheet>
       </nav>
-    </header>
+    </header >
   )
 }

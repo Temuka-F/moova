@@ -24,12 +24,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { 
-  SlidersHorizontal, 
-  MapPin, 
-  Car, 
-  Loader2, 
-  Map, 
+import {
+  SlidersHorizontal,
+  MapPin,
+  Car,
+  Loader2,
+  Map,
   List,
   X,
   Zap,
@@ -40,7 +40,7 @@ import { GEORGIAN_CITIES } from '@/types'
 // Dynamically import map
 const CarMap = dynamic(
   () => import('@/components/map/CarMapView').then((mod) => mod.CarMap),
-  { 
+  {
     ssr: false,
     loading: () => <div className="w-full h-full bg-muted animate-pulse rounded-2xl" />
   }
@@ -118,14 +118,15 @@ function CarListSkeleton() {
 function CarListingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [viewMode, setViewMode] = useState<'list' | 'map' | 'split'>('split')
+  const viewParam = searchParams.get('view') as 'list' | 'map' | 'split' | null
+  const [viewMode, setViewMode] = useState<'list' | 'map' | 'split'>(viewParam || 'split')
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState('recommended')
   const [cars, setCars] = useState<ApiCar[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
-  
+
   const [filters, setFilters] = useState({
     city: searchParams.get('city') || '',
     priceRange: [0, 500] as [number, number],
@@ -138,12 +139,12 @@ function CarListingContent() {
   const fetchCars = useCallback(async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const params = new URLSearchParams()
-      
-      if (filters.city) params.set('city', filters.city)
-      if (filters.category) params.set('category', filters.category)
+
+      if (filters.city && filters.city !== 'ALL') params.set('city', filters.city)
+      if (filters.category && filters.category !== 'ALL') params.set('category', filters.category)
       if (filters.transmission) params.set('transmission', filters.transmission)
       if (filters.fuelType) params.set('fuelType', filters.fuelType)
       if (filters.priceRange[0] > 0) params.set('minPrice', filters.priceRange[0].toString())
@@ -151,9 +152,9 @@ function CarListingContent() {
       if (filters.instantBookOnly) params.set('isInstantBook', 'true')
       if (sortBy !== 'recommended') params.set('sortBy', sortBy)
       params.set('limit', '50')
-      
+
       const res = await fetch(`/api/cars?${params.toString()}`)
-      
+
       if (!res.ok) {
         let errorMessage = 'Failed to fetch cars'
         try {
@@ -164,7 +165,7 @@ function CarListingContent() {
         }
         throw new Error(errorMessage)
       }
-      
+
       const data = await res.json()
       setCars(data.cars || [])
       setTotal(data.total || 0)
@@ -179,6 +180,12 @@ function CarListingContent() {
   useEffect(() => {
     fetchCars()
   }, [fetchCars])
+
+  // Update view mode if URL param changes
+  useEffect(() => {
+    const view = searchParams.get('view') as 'list' | 'map' | 'split' | null
+    if (view) setViewMode(view)
+  }, [searchParams])
 
   // Sort cars client-side for immediate feedback
   const sortedCars = [...cars].sort((a, b) => {
@@ -200,7 +207,7 @@ function CarListingContent() {
     longitude: car.longitude,
     rating: 4.5, // TODO: Calculate from reviews
     isInstantBook: car.isInstantBook,
-    image: car.images[0]?.url || '',
+    image: car.images?.[0]?.url || '',
   }))
 
   const activeFiltersCount = [
@@ -228,8 +235,8 @@ function CarListingContent() {
       {/* City */}
       <div className="space-y-3">
         <Label className="text-sm font-semibold">Location</Label>
-        <Select 
-          value={filters.city} 
+        <Select
+          value={filters.city}
           onValueChange={(value) => setFilters({ ...filters, city: value })}
         >
           <SelectTrigger className="h-12 rounded-xl">
@@ -239,7 +246,7 @@ function CarListingContent() {
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All cities</SelectItem>
+            <SelectItem value="ALL">All cities</SelectItem>
             {GEORGIAN_CITIES.map((city) => (
               <SelectItem key={city} value={city}>{city}</SelectItem>
             ))}
@@ -371,7 +378,7 @@ function CarListingContent() {
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
                   <div className="overflow-y-auto pb-20 pr-2">
-                    <FilterPanel onClose={() => {}} />
+                    <FilterPanel onClose={() => { }} />
                   </div>
                 </SheetContent>
               </Sheet>
@@ -383,7 +390,7 @@ function CarListingContent() {
                     <SelectValue placeholder="All cities" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All cities</SelectItem>
+                    <SelectItem value="ALL">All cities</SelectItem>
                     {GEORGIAN_CITIES.slice(0, 10).map((city) => (
                       <SelectItem key={city} value={city}>{city}</SelectItem>
                     ))}
@@ -396,7 +403,7 @@ function CarListingContent() {
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="ALL">All types</SelectItem>
                     <SelectItem value="SUV">SUV</SelectItem>
                     <SelectItem value="SEDAN">Sedan</SelectItem>
                     <SelectItem value="LUXURY">Luxury</SelectItem>
@@ -404,9 +411,9 @@ function CarListingContent() {
                   </SelectContent>
                 </Select>
 
-                <Button 
-                  variant={filters.instantBookOnly ? 'default' : 'outline'} 
-                  size="sm" 
+                <Button
+                  variant={filters.instantBookOnly ? 'default' : 'outline'}
+                  size="sm"
                   className="rounded-full"
                   onClick={() => setFilters({ ...filters, instantBookOnly: !filters.instantBookOnly })}
                 >
@@ -502,11 +509,10 @@ function CarListingContent() {
               ) : loading ? (
                 <CarListSkeleton />
               ) : sortedCars.length > 0 ? (
-                <div className={`grid gap-4 ${
-                  viewMode === 'split' 
-                    ? 'grid-cols-1 xl:grid-cols-2' 
-                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                }`}>
+                <div className={`grid gap-4 ${viewMode === 'split'
+                  ? 'grid-cols-1 xl:grid-cols-2'
+                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                  }`}>
                   {sortedCars.map((car) => (
                     <div
                       key={car.id}
@@ -527,7 +533,7 @@ function CarListingContent() {
                           transmission: car.transmission,
                           fuelType: car.fuelType,
                           seats: car.seats,
-                          images: car.images.map(img => ({ url: img.url, isPrimary: img.isPrimary })),
+                          images: (car.images || []).map(img => ({ url: img.url, isPrimary: img.isPrimary })),
                           owner: car.owner ? {
                             firstName: car.owner.firstName,
                             lastName: car.owner.lastName,

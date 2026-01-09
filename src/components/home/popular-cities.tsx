@@ -41,7 +41,7 @@ export function PopularCitiesSection() {
             </p>
           </div>
           <Button variant="ghost" asChild className="hidden sm:flex text-white hover:text-white hover:bg-white/10">
-            <Link href="/cars">
+            <Link href="/?view=list">
               View all cities
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
@@ -52,7 +52,7 @@ export function PopularCitiesSection() {
           {cities.map((city) => (
             <Link
               key={city.name}
-              href={`/cars?city=${city.name}`}
+              href={`/?city=${city.name}&view=list`}
               className="group relative overflow-hidden rounded-xl md:rounded-2xl aspect-[3/4] md:aspect-[4/5]"
             >
               <img
@@ -71,7 +71,7 @@ export function PopularCitiesSection() {
 
         <div className="mt-6 text-center sm:hidden">
           <Button variant="outline" asChild className="border-white/30 text-white hover:bg-white/10">
-            <Link href="/cars">
+            <Link href="/?view=list">
               View all cities
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>

@@ -38,7 +38,7 @@ import {
   AlertCircle,
   X
 } from 'lucide-react'
-import { format, differenceInDays, addDays, parseISO } from 'date-fns'
+import { format, differenceInDays, addDays, parseISO, startOfToday, differenceInCalendarDays } from 'date-fns'
 import { useAuth } from '@/hooks/useAuth'
 
 interface CarDetailPageProps {
@@ -698,7 +698,7 @@ export function CarDetailPage({
             <div className="lg:hidden" id="mobile-date-picker">
               <h2 className="text-xl font-semibold mb-4">Trip Dates</h2>
               <div className="grid grid-cols-2 gap-3">
-                <Popover>
+                <Popover modal={true}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="h-16 justify-start text-left font-normal rounded-xl border-2 hover:bg-background">
                       <div className="w-full">
@@ -711,18 +711,18 @@ export function CarDetailPage({
                       </div>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 z-[100]" align="start">
                     <Calendar
                       mode="single"
                       selected={startDate}
                       onSelect={setStartDate}
-                      disabled={(date) => date < new Date()}
+                      disabled={(date) => differenceInCalendarDays(date, startOfToday()) < 0}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
 
-                <Popover>
+                <Popover modal={true}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="h-16 justify-start text-left font-normal rounded-xl border-2 hover:bg-background">
                       <div className="w-full">
@@ -735,12 +735,12 @@ export function CarDetailPage({
                       </div>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 z-[100]" align="start">
                     <Calendar
                       mode="single"
                       selected={endDate}
                       onSelect={setEndDate}
-                      disabled={(date) => date <= (startDate || new Date())}
+                      disabled={(date) => differenceInCalendarDays(date, startDate || startOfToday()) <= 0}
                       initialFocus
                     />
                   </PopoverContent>
@@ -834,7 +834,7 @@ export function CarDetailPage({
               <CardContent className="p-6 space-y-4">
                 {/* Date Selection */}
                 <div className="grid grid-cols-2 gap-2">
-                  <Popover>
+                  <Popover modal={true}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="h-16 justify-start font-normal rounded-xl border-2">
                         <div className="text-left">
@@ -845,18 +845,18 @@ export function CarDetailPage({
                         </div>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[100]" align="start">
                       <Calendar
                         mode="single"
                         selected={startDate}
                         onSelect={setStartDate}
-                        disabled={(date) => date < new Date()}
+                        disabled={(date) => differenceInCalendarDays(date, startOfToday()) < 0}
                         initialFocus
                       />
                     </PopoverContent>
                   </Popover>
 
-                  <Popover>
+                  <Popover modal={true}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="h-16 justify-start font-normal rounded-xl border-2">
                         <div className="text-left">
@@ -867,12 +867,12 @@ export function CarDetailPage({
                         </div>
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[100]" align="start">
                       <Calendar
                         mode="single"
                         selected={endDate}
                         onSelect={setEndDate}
-                        disabled={(date) => date <= (startDate || new Date())}
+                        disabled={(date) => differenceInCalendarDays(date, startDate || startOfToday()) <= 0}
                         initialFocus
                       />
                     </PopoverContent>

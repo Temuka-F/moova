@@ -11,10 +11,10 @@ import { toast } from 'sonner'
 
 const footerLinks = {
   explore: [
-    { name: 'Browse Cars', href: '/cars' },
-    { name: 'Tbilisi', href: '/cars?city=Tbilisi' },
-    { name: 'Batumi', href: '/cars?city=Batumi' },
-    { name: 'Kutaisi', href: '/cars?city=Kutaisi' },
+    { name: 'Browse Cars', href: '/?view=list' },
+    { name: 'Tbilisi', href: '/?city=Tbilisi&view=list' },
+    { name: 'Batumi', href: '/?city=Batumi&view=list' },
+    { name: 'Kutaisi', href: '/?city=Kutaisi&view=list' },
   ],
   host: [
     { name: 'List Your Car', href: '/list-your-car' },
@@ -24,7 +24,7 @@ const footerLinks = {
   ],
   company: [
     { name: 'About Moova', href: '/about' },
-    { name: 'How It Works', href: '/cars' },
+    { name: 'How It Works', href: '/?view=list' }, // Or anchor to how-it-works
     { name: 'Safety', href: '/safety' },
     { name: 'Careers', href: '/careers' },
   ],
@@ -45,7 +45,7 @@ const socialLinks = [
 export function Footer() {
   const pathname = usePathname()
   const [email, setEmail] = useState('')
-  
+
   // Don't show footer on auth pages or admin pages
   if (pathname === '/login' || pathname === '/register' || pathname.startsWith('/admin')) {
     return null
@@ -76,24 +76,24 @@ export function Footer() {
               moova
             </Link>
             <p className="text-white/60 mb-6 max-w-xs text-sm">
-              The smartest way to rent a car in Georgia. 
+              The smartest way to rent a car in Georgia.
               Trusted by thousands of travelers and local hosts.
             </p>
-            
+
             {/* Newsletter */}
             <div className="mb-6">
               <p className="text-sm font-medium mb-2">Stay updated</p>
               <div className="flex gap-2">
-                <Input 
-                  type="email" 
+                <Input
+                  type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-full"
                 />
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="rounded-full px-4 min-h-[40px]"
                   onClick={handleSubscribe}
                 >

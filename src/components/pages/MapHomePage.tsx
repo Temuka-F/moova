@@ -12,6 +12,9 @@ import { ControlBar } from '@/components/search/ControlBar'
 import { CarList } from '@/components/listing/CarList'
 import { MobileCarSheet } from '@/components/ui/MobileCarSheet'
 import { MobileListMenu } from '@/components/ui/MobileListMenu'
+import { FilterDrawer } from '@/components/search/FilterDrawer'
+import { Header } from '@/components/layout/header'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from 'sonner'
 import { parseISO } from 'date-fns'
 import {
@@ -87,9 +90,21 @@ export function MapHomePage() {
   }, [searchParams, router])
 
   // Mobile View Mode
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
+  const [viewMode, setViewMode] = useState<'map' | 'list'>(() => {
+    return searchParams.get('view') === 'map' ? 'map' : 'list'
+  })
   const [isMobileSheetExpanded, setIsMobileSheetExpanded] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+
+  // Advanced Filter State
+  const [transmission, setTransmission] = useState<'AUTOMATIC' | 'MANUAL' | null>(null)
+  const [minSeats, setMinSeats] = useState(4)
+  const [instantBookOnly, setInstantBookOnly] = useState(false)
+  const [activeFeatures, setActiveFeatures] = useState<string[]>([])
+  const [selectedMake, setSelectedMake] = useState<string | null>(null)
+  const [selectedModel, setSelectedModel] = useState<string | null>(null)
+  const [selectedFuelType, setSelectedFuelType] = useState<string | null>(null)
 
 
   // Map ref for imperative control
@@ -117,6 +132,11 @@ export function MapHomePage() {
     const endParam = searchParams.get('endDate')
     if (endParam) setEndDate(parseISO(endParam))
     else setEndDate(undefined)
+
+    const viewParam = searchParams.get('view')
+    if (viewParam === 'list' || viewParam === 'map') {
+      setViewMode(viewParam as 'map' | 'list')
+    }
 
   }, [searchParams])
 
@@ -151,7 +171,25 @@ export function MapHomePage() {
   // Reset price range when city changes
   useEffect(() => {
     setPriceRange([cityPriceRange.min, cityPriceRange.max])
+    // Reset filters on city change
+    setTransmission(null)
+    setSelectedMake(null)
+    setSelectedModel(null)
+    setSelectedFuelType(null)
   }, [cityPriceRange])
+
+  // Derive available options
+  const availableMakes = useMemo(() => {
+    return Array.from(new Set(cityCars.map(c => c.make))).sort()
+  }, [cityCars])
+
+  const availableModels = useMemo(() => {
+    if (!selectedMake) return []
+    return Array.from(new Set(cityCars
+      .filter(c => c.make === selectedMake)
+      .map(c => c.model)
+    )).sort()
+  }, [cityCars, selectedMake])
 
   // Apply filters to city cars
   const filteredCars = useMemo(() => {
@@ -318,9 +356,10 @@ export function MapHomePage() {
           UNIFIED LAYOUT - Mobile First, Desktop Friendly
           ============================================== */}
       <div className="flex flex-col h-screen bg-slate-50 relative custom-safe-area-bottom w-full overflow-hidden">
+        <Header />
         {/* Top Search Area */}
-        <div className="flex-none z-30 bg-white lg:bg-transparent lg:absolute lg:top-4 lg:left-0 lg:right-0 lg:flex lg:justify-center lg:pointer-events-none">
-          <div className="w-full lg:max-w-2xl lg:pointer-events-auto space-y-2 lg:px-4">
+        <div className="flex-none z-50 bg-white border-b border-gray-200 lg:flex lg:justify-center lg:py-4 shadow-sm relative pointer-events-auto">
+          <div className="w-full lg:max-w-2xl space-y-2 lg:px-4">
             <SearchBar
               currentCity={currentCity}
               onCityChange={setCurrentCity}
@@ -334,9 +373,37 @@ export function MapHomePage() {
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
               totalCars={filteredCars.length}
+              onAllFiltersClick={() => setIsFilterOpen(true)}
             />
           </div>
         </div>
+
+        <FilterDrawer
+          open={isFilterOpen}
+          onOpenChange={setIsFilterOpen}
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
+          currentCount={filteredCars.length}
+          transmission={transmission}
+          setTransmission={setTransmission}
+          minSeats={minSeats}
+          setMinSeats={setMinSeats}
+          instantBookOnly={instantBookOnly}
+          setInstantBookOnly={setInstantBookOnly}
+          activeFeatures={activeFeatures}
+          setActiveFeatures={setActiveFeatures}
+          // New Props
+          selectedCategory={activeFilter}
+          setSelectedCategory={setActiveFilter}
+          selectedMake={selectedMake}
+          setSelectedMake={setSelectedMake}
+          selectedModel={selectedModel}
+          setSelectedModel={setSelectedModel}
+          selectedFuelType={selectedFuelType}
+          setSelectedFuelType={setSelectedFuelType}
+          availableMakes={availableMakes}
+          availableModels={availableModels}
+        />
 
         {/* Content Area (Map or List) */}
         <div className="flex-1 relative overflow-hidden">
@@ -353,8 +420,11 @@ export function MapHomePage() {
               className="absolute inset-0"
             />
           ) : (
-            <div className="absolute inset-0 overflow-y-auto pb-24 bg-gray-50">
-              <CarList cars={filteredCars} />
+            <div id="cars-section" className="absolute inset-0 overflow-y-auto pb-24 bg-gray-50">
+              <CarList
+                cars={filteredCars}
+                onCarSelect={(car) => setViewingCarId(car.id)}
+              />
             </div>
           )}
         </div>

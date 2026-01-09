@@ -1,7 +1,9 @@
 "use client"
 
-import { Map as MapIcon, List, SlidersHorizontal, Snowflake, Car, Sparkles, Leaf, Zap } from 'lucide-react'
+import { Map as MapIcon, List, SlidersHorizontal, Snowflake, Car, Sparkles, Leaf, Zap, DollarSign } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Slider } from '@/components/ui/slider'
 
 interface ControlBarProps {
     viewMode: 'map' | 'list'
@@ -9,7 +11,8 @@ interface ControlBarProps {
     activeFilter: string | null
     onFilterChange: (filter: string | null) => void
     totalCars: number
-    showToggle?: boolean // Added prop
+    showToggle?: boolean
+    onAllFiltersClick?: () => void
 }
 
 const FILTER_CHIPS = [
@@ -26,7 +29,8 @@ export function ControlBar({
     activeFilter,
     onFilterChange,
     totalCars,
-    showToggle = true // Default to true
+    showToggle = true,
+    onAllFiltersClick
 }: ControlBarProps) {
     return (
         <div className="flex flex-col gap-3 py-2">
@@ -35,17 +39,6 @@ export function ControlBar({
                 {/* View Toggle (Segmented Control) */}
                 {showToggle ? (
                     <div className="flex items-center bg-gray-100 rounded-lg p-1 h-10 w-48">
-                        <button
-                            type="button"
-                            onClick={() => onViewChange('map')}
-                            className={cn(
-                                "flex-1 flex items-center justify-center gap-2 h-full rounded-md text-sm font-medium transition-all",
-                                viewMode === 'map' ? "bg-white text-black shadow-sm" : "text-gray-500 hover:text-gray-700"
-                            )}
-                        >
-                            <MapIcon className="w-4 h-4" />
-                            Map
-                        </button>
                         <button
                             type="button"
                             onClick={() => onViewChange('list')}
@@ -57,6 +50,17 @@ export function ControlBar({
                             <List className="w-4 h-4" />
                             List
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => onViewChange('map')}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-2 h-full rounded-md text-sm font-medium transition-all",
+                                viewMode === 'map' ? "bg-white text-black shadow-sm" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            <MapIcon className="w-4 h-4" />
+                            Map
+                        </button>
                     </div>
                 ) : (
                     <div className="flex-1" /> /* Spacer if toggle hidden */
@@ -67,14 +71,18 @@ export function ControlBar({
                     {totalCars} cars available
                 </p>
 
-                {/* Mobile Filter Button (if we want a modal later) or just spacing */}
-                <button type="button" className="sm:hidden p-2 rounded-full hover:bg-gray-100">
+                {/* All Filters Button (Desktop & Mobile) */}
+                <button
+                    type="button"
+                    onClick={onAllFiltersClick}
+                    className="p-2 rounded-full hover:bg-gray-100 border border-gray-200 ml-2"
+                >
                     <SlidersHorizontal className="w-5 h-5 text-gray-700" />
                 </button>
             </div>
 
             {/* Bottom Row: Horizontal Filters */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-4 sm:px-0">
                 {FILTER_CHIPS.map((chip) => {
                     const Icon = chip.icon
                     const isActive = activeFilter === chip.id

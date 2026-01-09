@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
@@ -94,6 +94,34 @@ const defaultCarTypes = [
   { id: 'COMPACT', name: 'Compact', icon: '🚕', count: 0 },
 ]
 
+interface ApiCar {
+  id: string
+  make: string
+  model: string
+  year: number
+  pricePerDay: number
+  city: string
+  category: string
+  transmission: string
+  fuelType: string
+  seats: number
+  isInstantBook: boolean
+  latitude: number
+  longitude: number
+  images: { url: string; isPrimary: boolean }[]
+  owner: {
+    id: string
+    firstName: string
+    lastName: string
+    avatarUrl: string | null
+    verificationStatus: string
+  }
+  _count: {
+    reviews: number
+    bookings: number
+  }
+}
+
 const defaultCities = [
   { name: 'Tbilisi', count: 0, image: 'https://images.unsplash.com/photo-1565008576549-57569a49371d?w=400' },
   { name: 'Batumi', count: 0, image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400' },
@@ -108,7 +136,16 @@ export function HomePage() {
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 4))
   const [selectedType, setSelectedType] = useState('all')
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null)
-  const [showMap, setShowMap] = useState(false)
+  // Check for view param to control map visibility
+  const searchParams = useSearchParams()
+  const viewParam = searchParams.get('view')
+  const [showMap, setShowMap] = useState(viewParam === 'map')
+
+  useEffect(() => {
+    const view = searchParams.get('view')
+    if (view === 'map') setShowMap(true)
+    if (view === 'list') setShowMap(false)
+  }, [searchParams])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -143,18 +180,39 @@ export function HomePage() {
     count: stats?.cityStats?.[c.name] || 0,
   }))
 
-  // Filter featured cars by selected type
-  const filteredCars = stats?.featuredCars?.filter(car =>
-    selectedType === 'all' || car.category === selectedType
-  ) || []
+  const [cars, setCars] = useState<ApiCar[]>([])
+  const [totalCars, setTotalCars] = useState(0)
+  const [loadingCars, setLoadingCars] = useState(true)
 
-  // Filter by city if selected
-  const displayCars = city
-    ? filteredCars.filter(car => car.city === city)
-    : filteredCars
+  // Fetch cars based on current filters
+  const fetchCars = async () => {
+    setLoadingCars(true)
+    try {
+      const params = new URLSearchParams()
+      if (city) params.set('city', city)
+      if (startDate) params.set('startDate', startDate.toISOString())
+      if (endDate) params.set('endDate', endDate.toISOString())
+      if (selectedType !== 'all') params.set('category', selectedType)
+
+      const res = await fetch(`/api/cars?${params.toString()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setCars(data.cars || [])
+        setTotalCars(data.total || 0)
+      }
+    } catch (error) {
+      console.error('Error fetching cars:', error)
+    } finally {
+      setLoadingCars(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCars()
+  }, [city, selectedType, startDate, endDate])
 
   // Prepare cars for map display
-  const mapCars = displayCars.map(car => ({
+  const mapCars = cars.map(car => ({
     id: car.id,
     make: car.make,
     model: car.model,
@@ -164,16 +222,16 @@ export function HomePage() {
     longitude: car.longitude,
     rating: 4.5,
     isInstantBook: car.isInstantBook,
-    image: car.images[0]?.url || '',
+    image: car.images?.[0]?.url || '',
   }))
 
   const handleSearch = () => {
-    const params = new URLSearchParams()
-    if (city) params.set('city', city)
-    if (startDate) params.set('startDate', startDate.toISOString())
-    if (endDate) params.set('endDate', endDate.toISOString())
-    if (selectedType !== 'all') params.set('category', selectedType)
-    router.push(`/cars?${params.toString()}`)
+    fetchCars()
+    // Scroll to cars section
+    const carsSection = document.getElementById('cars-section')
+    if (carsSection) {
+      carsSection.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   return (
@@ -343,14 +401,14 @@ export function HomePage() {
       </section>
 
       {/* Map + Cars Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <section id="cars-section" className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold">
               {city ? `Cars in ${city}` : 'Cars near you'}
             </h2>
             <p className="text-muted-foreground mt-1">
-              {displayCars.length} cars available for your dates
+              {totalCars} cars available for your dates
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -364,7 +422,7 @@ export function HomePage() {
               {showMap ? 'Hide Map' : 'Show Map'}
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/cars">
+              <Link href="/">
                 View all
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Link>
@@ -375,7 +433,7 @@ export function HomePage() {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Cars Grid */}
           <div className={showMap ? '' : 'lg:col-span-2'}>
-            {loading ? (
+            {loadingCars ? (
               <div className={`grid gap-4 ${showMap ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
                 {[1, 2, 3, 4].map(i => (
                   <div key={i} className="rounded-2xl overflow-hidden border">
@@ -388,9 +446,9 @@ export function HomePage() {
                   </div>
                 ))}
               </div>
-            ) : displayCars.length > 0 ? (
+            ) : cars.length > 0 ? (
               <div className={`grid gap-4 ${showMap ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
-                {displayCars.slice(0, showMap ? 4 : 8).map((car) => (
+                {cars.map((car) => (
                   <CarCard
                     key={car.id}
                     car={{
@@ -406,7 +464,7 @@ export function HomePage() {
                       transmission: car.transmission,
                       fuelType: car.fuelType,
                       seats: car.seats,
-                      images: car.images.map(img => ({ url: img.url, isPrimary: false })),
+                      images: (car.images || []).map(img => ({ url: img.url, isPrimary: img.isPrimary })),
                       owner: car.owner ? {
                         firstName: car.owner.firstName,
                         lastName: car.owner.lastName,
@@ -434,13 +492,11 @@ export function HomePage() {
               </div>
             )}
 
-            {displayCars.length > 0 && (
+            {cars.length > 0 && cars.length < totalCars && (
               <div className="mt-6 text-center">
-                <Button variant="outline" size="lg" asChild className="rounded-full">
-                  <Link href="/cars">
-                    Browse all {stats?.totalCars || 0} cars
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Link>
+                <Button variant="outline" size="lg" className="rounded-full" onClick={() => fetchCars()}>
+                  Load More
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             )}

@@ -100,7 +100,7 @@ export function MobileListMenu({ open, onOpenChange }: MobileListMenuProps) {
         {
             label: 'Browse Cars',
             icon: Car,
-            href: '/cars',
+            href: '/?view=list#cars-section',
             showIn: ['RENTER']
         },
         {
